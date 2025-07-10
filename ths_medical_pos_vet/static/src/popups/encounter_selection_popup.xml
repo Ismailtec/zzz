@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+  <!-- Extend card-body in EncounterSelectionPopup for pet memberships and species -->
+    <t t-name="ths_medical_pos_vet.EncounterSelectionPopup" t-inherit="ths_medical_pos.EncounterSelectionPopup"
+       t-inherit-mode="extension">
+
+    <!-- Update Patient Information section to show enhanced vet data -->
+        <xpath expr="//t[@t-if='encounter.patient_ids?.length']" position="replace">
+      <!-- Enhanced Patient Information (Vet: Pets with species and membership) -->
+            <t t-if="encounter.patient_ids?.length">
+        <div class="mb-2">
+          <div class="d-flex align-items-start">
+            <i class="fa fa-paw me-2 text-secondary mt-1"/>
+              <div>
+              <small class="text-muted">Pets: </small>
+                  <div class="pets-list">
+                <t t-foreach="encounter.patient_ids" t-as="petName" t-key="petName_index">
+                  <span class="badge bg-success me-1 mb-1" style="font-size: 0.75rem;">
+                    <i class="fa fa-paw me-1" style="font-size: 0.65rem;"/>
+                      <t t-esc="petName"/>
+                  </span>
+                </t>
+              </div>
+            </div>
+          </div>
+        </div>
+      </t>
+    </xpath>
+
+        <!-- Add Pet Owner Information for vet context -->
+        <xpath expr="//div[contains(@class, 'card-body')]//div[contains(@class, 'd-flex justify-content-between')]"
+               position="after">
+      <!-- Pet Owner Information (for vet context) -->
+            <t t-if="encounter.pet_owner_name">
+        <div class="mb-2">
+          <div class="d-flex align-items-center">
+            <i class="fa fa-user me-2 text-info"/>
+              <small>
+              <span class="text-muted">Pet Owner: </span>
+                  <span class="fw-bold" t-esc="encounter.pet_owner_name"/>
+            </small>
+          </div>
+        </div>
+      </t>
+    </xpath>
+
+        <!-- Add membership information if available -->
+        <xpath expr="//div[contains(@class, 'card-body')]" position="inside">
+      <!-- Display memberships for each pet if available -->
+            <t t-if="encounter.pet_memberships">
+        <div class="mt-2">
+          <small class="text-muted">
+            <i class="fa fa-star me-2"/>
+              Memberships:
+          </small>
+            <ul class="mb-0 ps-3">
+            <t t-foreach="encounter.pet_memberships" t-as="m" t-key="m[0]">
+              <li>
+                <t t-esc="m[1]"/>:
+                  <span class="badge bg-success" t-if="m[2] === 'valid'">Valid</span>
+                  <span class="badge bg-danger" t-if="m[2] !== 'valid'">Invalid</span>
+              </li>
+            </t>
+          </ul>
+        </div>
+      </t>
+    </xpath>
+
+  </t>
+
+</templates>

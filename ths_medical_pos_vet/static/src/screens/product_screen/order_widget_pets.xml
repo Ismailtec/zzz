@@ -1,0 +1,98 @@
+<templates xml:space="preserve">
+    <t t-name="ths_medical_pos_vet.OrderWidgetPets" t-inherit="point_of_sale.OrderWidget" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('order-summary')]" position="before">
+            <t t-if="order and order.get_partner()">
+                <t t-set="partner" t-value="order.get_partner()"/>
+                <t t-set="medical_context" t-value="order.medical_context || {}"/>
+                <div class="pet-owner-header bg-light p-2 rounded mb-2">
+                    <div class="d-flex align-items-center mb-1">
+                        <i class="fa fa-user me-2 text-primary" title="Pet Owner"/>
+                        <strong>Pet Owner: </strong>
+                        <span class="ms-1" t-esc="partner.name || 'Unknown'"/>
+                    </div>
+                    <t t-if="medical_context.patient_ids and medical_context.patient_ids.length > 0">
+                        <div class="d-flex align-items-start">
+                            <i class="fa fa-paw me-2 text-secondary mt-1" title="Pets"/>
+                            <div class="flex-fill">
+                                <strong>Pets: </strong>
+                                <div class="pets-list pets-many2many-display">
+                                    <t t-foreach="medical_context.patient_ids" t-as="patient" t-key="patient_index">
+                                        <span class="badge bg-success me-1 mb-1 pet-order-tag"
+                                              style="font-size: 0.75rem; padding: 0.3rem 0.5rem;">
+                                            <i class="fa fa-paw me-1" style="font-size: 0.65rem;"/>
+                                            <t t-if="Array.isArray(patient)">
+                                                <t t-esc="patient[1] || 'Unknown Pet'"/>
+                                            </t>
+                                            <t t-else="">
+                                                <t t-esc="patient.name || patient || 'Unknown Pet'"/>
+                                            </t>
+                                            <t t-if="Array.isArray(patient) and patient.length > 2 and patient[2]">
+                                                <span class="species-indicator ms-1"
+                                                      style="font-size: 0.65rem; opacity: 0.8;">
+                                                    (<t t-if="Array.isArray(patient[2])">
+                                                        <t t-esc="patient[2][1] || 'Unknown Species'"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="patient[2].name || patient[2] || 'Unknown Species'"/>
+                                                    </t>)
+                                                </span>
+                                            </t>
+                                        </span>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-if="!medical_context.patient_ids or medical_context.patient_ids.length === 0">
+                        <div class="d-flex align-items-center text-muted">
+                            <i class="fa fa-paw me-2" title="No Pets"/>
+                            <small>No pets selected for this order</small>
+                        </div>
+                    </t>
+                    <t t-if="medical_context.encounter_name">
+                        <div class="d-flex align-items-center mt-1">
+                            <i class="fa fa-stethoscope me-2 text-info" title="Encounter"/>
+                            <small class="text-muted">
+                                Encounter:
+                                <span t-if="Array.isArray(medical_context.encounter_name)">
+                                    <t t-esc="medical_context.encounter_name[1] || medical_context.encounter_name[0] || 'N/A'"/>
+                                </span>
+                                <span t-else="">
+                                    <t t-esc="medical_context.encounter_name || 'N/A'"/>
+                                </span>
+                            </small>
+                        </div>
+                    </t>
+                    <t t-if="medical_context.practitioner_id">
+                        <div class="d-flex align-items-center mt-1">
+                            <i class="fa fa-user-md me-2 text-success" title="Practitioner"/>
+                            <small class="text-muted">
+                                Provider:
+                                <span t-if="Array.isArray(medical_context.practitioner_id)">
+                                    <t t-esc="medical_context.practitioner_id[1] || medical_context.practitioner_id[0] || 'N/A'"/>
+                                </span>
+                                <span t-else="">
+                                    <t t-esc="medical_context.practitioner_id.name || medical_context.practitioner_id || 'N/A'"/>
+                                </span>
+                            </small>
+                        </div>
+                    </t>
+                    <t t-if="medical_context.room_id">
+                        <div class="d-flex align-items-center mt-1">
+                            <i class="fa fa-home me-2 text-info" title="Room"/>
+                            <small class="text-muted">
+                                Room:
+                                <span t-if="Array.isArray(medical_context.room_id)">
+                                    <t t-esc="medical_context.room_id[1] || medical_context.room_id[0] || 'N/A'"/>
+                                </span>
+                                <span t-else="">
+                                    <t t-esc="medical_context.room_id.name || medical_context.room_id || 'N/A'"/>
+                                </span>
+                            </small>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </xpath>
+    </t>
+</templates>

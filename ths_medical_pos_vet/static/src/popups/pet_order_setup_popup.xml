@@ -1,0 +1,106 @@
+<templates xml:space="preserve">
+    <t t-name="ths_medical_pos_vet.PetOrderSetupPopup" t-inherit="web.Dialog" t-inherit-mode="primary">
+        <div class="popup pet-order-setup-popup">
+            <header class="d-flex justify-content-between align-items-center mb-3">
+                <h4 t-esc="props.title"/>
+            </header>
+            <main>
+                <div class="mb-3">
+                    <h5>Pet Owner: <span t-esc="partnerName"/></h5>
+                    <p class="text-muted" t-esc="encounterInfo"/>
+                </div>
+
+                <div class="mb-3">
+                    <h5>Select Pets:</h5>
+                    <t t-if="availablePets.length > 0">
+                        <div class="pet-selection">
+                            <t t-foreach="availablePets" t-as="pet" t-key="pet.id">
+                                <div class="form-check mb-2">
+                                    <input type="checkbox"
+                                           t-att-id="'pet-' + pet.id"
+                                           t-att-checked="isPetSelected(pet.id)"
+                                           t-on-change="() => togglePetSelection(pet.id)"
+                                           class="form-check-input"/>
+                                    <label t-att-for="'pet-' + pet.id" class="form-check-label">
+                                        <span t-esc="pet.name"/>
+                                        <t t-if="getSpeciesName(pet)">
+                                            <span class="text-muted ms-1">(<t t-esc="getSpeciesName(pet)"/>)</span>
+                                        </t>
+                                        <t t-if="getMembershipStatus(pet) === 'active'">
+                                            <span class="badge bg-success ms-2">Member</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="badge bg-secondary ms-2">Non-Member</span>
+                                        </t>
+                                    </label>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <p class="text-muted">No pets found for this owner.</p>
+                    </t>
+                </div>
+
+                <div class="mb-3">
+                    <h5>Select Service Provider:</h5>
+                    <select t-model="state.selectedPractitioner" class="form-select">
+                        <option value="">No Practitioner</option>
+                        <t t-foreach="availablePractitioners" t-as="practitioner" t-key="practitioner.id">
+                            <option t-att-value="practitioner.id" t-esc="practitioner.name"/>
+                        </t>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <h5>Select Treatment Room:</h5>
+                    <select t-model="state.selectedRoom" class="form-select">
+                        <option value="">No Room</option>
+                        <t t-foreach="availableRooms" t-as="room" t-key="room.id">
+                            <option t-att-value="room.id" t-esc="room.name"/>
+                        </t>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <h5>Summary:</h5>
+                    <div>
+                        <strong>Selected Pets:</strong>
+                        <t t-if="state.selectedPets.size > 0">
+                            <t t-foreach="Array.from(state.selectedPets)" t-as="petId" t-key="petId">
+                                <t t-set="pet" t-value="availablePets.find(p => p.id === petId)"/>
+                                <span t-esc="pet ? pet.name : 'Unknown'"/>
+                                <t t-if="pet &amp;&amp; getSpeciesName(pet)">
+                                    <span> (<t t-esc="getSpeciesName(pet)"/>)</span>
+                                </t>
+                                <t t-if="petId !== Array.from(state.selectedPets).slice(-1)[0]">,</t>
+                            </t>
+                        </t>
+                        <t t-else="">
+                            <span>None</span>
+                        </t>
+                    </div>
+                    <div>
+                        <strong>Service Provider:</strong>
+                        <span t-esc="state.selectedPractitioner ? getPractitionerName(state.selectedPractitioner) : 'None'"/>
+                    </div>
+                    <div>
+                        <strong>Treatment Room:</strong>
+                        <span t-esc="state.selectedRoom ? getRoomName(state.selectedRoom) : 'None'"/>
+                    </div>
+                </div>
+            </main>
+
+            <footer class="d-flex justify-content-end">
+                <button class="btn btn-secondary me-2" t-on-click="cancel">Cancel</button>
+                <t t-if="showSkipButton">
+                    <button class="btn btn-secondary me-2" t-on-click="skipSetup">Skip Setup</button>
+                </t>
+                <button class="btn btn-primary" t-on-click="confirmSelection">
+                    <t t-if="props.isNewOrder">Continue with Order</t>
+                    <t t-else="">Apply Changes</t>
+                </button>
+            </footer>
+        </div>
+    </t>
+</templates>

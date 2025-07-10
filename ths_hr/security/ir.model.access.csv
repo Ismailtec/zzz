@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_partner_type_hr_user_read,ths.partner.type.hr.user.read,model_ths_partner_type,ths_hr.group_ths_hr_user,1,0,0,0
+access_partner_type_hr_manager_write,ths.partner.type.hr.manager.write,model_ths_partner_type,ths_hr.group_ths_hr_manager,1,1,1,1
+access_hr_department_ths_fields_user,hr.department.ths.fields.user.read,model_hr_department,ths_hr.group_ths_hr_user,1,0,0,0
+access_hr_department_ths_fields_manager,hr.department.ths.fields.manager.write,model_hr_department,ths_hr.group_ths_hr_manager,1,1,1,1
+access_hr_employee_ths_fields_user,hr.employee.ths.fields.user.read,model_hr_employee,ths_hr.group_ths_hr_user,1,0,0,0
+access_hr_employee_ths_fields_manager,hr.employee.ths.fields.manager.write,model_hr_employee,ths_hr.group_ths_hr_manager,1,1,1,1
+access_res_partner_ths_employee_id_user,res.partner.ths.employee.id.user.read,model_res_partner,ths_hr.group_ths_hr_user,1,0,0,0
+access_res_partner_ths_employee_id_manager,res.partner.ths.employee.id.manager.write,model_res_partner,ths_hr.group_ths_hr_manager,1,1,1,1

@@ -1,0 +1,94 @@
+<templates xml:space="preserve">
+    <t t-name="ths_medical_pos_vet.PendingItemsListPopup" t-inherit="ths_medical_pos.PendingItemsListPopup"
+       t-inherit-mode="extension">
+        <!-- Veterinary Enhancement: Replace table header to show Pet and Owner columns -->
+        <xpath expr="//thead/tr" position="replace">
+            <tr>
+                <th>Pet</th>
+                <th>Owner</th>
+                <th>Product/Service</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Service Provider</th>
+                <th>Encounter</th>
+                <th>Action</th>
+            </tr>
+        </xpath>
+
+        <!-- Veterinary Enhancement: Update colspan for "no items" message -->
+        <xpath expr="//tbody/t/tr/td" position="attributes">
+            <attribute name="colspan">8</attribute>
+        </xpath>
+
+        <!-- Veterinary Enhancement: Replace Pet and Owner columns -->
+        <xpath expr="//tbody/t[@t-foreach='itemsToShow']/tr/td[1]" position="replace">
+            <td>
+                <t t-if="item.patient_ids and item.patient_ids.length > 0">
+                    <t t-if="Array.isArray(item.patient_ids[0])">
+                        <t t-esc="item.patient_ids[0][1] || 'N/A'"/>
+                    </t>
+                    <t t-else="">
+                        <t t-esc="item.patient_ids[0].name || item.patient_ids[0] || 'N/A'"/>
+                    </t>
+                </t>
+                <t t-else="">N/A</t>
+            </td>
+            <td>
+                <t t-if="item.partner_id">
+                    <t t-if="Array.isArray(item.partner_id)">
+                        <t t-esc="item.partner_id[1] || 'N/A'"/>
+                    </t>
+                    <t t-else="">
+                        <t t-esc="item.partner_id.name || item.partner_id || 'N/A'"/>
+                    </t>
+                </t>
+                <t t-else="">N/A</t>
+            </td>
+        </xpath>
+
+        <!-- Product/Service column -->
+        <xpath expr="//tbody/t[@t-foreach='itemsToShow']/tr/td[2]" position="replace">
+            <td>
+                <t t-if="item.product_id">
+                    <t t-if="Array.isArray(item.product_id)">
+                        <t t-esc="item.product_id[1] || 'N/A'"/>
+                    </t>
+                    <t t-else="">
+                        <t t-esc="item.product_id.name || item.product_id || 'N/A'"/>
+                    </t>
+                </t>
+                <t t-else="">N/A</t>
+            </td>
+        </xpath>
+
+        <!-- Service Provider column -->
+        <xpath expr="//tbody/t[@t-foreach='itemsToShow']/tr/td[5]" position="replace">
+            <td>
+                <t t-if="item.practitioner_id">
+                    <t t-if="Array.isArray(item.practitioner_id)">
+                        <t t-esc="item.practitioner_id[1] || 'N/A'"/>
+                    </t>
+                    <t t-else="">
+                        <t t-esc="item.practitioner_id.name || item.practitioner_id || 'N/A'"/>
+                    </t>
+                </t>
+                <t t-else="">N/A</t>
+            </td>
+        </xpath>
+
+        <!-- Encounter column -->
+        <xpath expr="//tbody/t[@t-foreach='itemsToShow']/tr/td[6]" position="replace">
+            <td>
+                <t t-if="item.encounter_id">
+                    <t t-if="Array.isArray(item.encounter_id)">
+                        <t t-esc="item.encounter_id[1] || 'N/A'"/>
+                    </t>
+                    <t t-else="">
+                        <t t-esc="item.encounter_id.name || item.encounter_id || 'N/A'"/>
+                    </t>
+                </t>
+                <t t-else="">N/A</t>
+            </td>
+        </xpath>
+    </t>
+</templates>

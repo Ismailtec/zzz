@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vet_pet_membership_form" model="ir.ui.view">
+        <field name="name">vet.pet.membership.form</field>
+        <field name="model">vet.pet.membership</field>
+        <field name="arch" type="xml">
+            <form string="Pet Membership">
+                <header>
+                    <button name="action_start_membership" string="Start Membership" type="object"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object"
+                            invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,running,expired"
+                           statusbar_colors='{"running":"success","expired":"danger"}'/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="partner_id" string="Pet Owner"
+                                   options="{'no_create': True, 'no_quick_create': True}"/>
+                            <field name="patient_ids" widget="many2many_tags"
+                                   options="{'no_create': True, 'no_quick_create': True}"/>
+
+<!--                            <field name="patient_ids_domain" invisible="1"/>-->
+                        </group>
+                        <group>
+                            <field name="membership_service_id"
+                                   options="{'no_create': True, 'no_quick_create': True}"
+                                   domain="[('product_sub_type_id', '=', %(ths_medical_vet.product_sub_type_member)d)]"/>
+                            <field name="is_paid" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group>
+                            <field name="valid_from"/>
+                            <field name="valid_to" readonly="1"/>
+                        </group>
+                        <group>
+                            <!-- Placeholder for future fields -->
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Add membership notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vet_pet_membership_list" model="ir.ui.view">
+        <field name="name">vet.pet.membership.list</field>
+        <field name="model">vet.pet.membership</field>
+        <field name="arch" type="xml">
+            <list string="Pet Memberships" decoration-success="state=='running'"
+                  decoration-danger="state=='expired'">
+                <field name="name"/>
+                <field name="partner_id" string="Pet Owner"/>
+                <field name="patient_ids" widget="many2many_tags"/>
+                <field name="membership_service_id"/>
+                <field name="valid_from"/>
+                <field name="valid_to"/>
+                <field name="state" widget="badge"/>
+                <field name="is_paid" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_vet_pet_membership" model="ir.actions.act_window">
+        <field name="name">Pet Memberships</field>
+        <field name="res_model">vet.pet.membership</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new pet membership
+            </p>
+        </field>
+    </record>
+
+</odoo>

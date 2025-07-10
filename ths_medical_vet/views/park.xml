@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_park_checkin_list" model="ir.ui.view">
+        <field name="name">park.checkin.list</field>
+        <field name="model">park.checkin</field>
+        <field name="arch" type="xml">
+            <list string="Park Check-ins" decoration-info="state=='checked_in'"
+                  decoration-success="state=='checked_out'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="patient_ids" widget="many2many_tags"/>
+                <field name="checkin_time" widget="datetime"/>
+                <field name="checkout_time" widget="datetime"/>
+                <field name="duration_hours" widget="float_time"/>
+                <field name="membership_valid" widget="boolean_toggle"/>
+                <field name="state" widget="badge"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_park_checkin_form" model="ir.ui.view">
+        <field name="name">park.checkin.form</field>
+        <field name="model">park.checkin</field>
+        <field name="arch" type="xml">
+            <form string="Park Check-in">
+                <header>
+                    <button name="action_checkout" string="Check Out" type="object"
+                            class="oe_highlight" invisible="state != 'checked_in'"/>
+                    <button name="action_extend_visit" string="Extend Visit" type="object"
+                            invisible="state != 'checked_out'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="checked_in,checked_out"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_encounter" type="object" icon="fa-stethoscope"
+                                class="oe_stat_button" invisible="not encounter_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Daily</span>
+                                <span class="o_stat_text">Encounter</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="partner_id" options="{'no_create': True, 'no_quick_create': True}"/>
+                            <field name="patient_ids" widget="many2many_tags"
+                                   options="{'no_create': True, 'no_quick_create': True}"/>
+                            <field name="checkin_time"/>
+                            <field name="checkout_time" readonly="state == 'checked_in'"/>
+                        </group>
+                        <group>
+                            <field name="membership_valid" readonly="1" widget="boolean_toggle"/>
+                            <field name="duration_hours" readonly="1" widget="float_time"/>
+                            <field name="company_id" groups="base.group_multi_company" invisible="1"/>
+                            <field name="encounter_id" readonly="1" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Visit Notes" name="notes">
+                            <field name="notes" placeholder="Add notes about the park visit..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_park_checkin_search" model="ir.ui.view">
+        <field name="name">park.checkin.search</field>
+        <field name="model">park.checkin</field>
+        <field name="arch" type="xml">
+            <search string="Search Park Check-ins">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="patient_ids"/>
+                <filter string="Checked In" name="filter_checked_in" domain="[('state', '=', 'checked_in')]"/>
+                <filter string="Checked Out" name="filter_checked_out" domain="[('state', '=', 'checked_out')]"/>
+                <filter string="Valid Membership" name="filter_valid_membership"
+                        domain="[('membership_valid', '=', True)]"/>
+                <separator/>
+                <filter string="Today" name="filter_today"
+                        context="{'search_checkin_time_range': 'today'}"/>
+                <filter string="This Week" name="filter_this_week"
+                        context="{'search_checkin_time_range': 'this_week'}"/>
+                <filter string="Last Week" name="filter_last_week"
+                        context="{'search_checkin_time_range': 'last_week'}"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Pet Owner" name="groupby_owner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Status" name="groupby_state" context="{'group_by': 'state'}"/>
+                    <filter string="Check-in Date" name="groupby_checkin_date"
+                            context="{'group_by': 'checkin_time:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_park_checkin" model="ir.actions.act_window">
+        <field name="name">Park Check-ins</field>
+        <field name="res_model">park.checkin</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_filter_today': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Record a new park check-in
+            </p>
+            <p>
+                Track pet owner visits to the park with membership validation
+            </p>
+        </field>
+    </record>
+
+    <!-- TODO: Add service-specific encounter templates -->
+    <!-- TODO: Implement cross-service encounter navigation -->
+    <!-- TODO: Add service timeline integration in encounter view -->
+    <!-- TODO: Implement service dependency warnings -->
+
+</odoo>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="point_of_sale.Navbar" t-inherit="point_of_sale.Navbar" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('pos-leftheader')]" position="inside">
+            <!-- Medical appointments button - always visible when module is installed -->
+            <button class="btn btn-lg lh-lg medical-appointments-btn btn-primary"
+                    t-on-click="() => this.pos.manageMedicalAppointments()">
+                <span t-if="!ui.isSmall">Appointments</span>
+                <i t-else="" class="fa fa-lg fa-fw fa-stethoscope"/>
+            </button>
+        </xpath>
+    </t>
+
+</templates>

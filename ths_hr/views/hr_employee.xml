@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.ths.hr</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet//h2//field[@name='job_title']" position="before">
+                <field name="name_ar" placeholder="Name in Arabic" class="oe_inline"/>
+            </xpath>
+            <xpath expr="//page[@name='hr_settings']/group[last()]" position="after">
+                <group string="Accounting &amp; Inventory Links">
+                    <field name="ths_analytic_acc_id" readonly="1"
+                           options="{'no_create': True, 'no_quick_create': True}"/>
+                    <field name="ths_inv_loss_loc_id" readonly="1"
+                           options="{'no_create': True, 'no_quick_create': True}"/>
+                </group>
+            </xpath>
+            <xpath expr="//widget[@name='contract_warning_tooltip']" position="attributes">
+                <attribute name="groups">hr.group_hr_user</attribute>
+            </xpath>
+
+            <xpath expr="//header" position="inside">
+                <button name="action_create_missing_emp_locations_accounts" type="object"
+                        string="Create Missing Items"
+                        help="Checks selected employees and creates/links Partner Type, Inventory Loss Locations and Analytic Accounts if they are missing or need hierarchy updates."
+                        groups="ths_hr.group_ths_hr_manager" class="oe_highlight"/>
+<!--                        invisible="not context.get('active_ids')"/>-->
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_tree_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">hr.employee.tree.inherit.ths.hr</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='department_id']" position="after">
+                <field name="employee_type" optional="show"/>
+                <field name="ths_analytic_acc_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_filter_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">hr.employee.search.inherit.ths.hr</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='job_id']" position="after">
+                <field name="employee_type"/>
+                <field name="ths_analytic_acc_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <separator/>
+                <filter string="Missing Location" name="filter_missing_loc"
+                        domain="[('ths_inv_loss_loc_id', '=', False)]"/>
+                <filter string="Missing Analytic Account" name="filter_missing_analytic"
+                        domain="[('ths_analytic_acc_id', '=', False)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_job']" position="after">
+                <filter string="Employee" name="groupby_employee_type" context="{'group_by': 'employee_type'}"/>
+                <filter string="Analytic Account" name="groupby_analytic"
+                        context="{'group_by': 'ths_analytic_acc_id'}"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_employee_kanban_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">hr.employee.kanban.inherit.ths.hr</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.hr_kanban_view_employees"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="class">mb-0 fw-bolder fs-4</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!--    <div class="bg-secondary rounded p-1 d-inline-block mb-0 fw-bolder fs-4">-->
+</odoo>

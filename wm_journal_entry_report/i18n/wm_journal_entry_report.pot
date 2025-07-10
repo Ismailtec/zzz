@@ -1,0 +1,151 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* wm_journal_entry_report
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-01-22 11:43+0000\n"
+"PO-Revision-Date: 2024-01-22 11:43+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: wm_journal_entry_report
+#: model:ir.actions.report,print_report_name:wm_journal_entry_report.account_journal
+msgid "(object._get_report_base_filename())"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "0.00"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "2023-09-12"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Account</span>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Amount Currency</span>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Credit</span>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Debit</span>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Disc Amount</span>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Due Date</span>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Journal Entry</span>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Label</span>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Partner</span>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Taxes</span>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid ""
+"<strong>Accounting Date:</strong>\n"
+"                                <br/>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid ""
+"<strong>Company:</strong>\n"
+"                                <br/>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid ""
+"<strong>Fiscal Position:</strong>\n"
+"                                <br/>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid ""
+"<strong>Journal:</strong>\n"
+"                                <br/>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid ""
+"<strong>Reference:</strong>\n"
+"                                <br/>"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "INV/2023/0001"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model:ir.actions.report,name:wm_journal_entry_report.account_journal
+msgid "Journal Entries"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "Miscellaneous Operations"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "Tax 15%"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "Total"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "Your Company"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "Your Reference"
+msgstr ""

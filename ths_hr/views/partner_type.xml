@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_partner_type_list_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">ths.partner.type.list.inherit.ths.hr</field>
+        <field name="model">ths.partner.type</field>
+        <field name="inherit_id" ref="ths_base.view_partner_type_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='is_customer']" position="before">
+                <field name="is_employee" optional="show" widget="boolean_toggle"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_type_form_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">ths.partner.type.form.inherit.ths.hr</field>
+        <field name="model">ths.partner.type</field>
+        <field name="inherit_id" ref="ths_base.view_partner_type_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='is_customer']" position="before">
+                <field name="is_employee" widget="boolean_toggle"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_type_search_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">ths.partner.type.search.inherit.ths.hr</field>
+        <field name="model">ths.partner.type</field>
+        <field name="inherit_id" ref="ths_base.view_partner_type_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_individuals']" position="after">
+                <filter string="Employee" name="filter_is_employee" domain="[('is_employee', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

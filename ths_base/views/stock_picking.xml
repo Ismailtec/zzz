@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_picking_form_inherit_ths_base" model="ir.ui.view">
+            <field name="name">stock.picking.form.inherit.ths.base</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button type="object" name="action_view_landed_costs"
+                            class="oe_stat_button" icon="fa-truck"
+                            invisible="landed_cost_count == 0">
+                        <field name="landed_cost_count" widget="statinfo" string="Landed Costs"/>
+                    </button>
+                </xpath>
+
+                <xpath expr="//field[@name='date_deadline']" position="before">
+                    <field name="ths_effective_date" readonly="state in ('done', 'cancel')"/>
+                </xpath>
+
+                <xpath expr="//field[@name='date_done']" position="attributes">
+                    <attribute name="string">Processed Date</attribute>
+                    <attribute name="help">Date the picking was actually processed/validated in the system.</attribute>
+                </xpath>
+
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="ths_analytic_plan_departments" model="account.analytic.plan">
+        <field name="name">Departments</field>
+        <field name="description">Parent plan for analytic accounts related to company departments.</field>
+    </record>
+    <record id="ths_analytic_plan_employees" model="account.analytic.plan">
+        <field name="name">Employees</field>
+        <field name="description">Analytic plan to track costs/revenue by employee.</field>
+    </record>
+
+</odoo>

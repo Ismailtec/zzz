@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_treatment_room_list" model="ir.ui.view">
+        <field name="name">ths.treatment.room.list</field>
+        <field name="model">ths.treatment.room</field>
+        <field name="arch" type="xml">
+            <list string="Treatment Rooms">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="department_id"/>
+                <field name="medical_staff_ids" widget="many2many_tags" optional="show"/>
+                <field name="add_to_calendar_resource" optional="show"/>
+                <field name="active" widget="boolean_toggle" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_treatment_room_form" model="ir.ui.view">
+        <field name="name">ths.treatment.room.form</field>
+        <field name="model">ths.treatment.room</field>
+        <field name="arch" type="xml">
+            <form string="Treatment Room">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="e.g., Room 101, Consultation Room A..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="department_id" options="{'no_create': True, 'no_quick_create': True}"/>
+                            <field name="add_to_calendar_resource"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="sequence" groups="base.group_no_one"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Allowed Staff" name="staff">
+                            <field name="medical_staff_ids" widget="many2many" placeholder="Add allowed staff...">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="job_title"/>
+                                    <field name="work_email"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Add internal notes about the room..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_treatment_room_search" model="ir.ui.view">
+        <field name="name">ths.treatment.room.search</field>
+        <field name="model">ths.treatment.room</field>
+        <field name="arch" type="xml">
+            <search string="Search Treatment Rooms">
+                <field name="name" string="Room"/>
+                <field name="department_id"/>
+                <field name="medical_staff_ids" string="Allowed Staff"/>
+                <filter string="Add to Calendar" name="filter_add_to_calendar"
+                        domain="[('add_to_calendar_resource', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Department" name="groupby_department" context="{'group_by': 'department_id'}"/>
+                    <filter string="Add to Calendar" name="groupby_calendar" context="{'group_by': 'add_to_calendar_resource'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_treatment_room" model="ir.actions.act_window">
+        <field name="name">Treatment Rooms</field>
+        <field name="res_model">ths.treatment.room</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_treatment_room_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Treatment Room
+            </p>
+            <p>
+                Define the rooms available in your medical departments for consultations, procedures, etc.
+            </p>
+        </field>
+    </record>
+
+</odoo>

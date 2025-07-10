@@ -1,0 +1,48 @@
+<odoo>
+    <data>
+        <record id="view_product_template_form_inherit_ths_base" model="ir.ui.view">
+            <field name="name">product.template.product.form.inherit.ths.base</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='invoice_policy']" position="before">
+                    <xpath expr="//field[@name='categ_id']" position="move">
+                    </xpath>
+                </xpath>
+                <xpath expr="//div[@name='standard_price_uom']" position="after">
+                    <field name="product_brand"/>
+                </xpath>
+                <xpath expr="//field[@name='categ_id']" position="before">
+                    <field name="ths_category_domain" invisible="1"/>
+                </xpath>
+                <xpath expr="//field[@name='categ_id']" position="attributes">
+                    <attribute name="domain">ths_category_domain</attribute>
+                </xpath>
+                <xpath expr="//field[@name='type']" position="after">
+                    <field name="ths_hide_taxes" invisible="1"/>
+                </xpath>
+                <xpath expr="//page[@name='general_information']//label[@for='taxes_id']" position="attributes">
+                    <attribute name="invisible">ths_hide_taxes == True</attribute>
+                </xpath>
+                <xpath expr="//page[@name='general_information']//div[@name='taxes_div']" position="attributes">
+                    <attribute name="invisible">ths_hide_taxes == True</attribute>
+                </xpath>
+                <xpath expr="//field[@name='supplier_taxes_id']" position="attributes">
+                    <attribute name="invisible">ths_hide_taxes == True</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_product_supplierinfo_tree_inherit_ths_base" model="ir.ui.view">
+            <field name="name">product.supplierinfo.tree.inherit.ths.base</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="ths_manual_priority_vendor" optional="show"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

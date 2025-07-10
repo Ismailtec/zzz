@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+
+        <template id="report_journal_document">
+            <t t-call="web.external_layout">
+                <t t-set="o" t-value="o.with_context(lang=lang)"/>
+                <div class="clearfix">
+                    <div class="page mb-4">
+                        <h2>
+                            <span>Journal Entry</span>
+                            <span t-if="o.name != '/'" t-field="o.name">INV/2023/0001</span>
+                        </h2>
+                        <div class="oe_structure"></div>
+                        <div id="informations" class="row mt-3 mb-1">
+                            <div t-attf-class="#{'col-auto col-3 mw-100' if report_type != 'html' else 'col'} mb-2"
+                                 t-if="o.date" name="date">
+                                <strong>Accounting Date:</strong>
+                                <br/>
+                                <span t-field="o.date">2023-09-12</span>
+                            </div>
+                            <div t-attf-class="#{'col-auto col-3 mw-100' if report_type != 'html' else 'col'} mb-2"
+                                 t-if="o.journal_id and o.move_type == 'entry'" name="journal_id">
+                                <strong>Journal:</strong>
+                                <br/>
+                                <span t-field="o.journal_id">Miscellaneous Operations</span>
+                            </div>
+                            <div t-attf-class="#{'col-auto col-3 mw-100' if report_type != 'html' else 'col'} mb-2"
+                                 t-if="o.ref" name="ref">
+                                <strong>Reference:</strong>
+                                <br/>
+                                <span t-field="o.ref">Your Reference</span>
+                            </div>
+                            <div t-attf-class="#{'col-auto col-3 mw-100' if report_type != 'html' else 'col'} mb-2"
+                                 t-if="o.company_id" name="company_id">
+                                <strong>Company:</strong>
+                                <br/>
+                                <span t-field="o.company_id">Your Company</span>
+                            </div>
+                            <div t-attf-class="#{'col-auto col-3 mw-100' if report_type != 'html' else 'col'} mb-2"
+                                 t-if="o.fiscal_position_id" name="fiscal_position_id">
+                                <strong>Fiscal Position:</strong>
+                                <br/>
+                                <span t-field="o.fiscal_position_id"/>
+                            </div>
+                        </div>
+                        <t t-set="display_tax" t-value="any(l.tax_ids for l in o.line_ids)"/>
+                        <t t-set="display_partner" t-value="any(l.partner_id for l in o.line_ids)"/>
+                        <t t-set="display_analytic" t-value="any(l.analytic_distribution for l in o.line_ids)"/>
+                        <t t-set="display_date_maturity" t-value="any(l.date_maturity for l in o.line_ids)"/>
+                        <t t-set="display_discount" t-value="any(l.discount_amount_currency for l in o.line_ids)"/>
+                        <t t-set="display_amount_currency"
+                           t-value="any(l.amount_currency and l.currency_id != l.company_id.currency_id for l in o.line_ids)"/>
+                        <div class="oe_structure"></div>
+                        <table class="table table-sm o_main_table table-borderless" name="invoice_line_table">
+                            <thead>
+                                <tr>
+                                    <th name="th_account" class="text-start">
+                                        <span>Account</span>
+                                    </th>
+                                    <th name="th_partner" t-if="display_partner" class="text-start">
+                                        <span>Partner</span>
+                                    </th>
+                                    <th name="th_label" class="text-start">
+                                        <span>Label</span>
+                                    </th>
+                                    <th name="th_due_date" t-if="display_date_maturity" class="text-start">
+                                        <span>Due Date</span>
+                                    </th>
+                                    <!--                                    <th name="th_analytic" t-if="display_analytic" class="text-start"><span>Analytic</span></th>-->
+                                    <th name="th_amount_currency" t-if="display_amount_currency"
+                                        t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                        <span>Amount Currency</span>
+                                    </th>
+                                    <th name="th_discount" t-if="display_discount"
+                                        t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                        <span>Disc Amount</span>
+                                    </th>
+                                     <th name="th_analytic" t-if="display_analytic" class="text-end">
+                                        <span>Analytic Account</span>
+                                    </th>
+                                    <th name="th_taxes" t-if="display_tax"
+                                        t-attf-class="text-start {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                        <span>Taxes</span>
+                                    </th>
+                                    <th name="th_debit"
+                                        t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                        <span>Debit</span>
+                                    </th>
+                                    <th name="th_credit"
+                                        t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                        <span>Credit</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="invoice_tbody">
+                                <t t-set="current_debit" t-value="0"/>
+                                <t t-set="current_credit" t-value="0"/>
+                                <t t-set="lines"
+                                   t-value="o.line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
+
+                                <t t-foreach="lines" t-as="line">
+                                    <t t-set="current_debit" t-value="current_debit + line.debit"/>
+                                    <t t-set="current_credit" t-value="current_credit + line.credit"/>
+
+                                    <tr class="'bg-200 fw-bold">
+                                        <t name="account_invoice_line_accountable">
+                                            <td name="account_invoice_line_name">
+                                                <span t-field="line.account_id"></span>
+                                            </td>
+                                            <td t-if="display_partner" name="td_partner" class="text-start">
+                                                <span t-field="line.partner_id"></span>
+                                            </td>
+                                            <td name="td_label" class="text-start">
+                                                <span t-field="line.name"></span>
+                                            </td>
+                                            <td t-if="display_date_maturity" name="td_date_maturity" class="text-start">
+                                                <span t-field="line.date_maturity"
+                                                      t-options='{"widget": "date"}'></span>
+                                            </td>
+
+                                            <td name="td_amount_currency" t-if="display_amount_currency"
+                                                t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                <span class="text-nowrap" t-field="line.amount_currency"></span>
+                                            </td>
+                                            <td name="td_discount" t-if="display_discount"
+                                                t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                <span class="text-nowrap" t-field="line.discount_amount_currency">
+                                                </span>
+                                            </td>
+                                            <td name="td_analytic" t-if="display_analytic" class="text-start">
+                                                <span>
+                                                    <div t-foreach="line.analytic_distribution" t-as="distribution">
+                                                        <div t-foreach="distribution.split(',')" t-as="d">
+                                                             <t t-esc="line.env['account.analytic.account'].browse(int(d))[0].name"/>: <t t-esc="line.analytic_distribution.get(distribution)"/>
+                                                        </div>
+                                                    </div>
+                                                </span>
+                                            </td>
+                                            <td name="td_taxes" t-if="display_tax"
+                                                t-attf-class="text-start {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                                                <span t-out="', '.join(map(lambda x: (x.name), line.tax_ids))"
+                                                      id="line_tax_ids">Tax 15%
+                                                </span>
+                                            </td>
+                                            <td name="td_debit" class="text-end">
+                                                <span class="text-nowrap" t-field="line.debit">0.00</span>
+                                            </td>
+                                            <td name="td_credit" class="text-end">
+                                                <span class="text-nowrap" t-field="line.credit">0.00</span>
+                                            </td>
+                                        </t>
+                                    </tr>
+                                </t>
+                                <tr>
+                                    <t t-set="colspan_no" t-value="2"/>
+                                    <t t-if="display_tax" t-set="colspan_no" t-value="colspan_no+1"/>
+                                    <t t-if="display_date_maturity" t-set="colspan_no" t-value="colspan_no+1"/>
+                                    <t t-if="display_partner" t-set="colspan_no" t-value="colspan_no+1"/>
+                                    <t t-if="display_discount" t-set="colspan_no" t-value="colspan_no+1"/>
+                                    <t t-if="display_analytic" t-set="colspan_no" t-value="colspan_no+1"/>
+                                    <t t-if="display_amount_currency" t-set="colspan_no" t-value="colspan_no+1"/>
+                                    <td t-att-colspan="colspan_no" style="border-top: 1px solid black;" class="fw-bold text-end">Total</td>
+                                    <td name="td_total_debit" style="border-top: 1px solid black;" class="text-end">
+                                        <strong>
+                                        <span class="text-nowrap"   t-out="current_debit" t-options='{"widget": "monetary", "display_currency": o.currency_id}'>0.00</span>
+                                        </strong>
+                                    </td>
+                                    <td name="td_total_credit" style="border-top: 1px solid black;" class="text-end">
+                                        <strong>
+                                        <span class="text-nowrap" t-out="current_credit"  t-options='{"widget": "monetary", "display_currency": o.currency_id}'>0.00</span>
+                                        </strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <template id="report_journal">
+            <t t-call="web.html_container">
+                <t t-foreach="docs" t-as="o">
+                    <t t-call="wm_journal_entry_report.report_journal_document" t-lang="o.partner_id.lang"/>
+                </t>
+            </t>
+        </template>
+
+        <record id="account_journal" model="ir.actions.report">
+            <field name="name">Journal Entries</field>
+            <field name="model">account.move</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">wm_journal_entry_report.report_journal</field>
+            <field name="report_file">wm_journal_entry_report.report_journal</field>
+            <field name="print_report_name">(object._get_report_base_filename())</field>
+            <field name="binding_model_id" ref="account.model_account_move"/>
+            <field name="groups_id" eval="[(4, ref('account.group_account_invoice')),(4, ref('account.group_account_readonly'))]"/>
+            <field name="binding_type">report</field>
+            <field name="domain" eval="[('move_type', '=', 'entry')]"/>
+        </record>
+
+    </data>
+</odoo>

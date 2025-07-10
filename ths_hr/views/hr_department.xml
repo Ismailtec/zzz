@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_department_form_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">hr.department.form.inherit.ths.hr</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr.view_department_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="action_create_missing_items" type="object"
+                            string="Create Missing Items"
+                            help="Checks selected departments and creates/links Sequences, Inventory Locations and Analytic Accounts if they are missing."
+                            groups="ths_hr.group_ths_hr_manager"
+                            class="oe_highlight"
+                            invisible="not id"/>
+                </header>
+            </xpath>
+            <xpath expr="//h1//field[@name='name']" position="replace">
+                <div class="row">
+                    <div class="col-md-8">
+                        <label for="name" string="Name"/>
+                        <field name="name" string="Name" required="1"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="code" string="Code"/>
+                        <field name="code" string="Code" placeholder="Ex: GYN" required="1"/>
+                    </div>
+                </div>
+            </xpath>
+            <xpath expr="//group[1]" position="replace">
+                <div style="height: 40px;"/>
+                <group>
+                    <group>
+                        <field name="parent_id"/>
+                    </group>
+                    <group>
+                        <field name="manager_id"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="color" widget="color_picker"/>
+                </group>
+                <group>
+                    <group string="Locations">
+                        <field name="ths_inv_location_id" readonly="1"
+                               options="{'no_create': True, 'no_quick_create': True}"/>
+                        <field name="ths_transfer_operation_id" string="Transfer Operation"
+                               options="{'no_create': True, 'no_quick_create': True}"/>
+                    </group>
+                    <group string="References">
+                        <field name="ths_analytic_acc_id" readonly="1"
+                               options="{'no_create': True, 'no_quick_create': True}"/>
+                        <field name="ths_sequence_id" string="Department Seq." readonly="1"
+                               options="{'no_create': True, 'no_quick_create': True}"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_department_tree_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">hr.department.tree.inherit.ths.hr</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr.view_department_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="code" optional="show"/>
+            </xpath>
+            <xpath expr="//field[@name='parent_id']" position="after">
+                <field name="ths_analytic_acc_id" optional="show"/>
+                <field name="ths_inv_location_id" optional="show"/>
+                <field name="ths_sequence_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_department_filter_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">hr.department.search.inherit.ths.hr</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="hr.view_department_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="code"/>
+            </xpath>
+            <xpath expr="//field[@name='manager_id']" position="after">
+                <field name="ths_analytic_acc_id"/>
+                <field name="ths_inv_location_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <separator/>
+                <filter string="Missing Sequence" name="filter_missing_seq"
+                        domain="[('ths_sequence_id', '=', False), ('code', '!=', False)]"/>
+                <filter string="Missing Location" name="filter_missing_loc"
+                        domain="[('ths_inv_location_id', '=', False)]"/>
+                <filter string="Missing Analytic Account" name="filter_missing_analytic"
+                        domain="[('ths_analytic_acc_id', '=', False)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='inactive']" position="after">
+                <filter string="Analytic Account" name="groupby_analytic"
+                        context="{'group_by': 'ths_analytic_acc_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

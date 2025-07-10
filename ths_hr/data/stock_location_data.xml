@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="ths_stock_location_departments_view" model="stock.location">
+        <field name="name">Departments</field>
+        <field name="usage">view</field>
+        <field name="location_id" eval="False"/>
+        <field name="company_id" eval="False"/>
+        <field name="comment">Parent view location for all department-specific inventory locations.</field>
+    </record>
+
+</odoo>

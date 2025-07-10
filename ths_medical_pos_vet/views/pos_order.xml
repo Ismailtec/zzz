@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pos_order_form_inherit_vet" model="ir.ui.view">
+        <field name="name">pos.order.form.inherit.vet</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="pet_owner_id"/>
+                <field name="patient_ids" widget="many2many_tags"/>
+                <field name="encounter_id"/>
+                <field name="practitioner_id"/>
+                <field name="room_id"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_pos_order_tree_inherit_vet" model="ir.ui.view">
+        <field name="name">pos.order.tree.inherit.vet</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="pet_owner_id"/>
+                <field name="patient_ids" widget="many2many_tags"/>
+                <field name="encounter_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,792 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="area_ah_abu_haleefa" model="res.country.area">
+            <field name="name">Abu Haleefa / أبو حليفة</field>
+            <field name="code">AH01</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_dhaher" model="res.country.area">
+            <field name="name">Dhaher / الظهر</field>
+            <field name="code">AH02</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_fahaheel" model="res.country.area">
+            <field name="name">Fahaheel / الفحيحيل</field>
+            <field name="code">AH03</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_fintass" model="res.country.area">
+            <field name="name">Fintas / الفنطاس</field>
+            <field name="code">AH04</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_hadani" model="res.country.area">
+            <field name="name">Hadiya / الهدية</field>
+            <field name="code">AH05</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_mangaf" model="res.country.area">
+            <field name="name">Mangaf / المنقف</field>
+            <field name="code">AH06</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_masayel" model="res.country.area">
+            <field name="name">Masayel / المسايل</field>
+            <field name="code">AH07</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_sabahiya" model="res.country.area">
+            <field name="name">Sabahiya / الصباحية</field>
+            <field name="code">AH08</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_south_sabahiya" model="res.country.area">
+            <field name="name">South Sabahiya / صباحية الجنوبية</field>
+            <field name="code">AH09</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_wista" model="res.country.area">
+            <field name="name">Wafra / الوفرة</field>
+            <field name="code">AH10</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_reqqa" model="res.country.area">
+            <field name="name">Al-Riqqa / الرقة</field>
+            <field name="code">AH11</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_aqeela" model="res.country.area">
+            <field name="name">Al-Aqila / العقيلة</field>
+            <field name="code">AH12</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_subah_aliya" model="res.country.area">
+            <field name="name">Sabah Al-Ahmad / صباح الأحمد</field>
+            <field name="code">AH13</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_khairan" model="res.country.area">
+            <field name="name">Khairan / الخيران</field>
+            <field name="code">AH14</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_abdally" model="res.country.area">
+            <field name="name">Abdali / العبدلي</field>
+            <field name="code">AH15</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_ali_sabah_salem" model="res.country.area">
+            <field name="name">Ali Sabah Al-Salem / علي صباح السالم</field>
+            <field name="code">AH16</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_bneidar" model="res.country.area">
+            <field name="name">Bneidar / بنيدر</field>
+            <field name="code">AH17</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_jaber_ali_north" model="res.country.area">
+            <field name="name">Jaber Al-Ali North / جابر العلي (شمال)</field>
+            <field name="code">AH18</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+         <record id="area_ah_mina_abdulla" model="res.country.area">
+            <field name="name">Mina Abdullah / ميناء عبد الله</field>
+            <field name="code">AH19</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_mina_ahmadi" model="res.country.area">
+            <field name="name">Mina Al-Ahmadi / ميناء الأحمدي</field>
+            <field name="code">AH20</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_mina_saud" model="res.country.area">
+            <field name="name">Mina Saud / ميناء سعود</field>
+            <field name="code">AH21</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+         <record id="area_ah_zour" model="res.country.area">
+            <field name="name">Zour / الزور</field>
+            <field name="code">AH22</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_east_ahmadi" model="res.country.area">
+            <field name="name">East Ahmadi / الأحمدي الشرقية</field>
+            <field name="code">AH23</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ah_badaa_abdullah" model="res.country.area">
+            <field name="name">Bada'a Abdullah / بدع عبد الله</field>
+            <field name="code">AH24</field>
+            <field name="state_id" ref="state_kw_ahmadi"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+        <record id="area_fa_fardos" model="res.country.area">
+            <field name="name">Al Fardous / الفردوس</field>
+            <field name="code">FA01</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_farwaniya" model="res.country.area">
+            <field name="name">Al Farwaniyah / الفروانية</field>
+            <field name="code">FA02</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_andalus" model="res.country.area">
+            <field name="name">Al Andalus / الأندلس</field>
+            <field name="code">FA03</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_rabia" model="res.country.area">
+            <field name="name">Al Rabiah / الرابية</field>
+            <field name="code">FA04</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_rabdan" model="res.country.area">
+            <field name="name">Al Rai / الري</field>
+            <field name="code">FA05</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_rawda" model="res.country.area">
+            <field name="name">Al Rawdah / الروضة</field>
+            <field name="code">FA06</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_rayan" model="res.country.area">
+            <field name="name">Al Rayyan / الريان</field>
+            <field name="code">FA07</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_shuwaikh" model="res.country.area">
+            <field name="name">Shuwaikh Residential / الشويخ السكنية</field>
+            <field name="code">FA08</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_south_khaitan" model="res.country.area">
+            <field name="name">South Khaitan / خيطان الجنوبي</field>
+            <field name="code">FA09</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_jleeb_shuyoukh" model="res.country.area">
+            <field name="name">Jleeb Al-Shuyoukh / جليب الشيوخ</field>
+            <field name="code">FA10</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_abdullah_mubarak" model="res.country.area">
+            <field name="name">Abdullah Al-Mubarak / عبدالله المبارك</field>
+            <field name="code">FA11</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_ardiyah" model="res.country.area">
+            <field name="name">Al-Ardhiyah / العارضية</field>
+            <field name="code">FA12</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_ardiyah_industrial" model="res.country.area">
+            <field name="name">Al-Ardhiyah Industrial / العارضية الصناعية</field>
+            <field name="code">FA13</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_sulaibiya" model="res.country.area">
+            <field name="name">Al-Sulaibiya / الصليبية</field>
+            <field name="code">FA14</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_ardiya_crafts" model="res.country.area">
+            <field name="name">Ardiya Crafts / العارضية حرفية</field>
+            <field name="code">FA15</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_sabah_nasser" model="res.country.area">
+            <field name="name">Sabah Al-Nasser / صباح الناصر</field>
+            <field name="code">FA16</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_farwaniya_industrial" model="res.country.area">
+            <field name="name">Farwaniya Industrial / الفروانية الصناعية</field>
+            <field name="code">FA17</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_abdullah_al_mubarak_south" model="res.country.area">
+            <field name="name">Abdullah Al-Mubarak South / جنوب عبد الله المبارك</field>
+            <field name="code">FA18</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_ishbiliya" model="res.country.area">
+            <field name="name">Ishbiliya / إشبيلية</field>
+            <field name="code">FA19</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_fa_dajeej_industrial" model="res.country.area">
+            <field name="name">Dajeej Industrial / دجيج الصناعية</field>
+            <field name="code">FA20</field>
+            <field name="state_id" ref="state_kw_farwaniya"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+        <record id="area_ja_jahra" model="res.country.area">
+            <field name="name">Al Jahra / الجهراء</field>
+            <field name="code">JA01</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_qasr" model="res.country.area">
+            <field name="name">Al Qasr / القصر</field>
+            <field name="code">JA02</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_naeem" model="res.country.area">
+            <field name="name">Al Naeem / النعيم</field>
+            <field name="code">JA03</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_uyoon" model="res.country.area">
+            <field name="name">Al Uyoon / العيون</field>
+            <field name="code">JA04</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_wajaha" model="res.country.area">
+            <field name="name">Al Waha / الواحة</field>
+            <field name="code">JA05</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_teym" model="res.country.area">
+            <field name="name">Teyma / تيماء</field>
+            <field name="code">JA06</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_saad_abdullah" model="res.country.area">
+            <field name="name">Saad Al-Abdullah / سعد العبدالله</field>
+            <field name="code">JA07</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_kabd" model="res.country.area">
+            <field name="name">Kabd / كبد</field>
+            <field name="code">JA08</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_amghara" model="res.country.area">
+            <field name="name">Amghara / أمغرة</field>
+            <field name="code">JA09</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_subiyah" model="res.country.area">
+            <field name="name">Al-Subiyah / الصبية</field>
+            <field name="code">JA10</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_tayeel" model="res.country.area">
+            <field name="name">Tayeel / الطيارة</field>
+            <field name="code">JA11</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_naseem" model="res.country.area">
+            <field name="name">Naseem / النسيم</field>
+            <field name="code">JA12</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_kaim" model="res.country.area">
+            <field name="name">Kaaim / كاظمة</field>
+            <field name="code">JA13</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_south_doha" model="res.country.area">
+            <field name="name">South Doha / جنوب الدوحة</field>
+            <field name="code">JA14</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_subbiya" model="res.country.area">
+            <field name="name">Subbiya / الصبية</field>
+            <field name="code">JA15</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_warba" model="res.country.area">
+            <field name="name">Warba / وربة</field>
+            <field name="code">JA16</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_salmi" model="res.country.area">
+            <field name="name">Salmi / السالمي</field>
+            <field name="code">JA17</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_abha" model="res.country.area">
+            <field name="name">Abha / أبهة</field>
+            <field name="code">JA18</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_nuwaiseeb" model="res.country.area">
+            <field name="name">Nuwaiseeb / النويصيب</field>
+            <field name="code">JA19</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_khuwaisat" model="res.country.area">
+            <field name="name">Khuwaisat / الخويسات</field>
+            <field name="code">JA20</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_shahd" model="res.country.area">
+            <field name="name">Shahd / الشدادية</field>
+            <field name="code">JA21</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_al_rawl" model="res.country.area">
+            <field name="name">Al-Rawl / الرويل</field>
+            <field name="code">JA22</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_al_subbiya_road" model="res.country.area">
+            <field name="name">Al-Subbiya Road / طريق الصبية</field>
+            <field name="code">JA23</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_al_salmi_road" model="res.country.area">
+            <field name="name">Al-Salmi Road / طريق السالمي</field>
+            <field name="code">JA24</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_mutlaa" model="res.country.area">
+            <field name="name">Mutlaa / المطلاع</field>
+            <field name="code">JA25</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_boubyan" model="res.country.area">
+            <field name="name">Boubyan Island / جزيرة بوبيان</field>
+            <field name="code">JA26</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_failaka" model="res.country.area">
+            <field name="name">Failaka Island / جزيرة فيلكا</field>
+            <field name="code">JA27</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ja_warbah" model="res.country.area">
+            <field name="name">Warbah Island / جزيرة وربة</field>
+            <field name="code">JA28</field>
+            <field name="state_id" ref="state_kw_jahra"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+        <record id="area_ku_abdullah_salem" model="res.country.area">
+            <field name="name">Abdullah Al-Salem / عبدالله السالم</field>
+            <field name="code">KU01</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_adiliyah" model="res.country.area">
+            <field name="name">Adiliyah / العديلية</field>
+            <field name="code">KU02</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_bneid_ghar" model="res.country.area">
+            <field name="name">Bneid Al-Gar / بنيد القار</field>
+            <field name="code">KU03</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_dasman" model="res.country.area">
+            <field name="name">Dasman / دسمان</field>
+            <field name="code">KU04</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_dasm_alqura" model="res.country.area">
+            <field name="name">Dasma / الدسمة</field>
+            <field name="code">KU05</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_doha" model="res.country.area">
+            <field name="name">Doha / الدوحة</field>
+            <field name="code">KU06</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_faiha" model="res.country.area">
+            <field name="name">Faiha / الفيحاء</field>
+            <field name="code">KU07</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_gharnata" model="res.country.area">
+            <field name="name">Gharnata / غرناطة</field>
+            <field name="code">KU08</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_kaifan" model="res.country.area">
+            <field name="name">Kaifan / كيفان</field>
+            <field name="code">KU09</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_khaldiya" model="res.country.area">
+            <field name="name">Khaldiya / الخالدية</field>
+            <field name="code">KU10</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_mansouriya" model="res.country.area">
+            <field name="name">Mansouriya / المنصورية</field>
+            <field name="code">KU11</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_nuzha" model="res.country.area">
+            <field name="name">Nuzha / النزهة</field>
+            <field name="code">KU12</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_qadsiya" model="res.country.area">
+            <field name="name">Qadsiya / القادسية</field>
+            <field name="code">KU13</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_qurtuba" model="res.country.area">
+            <field name="name">Qurtuba / قرطبة</field>
+            <field name="code">KU14</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_rawda" model="res.country.area">
+            <field name="name">Rawda / الروضة</field>
+            <field name="code">KU15</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_shamiyah" model="res.country.area">
+            <field name="name">Shamiyah / الشامية</field>
+            <field name="code">KU16</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_sharq" model="res.country.area">
+            <field name="name">Sharq / الشرق</field>
+            <field name="code">KU17</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_shuwaikh" model="res.country.area">
+            <field name="name">Shuwaikh / الشويخ</field>
+            <field name="code">KU18</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_sulaibikhat" model="res.country.area">
+            <field name="name">Sulaibikhat / الصليبخات</field>
+            <field name="code">KU19</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_surra" model="res.country.area">
+            <field name="name">Surra / السرة</field>
+            <field name="code">KU20</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_yarmoq" model="res.country.area">
+            <field name="name">Yarmouk / اليرموك</field>
+            <field name="code">KU21</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_daiya" model="res.country.area">
+            <field name="name">Daiya / الدعية</field>
+            <field name="code">KU22</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_Qirwan" model="res.country.area">
+            <field name="name">Qirwan / القيروان</field>
+            <field name="code">KU23</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_mirqab" model="res.country.area">
+            <field name="name">Mirqab / المرقاب</field>
+            <field name="code">KU24</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_qibla" model="res.country.area">
+            <field name="name">Qibla / القبلة</field>
+            <field name="code">KU25</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_mangaf" model="res.country.area">
+            <field name="name">Mangaf / المنقف</field>
+            <field name="code">KU26</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_nehda" model="res.country.area">
+            <field name="name">Nahda / النهضة</field>
+            <field name="code">KU27</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ku_north_west_sulaibikhat" model="res.country.area">
+            <field name="name">North West Sulaibikhat / شمال غرب الصليبيخات</field>
+            <field name="code">KU28</field>
+            <field name="state_id" ref="state_kw_capital"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+        <record id="area_ha_bida" model="res.country.area">
+            <field name="name">Al-Bidaa / البدع</field>
+            <field name="code">HA01</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_bayan" model="res.country.area">
+            <field name="name">Bayan / بيان</field>
+            <field name="code">HA02</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_hawally" model="res.country.area">
+            <field name="name">Hawally / حولي</field>
+            <field name="code">HA03</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_hudud" model="res.country.area">
+            <field name="name">Hateen / حطين</field>
+            <field name="code">HA04</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_jabriya" model="res.country.area">
+            <field name="name">Jabriya / الجابرية</field>
+            <field name="code">HA05</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_mishref" model="res.country.area">
+            <field name="name">Mishref / مشرف</field>
+            <field name="code">HA06</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_ramithiya" model="res.country.area">
+            <field name="name">Rumaithiya / الرميثية</field>
+            <field name="code">HA07</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_salmiya" model="res.country.area">
+            <field name="name">Salmiya / السالمية</field>
+            <field name="code">HA08</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_salam" model="res.country.area">
+            <field name="name">Al-Salam / السلام</field>
+            <field name="code">HA09</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_shuhada" model="res.country.area">
+            <field name="name">Al-Shuhada / الشهداء</field>
+            <field name="code">HA10</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_zara" model="res.country.area">
+            <field name="name">Al-Zahra / الزهراء</field>
+            <field name="code">HA11</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_siddeeq" model="res.country.area">
+            <field name="name">Al-Siddeeq / الصديق</field>
+            <field name="code">HA12</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_abdullah_mubarak_west" model="res.country.area">
+            <field name="name">Abdullah Al-Mubarak West / عبد الله المبارك (غرب)</field>
+            <field name="code">HA13</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_south_surra" model="res.country.area">
+            <field name="name">South Surra / جنوب السرة</field>
+            <field name="code">HA14</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_south_mishref" model="res.country.area">
+            <field name="name">South Mishref / مشرف الجنوبي</field>
+            <field name="code">HA15</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_shaab" model="res.country.area">
+            <field name="name">Shaab / الشعب</field>
+            <field name="code">HA16</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_rawda" model="res.country.area">
+            <field name="name">Rawda / الروضة</field>
+            <field name="code">HA17</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_ha_maidan_hawally" model="res.country.area">
+            <field name="name">Maidan Hawally / ميدان حولي</field>
+            <field name="code">HA18</field>
+            <field name="state_id" ref="state_kw_hawally"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+        <record id="area_mu_adhaifa" model="res.country.area">
+            <field name="name">Abu Al Hasaniya / أبو الحصانية</field>
+            <field name="code">MU01</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_adhaiyah" model="res.country.area">
+            <field name="name">Abu Futaira / أبو فطيرة</field>
+            <field name="code">MU02</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_adha" model="res.country.area">
+            <field name="name">Al-Adan / العدان</field>
+            <field name="code">MU03</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_qurain" model="res.country.area">
+            <field name="name">Al-Qurain / القرين</field>
+            <field name="code">MU04</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_qurain_suburb" model="res.country.area">
+            <field name="name">Al-Qurain Suburb / ضاحية القرين</field>
+            <field name="code">MU05</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_misila" model="res.country.area">
+            <field name="name">Al-Messila / المسيلة</field>
+            <field name="code">MU06</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_mubarak_kabeer" model="res.country.area">
+            <field name="name">Mubarak Al-Kabeer / مبارك الكبير</field>
+            <field name="code">MU07</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_sabah_salem" model="res.country.area">
+            <field name="name">Sabah Al-Salem / صباح السالم</field>
+            <field name="code">MU08</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_sabah_sea" model="res.country.area">
+            <field name="name">Sabah Al-Ahmad Sea City / مدينة صباح الأحمد البحرية</field>
+            <field name="code">MU09</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_wista" model="res.country.area">
+            <field name="name">Wista / الواسطي</field>
+            <field name="code">MU10</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_funaitis" model="res.country.area">
+            <field name="name">Funaitis / الفنيطيس</field>
+            <field name="code">MU11</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+        <record id="area_mu_south_funaitis" model="res.country.area">
+            <field name="name">South Funaitis / فنيطيس الجنوبي</field>
+            <field name="code">MU12</field>
+            <field name="state_id" ref="state_kw_mubarak_al_kabeer"/>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+
+    </data>
+</odoo>

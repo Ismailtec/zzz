@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="product_template_form_view_services_inherited" model="ir.ui.view">
+            <field name="name">ths.product.template.form.services.inherited</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_form_view"/>
+            <field name="priority">30</field>
+            <field name="arch" type="xml">
+                <!-- hide the Inventory page when type = 'service' -->
+                <xpath expr="//page[@name='inventory']" position="attributes">
+                    <attribute name="invisible">type == 'service'</attribute>
+                </xpath>
+                <!-- hide tracking if manual service -->
+                <xpath expr="//field[@name='service_tracking']" position="attributes">
+                    <attribute name="invisible">service_type == 'manual'</attribute>
+                </xpath>
+                <!-- hide taxes columns when ths_hide_taxes is True -->
+                <xpath expr="//field[@name='taxes_id']" position="attributes">
+                    <attribute name="invisible">ths_hide_taxes == True</attribute>
+                </xpath>
+                <xpath expr="//field[@name='supplier_taxes_id']" position="attributes">
+                    <attribute name="invisible">ths_hide_taxes == True</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="product_template_service_list_view" model="ir.ui.view">
+            <field name="name">ths.product.template.service.list</field>
+            <field name="model">product.template</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <list string="Services">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name" string="Service Name"/>
+                    <field name="categ_id" string="Service Category"/>
+                    <field name="list_price" string="Sales Price"/>
+                    <field name="standard_price" string="Cost" optional="hide"/>
+                    <field name="default_code" string="Internal Reference" optional="show"/>
+                    <field name="type" invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="product_template_service_kanban_view" model="ir.ui.view">
+            <field name="name">ths.product.template.service.kanban</field>
+            <field name="model">product.template</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <kanban default_group_by="categ_id">
+                    <field name="id"/>
+                    <field name="name"/>
+                    <field name="list_price"/>
+                    <field name="categ_id"/>
+                    <field name="image_128"/>
+                    <field name="currency_id"/>
+                    <templates>
+                        <t t-name="card">
+                            <div class="oe_kanban_global_click">
+                                <div class="o_kanban_image">
+                                    <img t-att-src="'/web/image?model=product.template&amp;id=%s&amp;field=image_128' % record.id.raw_value"
+                                         t-att-alt="record.name.raw_value or 'Service'"
+                                         alt="Service"
+                                         style="object-fit: cover; width: 100%; height: 100%;"/>
+                                </div>
+                                <div class="oe_kanban_details">
+                                    <strong class="o_kanban_record_title"><field name="name"/></strong>
+                                    <div name="tags"/>
+                                    <ul>
+                                        <li>Price: <field name="list_price" widget="monetary"
+                                                          options="{'currency_field': 'currency_id'}"/></li>
+                                        <li>Category: <field name="categ_id"/></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <record id="action_product_template_service" model="ir.actions.act_window">
+            <field name="name">Services</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="views" eval="[(ref('product_template_service_kanban_view'),'kanban'),(ref('product_template_service_list_view'),'list'),
+                                        (ref('product_template_form_view_services_inherited'),'form')]"/>
+            <field name="domain">[('type', '=', 'service')]</field>
+            <field name="context">{'default_type': 'service', 'default_detailed_type': 'service'}</field>
+            <field name="search_view_id" ref="product.product_template_search_view"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new service
+                </p>
+                <p>
+                    Manage your services that can be sold or purchased.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

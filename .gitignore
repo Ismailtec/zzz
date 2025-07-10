@@ -1,0 +1,16 @@
+# Python cache
+*.pyc
+*.pyo
+__pycache__/
+*.log
+*.swp
+*.tmp
+*.bak
+.idea/
+.vscode/
+.cursor/
+.specstory/
+*.egg-info/
+.env
+.env.*
+.idea/Zueforpetsuppliesco.iml

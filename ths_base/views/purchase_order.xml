@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="purchase_order_form_inherit_ths_base" model="ir.ui.view">
+            <field name="name">purchase.order.form.inherit.ths.base</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button type="object" name="action_view_landed_costs"
+                            class="oe_stat_button" icon="fa-truck"
+                            invisible="ths_landed_cost_count == 0">
+                        <field name="ths_landed_cost_count" widget="statinfo" string="Landed Costs"/>
+                    </button>
+                </xpath>
+
+                <xpath expr="//field[@name='date_order']" position="before">
+                    <field name="ths_effective_date"/>
+                </xpath>
+                <xpath expr="//field[@name='date_order']" position="attributes">
+                    <attribute name="string">Order Deadline</attribute>
+                </xpath>
+                <xpath expr="//field[@name='partner_id']" position="attributes">
+                    <attribute name="options">{'no_quick_create': True, 'no_create_edit': True}</attribute>
+                    <attribute name="domain">[('partner_type_id', '=', %(ths_base.partner_type_vendor)d)]</attribute>
+                    <attribute name="context">{'default_partner_type_id':
+                        %(ths_base.partner_type_vendor)d,'default_is_company': True,'default_supplier_rank': 1,
+                        'search_default_supplier': 1}</attribute>
+                </xpath>
+                <xpath expr="//page[@name='products']/field[@name='order_line']/list//field[@name='product_id']"
+                       position="attributes">
+                    <attribute name="options">{'no_quick_create': True, 'no_create_edit': True}</attribute>
+                </xpath>
+                <xpath expr="//field[@name='discount']" position="attributes">
+                    <attribute name="optional">show</attribute>
+                </xpath>
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="ths_hide_taxes" invisible="1"/>
+                </xpath>
+
+                <xpath expr="//page[@name='products']/field[@name='order_line']/list//field[@name='taxes_id']"
+                       position="attributes">
+                    <attribute name="column_invisible">parent.ths_hide_taxes == True</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='product_packaging_id']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='product_packaging_qty']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

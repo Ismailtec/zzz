@@ -1,0 +1,24 @@
+<templates xml:space="preserve">
+    <t t-name="ths_medical_pos_vet.ProductScreenWidget" t-inherit="point_of_sale.ProductScreen"
+       t-inherit-mode="extension">
+        <xpath expr="//div[@class='control-buttons']" position="inside">
+            <button class="control-button" t-on-click="createParkCheckIn">
+                <i class="fa fa-sign-in"/> Park Check-In
+            </button>
+        </xpath>
+        <xpath expr="//div[@class='orderlines']" position="after">
+            <div class="order-line-details">
+                <t t-foreach="pos.get_order().get_orderlines()" t-as="line">
+                    <div class="order-line">
+                        <span t-esc="line.product_id[1]"/>
+                        <span t-esc="pos.formatPatientIds(line.extras?.patient_ids || [])"/>
+                        <span t-esc="line.extras?.practitioner_id?.[1] || 'No Provider'"/>
+                        <span t-esc="line.extras?.room_id?.[1] || 'No Room'"/>
+                        <input type="number" t-model.number="line.extras.discount" placeholder="Discount (%)"/>
+                        <span t-esc="line.product_id[1].list_price" t-options="{'widget': 'monetary'}"/>
+                    </div>
+                </t>
+            </div>
+        </xpath>
+    </t>
+</templates>

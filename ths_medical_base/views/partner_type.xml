@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_partner_type_list_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">ths.partner.type.list.inherit.ths.medical</field>
+        <field name="model">ths.partner.type</field>
+        <field name="inherit_id" ref="ths_base.view_partner_type_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='is_customer']" position="after">
+                <field name="is_patient" widget="boolean_toggle"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_type_form_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">ths.partner.type.form.inherit.ths.medical</field>
+        <field name="model">ths.partner.type</field>
+        <field name="inherit_id" ref="ths_base.view_partner_type_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='is_customer']" position="after">
+                <field name="is_patient" widget="boolean_toggle"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_type_search_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">ths.partner.type.search.inherit.ths.hr</field>
+        <field name="model">ths.partner.type</field>
+        <field name="inherit_id" ref="ths_base.view_partner_type_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_customers']" position="after">
+                <filter string="Patient" name="filter_patient" domain="[('is_patient', '=', True)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='groupby_customers']" position="after">
+                <filter string="Is Patient" name="groupby_patient" context="{'group_by': 'is_patient'}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

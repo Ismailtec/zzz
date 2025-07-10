@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="seq_partner_ref_vendor" model="ir.sequence">
+        <field name="name">Vendor</field>
+        <field name="code">res.partner.ref.vendor</field>
+        <field name="prefix">VEND</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_partner_ref_customer" model="ir.sequence">
+        <field name="name">Customer</field>
+        <field name="code">res.partner.ref.customer</field>
+        <field name="prefix">CUST</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_partner_ref_contact" model="ir.sequence">
+        <field name="name">Contact</field>
+        <field name="code">res.partner.ref.contact</field>
+        <field name="prefix">CONT</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_partner_ref_prospect" model="ir.sequence">
+        <field name="name">Prospect</field>
+        <field name="code">res.partner.ref.prospect</field>
+        <field name="prefix">PROS</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_partner_ref_affiliate" model="ir.sequence">
+        <field name="name">Affiliate</field>
+        <field name="code">res.partner.ref.affiliate</field>
+        <field name="prefix">AFFI</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+</odoo>

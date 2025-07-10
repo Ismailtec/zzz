@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_category_property_form_inherit_ths_base" model="ir.ui.view">
+        <field name="name">product.category.form.inherit.ths.base</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='parent_id']" position="after">
+                <field name="product_type_filter" widget="radio" options="{'horizontal': true}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_category_tree_inherit_ths_base" model="ir.ui.view">
+        <field name="name">product.category.tree.inherit.ths.base</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_list_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='display_name']" position="after">
+                <field name="product_type_filter" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_category_search_inherit_ths_base" model="ir.ui.view">
+        <field name="name">product.category.search.inherit.ths.base</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter string="Product Type Filter" name="groupby_type_filter"
+                        context="{'group_by': 'product_type_filter'}"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

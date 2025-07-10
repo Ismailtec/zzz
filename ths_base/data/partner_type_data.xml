@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="partner_type_company" model="ths.partner.type">
+        <field name="name">Company</field>
+        <field name="is_company" eval="True"/>
+        <field name="is_individual" eval="False"/>
+        <field name="sequence_id" eval="False"/>
+    </record>
+
+    <record id="partner_type_individual" model="ths.partner.type">
+        <field name="name">Individual</field>
+        <field name="is_company" eval="False"/>
+        <field name="is_individual" eval="True"/>
+        <field name="sequence_id" eval="False"/>
+    </record>
+
+    <record id="partner_type_vendor" model="ths.partner.type">
+        <field name="name">Vendor</field>
+        <field name="parent_id" ref="partner_type_company"/>
+        <field name="is_company" eval="True"/>
+        <field name="is_individual" eval="False"/>
+        <field name="sequence_id" ref="seq_partner_ref_vendor"/>
+    </record>
+
+    <record id="partner_type_customer" model="ths.partner.type">
+        <field name="name">Customer</field>
+        <field name="parent_id" ref="partner_type_company"/>
+        <field name="is_company" eval="False"/>
+        <field name="is_individual" eval="True"/>
+        <field name="is_customer" eval="True"/>
+        <field name="sequence_id" ref="seq_partner_ref_customer"/>
+    </record>
+
+    <record id="partner_type_contact" model="ths.partner.type">
+        <field name="name">Contact</field>
+        <field name="parent_id" ref="partner_type_individual"/>
+        <field name="is_company" eval="False"/>
+        <field name="is_individual" eval="True"/>
+        <field name="sequence_id" ref="seq_partner_ref_contact"/>
+    </record>
+
+    <record id="partner_type_prospect" model="ths.partner.type">
+        <field name="name">Prospect</field>
+        <field name="parent_id" ref="partner_type_individual"/>
+        <field name="is_company" eval="False"/>
+        <field name="is_individual" eval="True"/>
+        <field name="sequence_id" ref="seq_partner_ref_prospect"/>
+    </record>
+
+    <record id="partner_type_affiliate" model="ths.partner.type">
+        <field name="name">Affiliate</field>
+        <field name="parent_id" ref="partner_type_company"/>
+        <field name="is_company" eval="True"/>
+        <field name="is_individual" eval="False"/>
+        <field name="sequence_id" ref="seq_partner_ref_affiliate"/>
+    </record>
+
+</odoo>

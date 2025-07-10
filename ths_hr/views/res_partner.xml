@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.ths.hr</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="ths_employee_id" readonly="1" options="{'no_open': False}" invisible="not ths_employee_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_res_partner_filter_inherit_ths_hr" model="ir.ui.view">
+        <field name="name">res.partner.select.inherit.ths.hr</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="ths_base.view_res_partner_filter_inherit_ths_base"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_type_id']" position="after">
+                <field name="ths_employee_id" string="Related Employee"/>
+            </xpath>
+            <xpath expr="//filter[@name='filter_partner_type']" position="after">
+                <filter string="Has Related Employee" name="filter_has_employee"
+                        domain="[('ths_employee_id', '!=', False)]"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

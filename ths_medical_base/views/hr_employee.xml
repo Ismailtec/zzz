@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.ths.medical</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="ths_hr.view_employee_form_inherit_ths_hr"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='hr_settings']//field[@name='employee_type']" position="after">
+                <field name="is_medical" readonly="0"/>
+                <field name="add_to_calendar"/>
+            </xpath>
+
+<!--             <xpath expr="//field[@name='has_work_entries']" position="attributes">-->
+<!--                <attribute name="groups">hr.group_hr_user</attribute>-->
+<!--            </xpath>-->
+
+        </field>
+    </record>
+
+    <record id="view_employee_list_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">hr.employee.list.inherit.ths.medical</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="ths_hr.view_employee_tree_inherit_ths_hr"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='employee_type']" position="after">
+                <field name="is_medical" optional="show"/>
+                <field name="add_to_calendar" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_filter_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">hr.employee.search.inherit.ths.medical</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="ths_hr.view_employee_filter_inherit_ths_hr"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <field name="is_medical"/>
+                <field name="add_to_calendar"/>
+            </xpath>
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <filter string="Add to Calendar" name="filter_add_to_calendar"
+                        domain="[('add_to_calendar', '=', True)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_job']" position="after">
+                <filter string="Add to Calendar" name="groupby_add_to_calendar"
+                        context="{'group_by': 'add_to_calendar'}"/>
+            </xpath>
+        </field>
+    </record>
+
+<!--    <record id="view_employee_form_inherit_ths_medical_work_entries" model="ir.ui.view">-->
+<!--        <field name="name">hr.employee.form.inherit.ths.medical.work.entries</field>-->
+<!--        <field name="model">hr.employee</field>-->
+<!--        <field name="inherit_id" ref="hr_work_entry.hr_employee_view_form"/>-->
+<!--        <field name="arch" type="xml">-->
+
+<!--             <xpath expr="//field[@name='has_work_entries']" position="attributes">-->
+<!--                <attribute name="groups">base.group_user</attribute>-->
+<!--            </xpath>-->
+
+<!--        </field>-->
+<!--    </record>-->
+
+</odoo>

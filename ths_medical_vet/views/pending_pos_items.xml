@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ths_pending_pos_item_list_inherit_vet" model="ir.ui.view">
+        <field name="name">ths.pending.pos.item.list.inherit.vet</field>
+        <field name="model">ths.pending.pos.item</field>
+        <field name="inherit_id" ref="ths_medical_base.view_ths_pending_pos_item_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="patient_ids_domain" column_invisible="1"/>
+            </xpath>
+
+            <!-- Domain to show Pets related to owner -->
+            <xpath expr="//field[@name='patient_ids']" position="attributes">
+                <attribute name="domain">patient_ids_domain</attribute>
+                <attribute name="readonly">0</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_ths_pending_pos_item_form_inherit_vet" model="ir.ui.view">
+        <field name="name">ths.pending.pos.item.form.inherit.vet</field>
+        <field name="model">ths.pending.pos.item</field>
+        <field name="inherit_id" ref="ths_medical_base.view_ths_pending_pos_item_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <field name="patient_ids_domain" invisible="1"/>
+            </xpath>
+
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="string">Pet Owner (Billing)</attribute>
+            </xpath>
+            <!-- Domain to show Pets related to owner -->
+            <xpath expr="//field[@name='patient_ids']" position="attributes">
+                <attribute name="domain">patient_ids_domain</attribute>
+                <attribute name="readonly">0</attribute>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

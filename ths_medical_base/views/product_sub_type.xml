@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="view_product_sub_type_list" model="ir.ui.view">
+            <field name="name">ths.product.sub.type.list</field>
+            <field name="model">ths.product.sub.type</field>
+            <field name="arch" type="xml">
+                <list string="Product Sub Types" editable="bottom"><field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="product_group" optional="show"/>
+                    <field name="is_for_service" optional="show"/>
+                    <field name="is_for_internal_reference" optional="show"/>
+                    <field name="sequence_id" optional="show"/>
+                    <field name="active" widget="boolean_toggle" optional="show"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_product_sub_type_form" model="ir.ui.view">
+            <field name="name">ths.product.sub.type.form</field>
+            <field name="model">ths.product.sub.type</field>
+            <field name="arch" type="xml">
+                <form string="Product Sub Type">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="code"/>
+                                <field name="product_group"/>
+                                <field name="sequence"/></group>
+                            <group>
+                                <field name="is_for_service"/>
+                                <field name="is_for_internal_reference"/>
+                                <field name="sequence_id" readonly="1"/> <field name="active"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_product_sub_type" model="ir.actions.act_window">
+            <field name="name">Product Sub Types</field>
+            <field name="res_model">ths.product.sub.type</field>
+            <field name="view_mode">list,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new Product Sub Type
+                </p>
+                <p>
+                    Define specific sub-categories for your products, often used for classification and sequence
+                    generation.
+                </p>
+            </field>
+        </record>
+    </data>
+</odoo>

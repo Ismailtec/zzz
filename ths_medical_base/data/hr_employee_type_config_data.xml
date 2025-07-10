@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="emp_type_config_employee" model="ths.hr.employee.type.config">
+            <field name="name">Employee</field>
+            <field name="employee_type_key">employee</field>
+            <field name="is_medical">False</field>
+        </record>
+
+        <record id="emp_type_config_contractor" model="ths.hr.employee.type.config">
+            <field name="name">Contractor</field>
+            <field name="employee_type_key">contractor</field>
+            <field name="is_medical">False</field>
+        </record>
+
+        <record id="emp_type_config_freelancer" model="ths.hr.employee.type.config">
+            <field name="name">Freelancer</field>
+            <field name="employee_type_key">freelancer</field>
+            <field name="is_medical">False</field>
+        </record>
+
+        <record id="emp_type_config_part_time" model="ths.hr.employee.type.config">
+            <field name="name">Part Time Employee</field>
+            <field name="employee_type_key">part_time</field>
+            <field name="is_medical">False</field>
+        </record>
+
+        <record id="emp_type_config_external_employee" model="ths.hr.employee.type.config">
+            <field name="name">External Employee</field>
+            <field name="employee_type_key">external_employee</field>
+            <field name="is_medical">False</field>
+        </record>
+
+        <record id="emp_type_config_doctor" model="ths.hr.employee.type.config">
+            <field name="name">Doctor</field>
+            <field name="employee_type_key">doctor</field>
+            <field name="is_medical" eval="True"/>
+        </record>
+
+        <record id="employee_type_medical_staff" model="ths.hr.employee.type.config">
+            <field name="name">Medical Staff</field>
+            <field name="employee_type_key">medical_staff</field>
+            <field name="is_medical" eval="True"/>
+        </record>
+
+        <record id="employee_type_nurse" model="ths.hr.employee.type.config">
+            <field name="name">Nurse</field>
+            <field name="employee_type_key">nurse</field>
+            <field name="is_medical" eval="True"/>
+        </record>
+
+        <record id="employee_type_pharmacist" model="ths.hr.employee.type.config">
+            <field name="name">Pharmacist</field>
+            <field name="employee_type_key">pharmacist</field>
+            <field name="is_medical" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

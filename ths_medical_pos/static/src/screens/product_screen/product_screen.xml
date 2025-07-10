@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!-- Extend the ProductScreen to add medical buttons -->
+    <t t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension">
+        <!-- Add medical controls to product screen layout -->
+        <xpath expr="//div[hasclass('product-screen d-flex h-100')]" position="inside">
+            <!-- Container for Medical Buttons -->
+            <div class="medical-controls d-flex gap-2 p-2 border rounded">
+                <!-- Pending Items Button Component -->
+                <PendingItemsButton/>
+
+                <!-- Medical Context Display (if exists) -->
+                <t t-if="hasMedicalContext()">
+                    <div class="medical-context-banner p-2 border rounded bg-light">
+                        <small class="text-muted">
+                            <i class="fa fa-stethoscope me-1"/>
+                            <t t-set="context" t-value="formatMedicalContextDisplay()"/>
+                            <t t-if="context.encounter_name">
+                                <span class="encounter-badge me-2"><t t-esc="context.encounter_name"/></span>
+                            </t>
+                            <t t-if="context.patient_names.length > 0">
+                                Patients: <t t-esc="context.patient_names.join(', ')"/>
+                            </t>
+                            <t t-if="context.practitioner_name">
+                                | Dr. <t t-esc="context.practitioner_name"/>
+                            </t>
+                            <t t-if="context.room_name">
+                                | Room: <t t-esc="context.room_name"/>
+                            </t>
+                        </small>
+                    </div>
+                </t>
+            </div>
+        </xpath>
+    </t>
+
+</templates>

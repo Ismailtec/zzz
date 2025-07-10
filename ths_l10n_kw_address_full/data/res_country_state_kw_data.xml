@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="base.kw" model="res.country">
+            <field name="address_format">
+                %(street)s
+                %(street2)s
+                %(city)s
+                %(state_name)s
+                %(country_name)s
+            </field>
+            <field name="zip_required">False</field>
+            <field name="state_required">False</field>
+        </record>
+
+        <record id="state_kw_capital" model="res.country.state">
+            <field name="name">Capital / العاصمة</field>
+            <field name="code">CP</field>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+        <record id="state_kw_hawally" model="res.country.state">
+            <field name="name">Hawally / حولي</field>
+            <field name="code">HA</field>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+        <record id="state_kw_farwaniya" model="res.country.state">
+            <field name="name">Farwaniya / الفروانية</field>
+            <field name="code">FA</field>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+        <record id="state_kw_ahmadi" model="res.country.state">
+            <field name="name">Al-Ahmadi / الأحمدي</field>
+            <field name="code">AH</field>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+        <record id="state_kw_jahra" model="res.country.state">
+            <field name="name">Jahra / الجهراء</field>
+            <field name="code">JA</field>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+        <record id="state_kw_mubarak_al_kabeer" model="res.country.state">
+            <field name="name">Mubarak Al-Kabeer / مبارك الكبير</field>
+            <field name="code">MK</field>
+            <field name="country_id" ref="base.kw"/>
+        </record>
+
+    </data>
+</odoo>

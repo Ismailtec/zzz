@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_medical_encounter_list" model="ir.ui.view">
+        <field name="name">ths.medical.base.encounter.list</field>
+        <field name="model">ths.medical.base.encounter</field>
+        <field name="arch" type="xml">
+            <list string="Medical Encounters" decoration-info="state=='in_progress'" decoration-success="state=='done'">
+                <field name="name"/>
+                <field name="encounter_date" widget="date"/>
+                <field name="patient_ids" string="Patients" widget="many2many_tags"/>
+                <field name="partner_id" string="Customer" optional="show" options="{'no_open': True}"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-info="state == 'in_progress'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_medical_encounter_form" model="ir.ui.view">
+        <field name="name">ths.medical.base.encounter.form</field>
+        <field name="model">ths.medical.base.encounter</field>
+        <field name="arch" type="xml">
+            <form string="Medical Encounter">
+                <header>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}"
+                           statusbar_visible="in_progress,done" readonly="0"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_appointments" type="object" icon="fa-calendar"
+                                class="oe_stat_button" invisible="not appointment_ids">
+                            <field name="appointment_ids" widget="statinfo" string="Appointments"/>
+                        </button>
+                    </div>
+
+                    <div class="alert alert-info" role="alert" invisible="not appointment_status">
+                        <strong>Appointment Status: </strong>
+                        <span class="badge badge-info">
+                            <field name="appointment_status" readonly="1"/>
+                        </span>
+                        <span class="ms-2 text-muted">
+                            Appointment linked to this encounter is still in progress, please consider ending it.
+                        </span>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group name="encounter_info">
+                        <group string="Encounter Information" name="col_1">
+                            <field name="encounter_date"/>
+                            <field name="partner_id" string="Patient (Billing)" options="{'open_create': True}"
+                                   help="Patient receiving treatment and responsible for payment"/>
+                            <field name="patient_ids" string="Patients" options="{'open_create': True}"
+                                   widget="many2many_tags"
+                                   help="Patients receiving treatment"/>
+                            <field name="practitioner_id"
+                                   string="Service Provider"
+                                   options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"/>
+                            <field name="room_id"
+                                   options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"
+                                   string="Treatment Room"
+                                   domain="room_id_domain"/>
+                            <field name="patient_mobile" readonly="1" string="Mobile"
+                                   help="Mobile number of the partner"/>
+                        </group>
+                        <group string="Payment Information" name="col_2">
+                            <group name="lines_payment_info" string="Lines Payments">
+                                <field name="pending_amount" readonly="1" widget="monetary"
+                                       string="Pending Amount"/>
+                                <field name="paid_amount" readonly="1" widget="monetary"
+                                       string="Paid Amount"/>
+                                <field name="pending_payments" readonly="1" widget="boolean_toggle"
+                                       string="Pending Line Payments"/>
+                            </group>
+                        </group>
+                    </group>
+                    <group string="Internal Notes" name="internal_notes">
+                        <field name="notes" placeholder="Add internal administrative notes here..."/>
+                    </group>
+                    <notebook>
+                        <page string="Services/Products" name="pending_pos_items">
+                            <field name="pending_pos_items" nolabel="1"
+                                   context="{'default_partner_id': partner_id,
+                                             'default_encounter_id': id, 'default_practitioner_id': practitioner_id or False,
+                                             'default_room_id': room_id or False}">
+                                <list editable="top">
+                                    <field name="product_id" required="1"/>
+                                    <field name="description" optional="hide"/>
+                                    <field name="qty" string="Qty"/>
+<!--                                    <field name="price_unit" widget="monetary"/>-->
+                                    <field name="discount" optional="show"/>
+                                    <field name="sub_total" readonly="1" widget="monetary" optional="show"/>
+                                    <field name="practitioner_id" options="{'no_open': True}" required="0"/>
+                                    <field name="commission_pct" optional="hide"/>
+                                    <field name="partner_id" optional="hide" readonly="0"/>
+                                    <field name="patient_ids" optional="show" widget="many2many_tags"/>
+                                    <field name="room_id" optional="show" domain="room_id_domain"/>
+                                    <field name="state" widget="badge" decoration-success="state == 'processed'"
+                                           decoration-info="state == 'pending'"
+                                           decoration-warning="state == 'cancelled'" optional="show"/>
+                                    <field name="encounter_id" optional="hide" required="1"/>
+                                    <field name="notes" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Appointments" name="appointments">
+                            <field name="appointment_ids" nolabel="1" readonly="0"
+                                   context="{'default_encounter_id': id, 'default_practitioner_id': practitioner_id or False,
+                                             'default_room_id': room_id or False,
+                                             'default_appointment_type_id': default_appointment_type_id if default_appointment_type_id else False}">
+                                <list create="true" edit="true" editable="bottom"
+                                      decoration-success="appointment_status in ('billed','completed')"
+                                      decoration-info="appointment_status in ('draft', 'confirmed')"
+                                      decoration-warning="appointment_status in ('in_progress', 'checked_in')"
+                                      decoration-danger="appointment_status in ('cancelled_by_patient', 'cancelled_by_clinic', 'no_show')">
+                                    <field name="name" readonly="1" optional="hide"/>
+                                    <field name="appointment_type_id" string="Type"/>
+                                    <field name="patient_ids" widget="many2many_tags"/>
+                                    <field name="partner_ids" widget="many2many_tags" optional="hide"/>
+                                    <field name="resource_ids" widget="many2many_tags" optional="hide"/>
+                                    <field name="practitioner_id" domain="practitioner_id_domain"/>
+                                    <field name="room_id" optional="show" domain="room_id_domain"/>
+                                    <field name="start" widget="datetime"/>
+                                    <field name="stop" widget="datetime"/>
+                                    <field name="appointment_status" string="Status"/>
+                                    <field name="ths_reason_for_visit" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Clinical Data" name="clinical_data">
+                            <group string="Visit Details">
+                                <field name="chief_complaint" placeholder="Reason for visit..."/>
+                                <field name="history_illness" placeholder="History of present illness..."/>
+                                <field name="vitals" placeholder="Temperature, Heart Rate, Respiratory Rate, BP..."/>
+                            </group>
+                            <separator string="SOAP Notes"/>
+                            <group>
+                                <field name="ths_subjective" placeholder="Subjective findings..."/>
+                                <field name="ths_objective" placeholder="Objective findings..."/>
+                                <field name="ths_assessment" placeholder="Assessment/Diagnosis..."/>
+                                <field name="ths_plan" placeholder="Treatment plan, orders, follow-up..."/>
+                            </group>
+                            <separator string="Summaries"/>
+                            <group>
+                                <field name="ths_diagnosis_text" placeholder="Summary of diagnoses..."/>
+                                <field name="ths_procedures_text" placeholder="Summary of procedures performed..."/>
+                                <field name="ths_prescriptions_text" placeholder="Summary of prescriptions issued..."/>
+                                <field name="ths_lab_orders_text" placeholder="Summary of lab tests ordered..."/>
+                                <field name="ths_radiology_orders_text"
+                                       placeholder="Summary of radiology exams ordered..."/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <!-- Attachment preview -->
+                <div class="o_attachment_preview"/>
+                <!-- Chatter -->
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_medical_encounter_search" model="ir.ui.view">
+        <field name="name">ths.medical.base.encounter.search</field>
+        <field name="model">ths.medical.base.encounter</field>
+        <field name="arch" type="xml">
+            <search string="Search Medical Encounters">
+                <group expand="0" string="Search">
+                    <field name="name" string="Encounter ID"/>
+                    <field name="encounter_date"/>
+                    <field name="appointment_ids"/>
+                    <field name="partner_id"
+                           filter_domain="['|', ('partner_id', 'ilike', self), ('patient_ids', 'ilike', self)]"
+                           string="Patient"/>
+                    <field name="patient_ids" string="Patients"/>
+                    <field name="practitioner_id"/>
+                    <filter string="In Progress" name="filter_in_progress" domain="[('state', '=', 'in_progress')]"/>
+                    <filter string="Done/Completed" name="filter_billed" domain="[('state', '=', 'done')]"/>
+                    <separator/>
+                    <filter string="Today" name="filter_today"
+                            domain="[('encounter_date', '=', context_today())]"/>
+                    <filter string="This Week" name="filter_this_week"
+                            context="{'search_encounter_date_range': 'this_week'}"/>
+                    <filter string="Last Week" name="filter_last_week"
+                            context="{'search_encounter_date_range': 'last_week'}"/>
+                    <filter string="Scheduled Appointments" name="filter_apt_scheduled"
+                            domain="[('appointment_status', 'in', ['draft', 'confirmed'])]"/>
+                    <filter string="Checked In Appointments" name="filter_apt_checked_in"
+                            domain="[('appointment_status', '=', 'checked_in')]"/>
+                    <filter string="In Progress Appointments" name="filter_apt_in_progress"
+                            domain="[('appointment_status', '=', 'in_progress')]"/>
+                    <filter string="Completed Appointments" name="filter_apt_completed"
+                            domain="[('appointment_status', '=', 'completed')]"/>
+                    <filter string="Cancelled Appointments" name="filter_apt_cancelled"
+                            domain="[('appointment_status', 'in', ['cancelled_by_patient', 'cancelled_by_clinic', 'no_show'])]"/>
+                    <separator/>
+
+                </group>
+                <group expand="0" string="Group By">
+                    <filter string="Encounter Status" name="groupby_state" context="{'group_by': 'state'}"/>
+                    <filter string="Appointment Status" name="groupby_appointment_status"
+                            context="{'group_by': 'appointment_status'}"/>
+                    <filter string="Practitioner" name="groupby_practitioner"
+                            context="{'group_by': 'practitioner_id'}"/>
+                    <filter string="Room" name="groupby_room"
+                            context="{'group_by': 'room_id'}"/>
+                    <filter string="Patients" name="groupby_patients" context="{'group_by': 'patient_ids'}"/>
+                    <filter string="Status" name="groupby_state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- New view for encounter status dashboard -->
+    <record id="view_medical_encounter_kanban" model="ir.ui.view">
+        <field name="name">ths.medical.base.encounter.kanban</field>
+        <field name="model">ths.medical.base.encounter</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_small_column" quick_create="false">
+                <field name="name"/>
+                <field name="patient_ids"/>
+                <field name="practitioner_id"/>
+                <field name="room_id"/>
+                <field name="appointment_status"/>
+                <field name="state"/>
+                <field name="encounter_date"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="o_kanban_record_title">
+                                    <t t-esc="record.name.value"/>
+                                </strong>
+                                <!--                                <div class="d-flex flex-column align-items-end">-->
+                                <!--                                    <span class="text-muted" style="font-size: 11px; line-height: 1;">Appointment</span>-->
+                                <!--                                    <span t-att-class="{-->
+                                <!--                                    'badge': true,-->
+                                <!--                                    'badge-warning': record.appointment_status.raw_value === 'checked_in',-->
+                                <!--                                    'badge-info': record.appointment_status.raw_value === 'in_progress',-->
+                                <!--                                    'badge-success': record.appointment_status.raw_value === 'completed',-->
+                                <!--                                    'badge-secondary': !['checked_in','in_progress','completed'].includes(record.appointment_status.raw_value)-->
+                                <!--                                    }" class="badge" style="margin-top: 2px;">-->
+                                <!--                                        <t t-esc="record.appointment_status.value"/>-->
+                                <!--                                    </span>-->
+                                <!--                                </div>-->
+                            </div>
+
+
+                            <!--                                <span t-att-class="{-->
+                            <!--                                    'badge': true,-->
+                            <!--                                    'badge-warning': record.appointment_status.raw_value == 'checked_in',-->
+                            <!--                                    'badge-info': record.appointment_status.raw_value == 'in_progress',-->
+                            <!--                                    'badge-success': record.appointment_status.raw_value == 'completed',-->
+                            <!--                                    'badge-secondary': !['checked_in','in_progress','completed'].includes(record.appointment_status.raw_value)-->
+                            <!--                                }" class="badge float-end">-->
+                            <!--                                    <t t-esc="record.appointment_status.value"/>-->
+                            <!--                                </span>-->
+                            <div class="o_kanban_record_body">
+                                <div>
+                                    <strong>Patient(s): </strong>
+                                    <t t-esc="record.patient_ids.value"/>
+                                </div>
+                                <div>
+                                    <strong>Practitioner: </strong>
+                                    <t t-esc="record.practitioner_id.value"/>
+                                </div>
+                                <t t-if="record.room_id.raw_value">
+                                    <div>
+                                        <strong>Room: </strong>
+                                        <t t-esc="record.room_id.value"/>
+                                    </div>
+                                </t>
+                                <div>
+                                    <div style="margin-bottom: 4px;"></div>
+                                    <small class="text-muted">
+                                        <i class="fa fa-calendar me-1"/>
+                                        <t t-esc="record.encounter_date.value"/>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_medical_encounter" model="ir.actions.act_window">
+        <field name="name">Medical Encounters</field>
+        <field name="res_model">ths.medical.base.encounter</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_medical_encounter_search"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Medical Encounter
+            </p>
+            <p>
+                Encounters track clinical visits, usually created automatically from appointments. Add services/products
+                used during the visit.
+            </p>
+        </field>
+    </record>
+
+    <!-- TODO: Add encounter timeline view showing chronological service order -->
+    <!-- TODO: Implement encounter print templates for patient summaries -->
+    <!-- TODO: Add encounter QR code generation for mobile access -->
+    <!-- TODO: Implement encounter mass operations (bulk state changes) -->
+    <!-- TODO: Add encounter comparison view for repeat patients -->
+    <!-- TODO: Implement encounter search by service combinations -->
+
+</odoo>

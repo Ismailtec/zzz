@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="appointment_resource_view_form_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">appointment.resource.form.inherit.ths.medical</field>
+        <field name="model">appointment.resource</field>
+        <field name="inherit_id" ref="appointment.appointment_resource_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='capacity']" position="before">
+                <field name="resource_category"/>
+                <field name="employee_id" invisible="resource_category != 'practitioner'" readonly="1"/>
+                <field name="treatment_room_id" invisible="resource_category != 'location'" readonly="1"/>
+            </xpath>
+            <xpath expr="//field[@name='resource_calendar_id']" position="after">
+                <field name="ths_department_id" string="Department" readonly="1" invisible="not ths_department_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="appointment_resource_view_list_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">appointment.resource.list.inherit.ths.medical</field>
+        <field name="model">appointment.resource</field>
+        <field name="inherit_id" ref="appointment.appointment_resource_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='capacity']" position="before">
+                <field name="resource_category" optional="show"/>
+                <field name="employee_id" optional="show"/>
+                <field name="treatment_room_id" optional="show"/>
+                <field name="ths_department_id" string="Department" optional="show" readonly="1"/>
+                <field name="company_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="appointment_resource_view_search_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">appointment.resource.search.inherit.ths.medical</field>
+        <field name="model">appointment.resource</field>
+        <field name="inherit_id" ref="appointment.appointment_resource_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='capacity']" position="after">
+                <field name="resource_category"/>
+                <field name="employee_id"/>
+                <field name="treatment_room_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_by_appointment_type']" position="before">
+                <filter string="Medical Category" name="group_by_resource_category"
+                        context="{'group_by': 'resource_category'}"/>
+                <filter string="Department" name="group_by_department"
+                        context="{'group_by': 'ths_department_id'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+    <record id="product_sub_type_grm" model="ths.product.sub.type">
+        <field name="name">Grooming</field>
+        <field name="code">GRM</field>
+        <field name="product_group">grooming</field>
+        <field name="is_for_service" eval="True"/>
+        <field name="sequence_id" ref="seq_product_sub_type_grm"/>
+    </record>
+    <record id="product_sub_type_board" model="ths.product.sub.type">
+        <field name="name">Boarding</field>
+        <field name="code">BRD</field>
+        <field name="product_group">boarding</field>
+        <field name="is_for_service" eval="True"/>
+        <field name="sequence_id" ref="seq_product_sub_type_brd"/>
+    </record>
+    <record id="product_sub_type_member" model="ths.product.sub.type">
+        <field name="name">Membership</field>
+        <field name="code">MEM</field>
+        <field name="product_group">subscriptions</field>
+        <field name="is_for_service" eval="True"/>
+        <field name="sequence_id" ref="seq_product_sub_type_member"/>
+    </record>
+
+</odoo>

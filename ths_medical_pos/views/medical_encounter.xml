@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_medical_encounter_list_pos" model="ir.ui.view">
+        <field name="name">ths.medical.base.encounter.list.pos</field>
+        <field name="model">ths.medical.base.encounter</field>
+        <field name="inherit_id" ref="ths_medical_base.view_medical_encounter_list"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//list/field[@name='partner_id']" position="after">
+                <field name="total_pos_pending_amount" widget="monetary" optional="show"/>
+                <field name="total_pos_paid_amount" widget="monetary" optional="show"/>
+            </xpath>
+
+            <xpath expr="//list/field[@name='state']" position="after">
+                <field name="has_pos_pending_payments" widget="boolean_toggle" optional="show"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_medical_encounter_form_inherit_pos" model="ir.ui.view">
+        <field name="name">ths.medical.base.encounter.form.inherit.pos</field>
+        <field name="model">ths.medical.base.encounter</field>
+        <field name="inherit_id" ref="ths_medical_base.view_medical_encounter_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//div[@name='button_box']//button[@name='action_view_appointments']" position="after">
+                <button name="action_view_pos_orders" type="object" icon="fa-shopping-cart"
+                        class="oe_stat_button" invisible="not pos_order_ids">
+                    <field name="pos_order_ids" widget="statinfo" string="POS Orders"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//group[@name='lines_payment_info']" position="after">
+                <group string="POS Payments" name="pos_payments">
+                    <field name="total_pos_pending_amount" readonly="1" widget="monetary"/>
+                    <field name="total_pos_paid_amount" readonly="1" widget="monetary"/>
+                    <field name="has_pos_pending_payments" readonly="1" widget="boolean_toggle"/>
+                </group>
+            </xpath>
+
+            <xpath expr="//page[@name='pending_pos_items']" position="after">
+                <page string="POS Orders" name="pos_orders">
+                    <field name="pos_order_ids" nolabel="1" readonly="1">
+                        <list create="false" edit="false">
+                            <field name="name"/>
+                            <field name="date_order" widget="datetime"/>
+                            <field name="partner_id"/>
+                            <field name="patient_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="amount_total" widget="monetary"/>
+                            <field name="state" widget="badge" decoration-success="state == 'paid' or state == 'done'"
+                                   decoration-info="state == 'invoiced'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_medical_encounter_search_inherit_pos" model="ir.ui.view">
+        <field name="name">ths.medical.base.encounter.search.inherit.pos</field>
+        <field name="model">ths.medical.base.encounter</field>
+        <field name="inherit_id" ref="ths_medical_base.view_medical_encounter_search"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//filter[@name='filter_billed']" position="after">
+                <filter string="Has POS Pending Payments" name="filter_pending_payments"
+                        domain="[('has_pos_pending_payments', '=', True)]"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

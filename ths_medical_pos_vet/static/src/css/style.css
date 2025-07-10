@@ -1,0 +1,193 @@
+/* ths_medical_pos_vet/static/src/css/style.css - VET EXTENSION ONLY */
+
+/* === VET-SPECIFIC STYLES === */
+
+.vet-species-badge {
+    background-color: #e3f2fd !important;
+    color: #1976d2 !important;
+    font-size: 0.75rem !important;
+    padding: 0.2rem 0.4rem !important;
+    border-radius: 0.25rem !important;
+    margin-left: 0.25rem !important;
+}
+
+.membership-status {
+    font-size: 0.75rem !important;
+}
+
+.membership-status.active {
+    color: #28a745 !important;
+}
+
+.membership-status.inactive {
+    color: #dc3545 !important;
+}
+
+.membership-status.pending {
+    color: #ffc107 !important;
+}
+
+/* === PET DISPLAY ENHANCEMENTS === */
+
+.pet-species-display {
+    font-size: 0.8rem !important;
+    color: #6c757d !important;
+    font-style: italic !important;
+}
+
+.pet-owner-badge {
+    background-color: #f8f9fa !important;
+    color: #495057 !important;
+    border: 1px solid #dee2e6 !important;
+    font-size: 0.75rem !important;
+    padding: 0.2rem 0.4rem !important;
+    border-radius: 0.25rem !important;
+}
+
+/* === VET ENCOUNTER CARD ENHANCEMENTS === */
+
+.vet-encounter-card .pet-list {
+    max-height: 60px !important;
+    overflow-y: auto !important;
+}
+
+.vet-encounter-card .species-indicator {
+    display: inline-block !important;
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    margin-right: 0.25rem !important;
+}
+
+.vet-encounter-card .species-indicator.dog {
+    background-color: #8b4513 !important;
+}
+
+.vet-encounter-card .species-indicator.cat {
+    background-color: #ff69b4 !important;
+}
+
+.vet-encounter-card .species-indicator.bird {
+    background-color: #87ceeb !important;
+}
+
+.vet-encounter-card .species-indicator.other {
+    background-color: #808080 !important;
+}
+
+/* === VET MEMBERSHIP INDICATORS === */
+
+.membership-indicator {
+    position: absolute !important;
+    top: 0.5rem !important;
+    right: 0.5rem !important;
+    font-size: 0.7rem !important;
+    padding: 0.1rem 0.3rem !important;
+}
+
+.membership-indicator.valid {
+    background-color: #28a745 !important;
+    color: white !important;
+}
+
+.membership-indicator.expired {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+.membership-indicator.pending {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+/* === VET MOBILE OPTIMIZATIONS === */
+
+@media (max-width: 768px) {
+    .vet-species-badge {
+        font-size: 0.7rem !important;
+        padding: 0.1rem 0.3rem !important;
+    }
+
+    .pet-species-display {
+        display: block !important;
+        margin-top: 0.2rem !important;
+    }
+
+    .membership-indicator {
+        position: relative !important;
+        top: auto !important;
+        right: auto !important;
+        margin-top: 0.25rem !important;
+        display: inline-block !important;
+    }
+}
+
+/* === VET PARTNER LIST ENHANCEMENTS === */
+
+.vet-partner-line .pet-count {
+    background-color: #e7f3ff !important;
+    color: #0066cc !important;
+    font-size: 0.75rem !important;
+    padding: 0.1rem 0.4rem !important;
+    border-radius: 1rem !important;
+    margin-left: 0.5rem !important;
+}
+
+.vet-partner-line.pet-owner {
+    border-left: 3px solid #28a745 !important;
+}
+
+.vet-partner-line.pet {
+    border-left: 3px solid #007bff !important;
+}
+
+/* === VET POPUP SPECIFIC STYLES === */
+
+.vet-encounter-popup .pet-info {
+    background-color: rgba(40, 167, 69, 0.1) !important;
+    border-radius: 0.375rem !important;
+    padding: 0.5rem !important;
+    margin: 0.25rem 0 !important;
+}
+
+.vet-encounter-popup .owner-info {
+    background-color: rgba(0, 123, 255, 0.1) !important;
+    border-radius: 0.375rem !important;
+    padding: 0.5rem !important;
+    margin: 0.25rem 0 !important;
+}
+
+/* === PET OWNER HEADER STYLES === */
+
+.pet-owner-header {
+    background-color: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 0.375rem !important;
+}
+
+.pets-list .badge {
+    margin-right: 0.25rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+/* === MANY2MANY PETS STYLE === */
+
+.pets-many2many-display .pet-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    margin-right: 0.5rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.pets-many2many-display .species-sub-badge {
+    font-weight: normal !important;
+}
+
+.pet-order-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.species-indicator {
+    font-style: italic !important;
+}

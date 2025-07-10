@@ -1,0 +1,41 @@
+<odoo>
+    <template id="vet_line_summary_report">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="order">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Veterinary Order Line Summary</h2>
+                        <table class="table table-condensed">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Product</th>
+                                    <th>Pet</th>
+                                    <th>Provider</th>
+                                    <th>Room</th>
+                                    <th>Discount</th>
+                                    <th>Unit Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="order.lines" t-as="line">
+                                    <tr>
+                                        <td><span t-field="order.name"/></td>
+                                        <td><span t-field="line.product_id.name"/></td>
+                                        <td><t t-foreach="line.patient_ids" t-as="pet"><span t-field="pet.name"/>
+                                            , </t></td>
+                                        <td><span t-field="line.practitioner_id.name"/></td>
+                                        <td><span t-field="line.room_id.name"/></td>
+                                        <td><span t-field="line.discount"/></td>
+                                        <td><span t-field="line.product_id.list_price"
+                                                  t-options="{'widget': 'monetary'}"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

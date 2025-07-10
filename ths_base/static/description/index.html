@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Techouse Base Customizations</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+        /* Techouse Theme Colors */
+        :root {
+            --techouse-primary: #FF8E46;
+            --techouse-secondary: #FFDCC6;
+            --techouse-text: #212529;
+            --techouse-link: #c64d00;
+            --techouse-bg: #FFFBF6;
+            --techouse-dark-section-bg: #F8F9FA; /* Using neutral light grey */
+            --techouse-border: #E9ECEF; /* Using neutral border */
+        }
+
+        /* Basic styles */
+        body {
+            font-family: 'Roboto', sans-serif; /* Consider adding a font link if needed */
+            line-height: 1.6;
+            color: var(--techouse-text);
+            background-color: var(--techouse-bg); /* Set main background */
+        }
+        .oe_container { padding-right: 15px; padding-left: 15px; margin-right: auto; margin-left: auto; box-sizing: border-box; width: 100%; max-width: 1140px; }
+        .oe_row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; box-sizing: border-box; }
+        .oe_spaced { padding-top: 32px; padding-bottom: 32px; }
+        .oe_slogan { text-align: center; margin-bottom: 10px; font-size: 24px; color: var(--techouse-text); font-weight: 300; }
+        h2.oe_slogan { font-size: 36px; margin-bottom: 20px; font-weight: 500; color: var(--techouse-primary); } /* Use primary for main slogan */
+        h3.oe_slogan { font-size: 28px; margin-bottom: 25px; font-weight: 400; color: var(--techouse-text); }
+        .oe_span12, .oe_span6 { position: relative; min-height: 1px; padding-right: 15px; padding-left: 15px; box-sizing: border-box; }
+        .oe_span12 { width: 100%; }
+        .oe_span6 { width: 50%; float: left; }
+        .text-center { text-align: center; }
+        .text-justify { text-align: justify; }
+        .text-primary { color: var(--techouse-primary) !important; } /* Use primary color */
+        .oe_mt16 { margin-top: 16px !important; }
+        .oe_mt32 { margin-top: 32px !important; }
+        .mb32 { margin-bottom: 32px !important; }
+        .list-unstyled { padding-left: 0; list-style: none; }
+        .list-unstyled li { margin-bottom: 8px; display: flex; align-items: flex-start; }
+        .list-unstyled li .fa { margin-right: 10px; margin-top: 4px; color: var(--techouse-primary); } /* Use primary for icons */
+        hr { margin-top: 25px; margin-bottom: 25px; border: 0; border-top: 1px solid var(--techouse-border); }
+        .oe_row::after { content: ""; display: table; clear: both; }
+        .oe_dark { background-color: var(--techouse-dark-section-bg); border-top: 1px solid var(--techouse-border); border-bottom: 1px solid var(--techouse-border); }
+        .fa { margin-right: 8px; }
+        a { color: var(--techouse-link); text-decoration: none; }
+        a:hover { color: darken(var(--techouse-link), 10%); text-decoration: underline; } /* Basic darken effect */
+        h4 { font-size: 18px; margin-top: 20px; margin-bottom: 10px; display: flex; align-items: center; color: var(--techouse-text); }
+        h4 .fa { font-size: 20px; margin-right: 10px; color: var(--techouse-primary); } /* Use primary for heading icons */
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .oe_span6 { width: 100%; float: none; margin-bottom: 20px; }
+            h2.oe_slogan { font-size: 30px; }
+            h3.oe_slogan { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="oe_span12 text-center">
+            <h2 class="oe_slogan">Techouse Base Customizations</h2>
+            <h3 class="oe_slogan">Core Enhancements for Odoo 18 by Techouse Solutions</h3>
+            <p class="oe_mt32 text-justify">
+                This module provides essential enhancements developed by Techouse Solutions for businesses needing more
+                precise control over inventory and accounting dates, optimized purchasing based on price or manual
+                priority, a more robust and automated landed cost workflow, and various UI adjustments for improved
+                usability within Odoo 18.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <h3 class="oe_slogan" style="color: var(--techouse-text);">Key Features</h3>
+        <div class="oe_span6 mt32 mb32">
+            <h4><i class="fa fa-calendar-check-o"></i> Effective Date Control</h4>
+            <ul class="list-unstyled">
+                <li><i class="fa fa-check text-primary"></i> Set a specific "Effective Date" on Purchases, Receipts,
+                    Scraps, Inventory Adjustments, and Landed Costs.
+                </li>
+                <li><i class="fa fa-check text-primary"></i> Ensures Stock Moves and Journal Entries use the specified
+                    date, allowing for accurate backdating.
+                </li>
+            </ul>
+            <hr/>
+            <h4><i class="fa fa-eur"></i> Flexible Vendor Selection</h4>
+            <ul class="list-unstyled">
+                <li><i class="fa fa-check text-primary"></i> Replenishment automatically selects the **lowest priced**
+                    valid vendor by default.
+                </li>
+                <li><i class="fa fa-check text-primary"></i> Allows **manual override** via a "Priority" flag and
+                    sequence setting on vendor pricelists.
+                </li>
+            </ul>
+            <hr/>
+            <h4><i class="fa fa-tags"></i> Product Brand Field</h4>
+            <ul class="list-unstyled">
+                <li><i class="fa fa-check text-primary"></i> Adds a "Product Brand" field to Product Templates for
+                    filtering and reporting.
+                </li>
+            </ul>
+        </div>
+        <div class="oe_span6 mt32 mb32">
+            <h4><i class="fa fa-truck"></i> Landed Cost Enhancements</h4>
+            <ul class="list-unstyled">
+                <li><i class="fa fa-check text-primary"></i> Adds "Effective Date" for precise accounting.</li>
+                <li><i class="fa fa-check text-primary"></i> Links Landed Costs clearly to Purchase Orders.</li>
+                <li><i class="fa fa-check text-primary"></i> Dynamic filtering of Bills/Receipts based on PO.</li>
+                <li><i class="fa fa-check text-primary"></i> Auto-population of related documents and cost lines.</li>
+                <li><i class="fa fa-check text-primary"></i> Safe "Cancel" (Reversal) action for posted Landed Costs.
+                </li>
+                <li><i class="fa fa-check text-primary"></i> Smart buttons on PO/Bill/Receipt for easy navigation.</li>
+                <li><i class="fa fa-check text-primary"></i> Automatic LC creation/update from PO/Bill (for LC type
+                    products).
+                </li>
+            </ul>
+            <hr/>
+            <h4><i class="fa fa-eye-slash"></i> Optional Tax Column Hiding</h4>
+            <ul class="list-unstyled">
+                <li><i class="fa fa-check text-primary"></i> Global setting (Accounting -> Settings) to hide "Taxes"
+                    columns on PO, SO, and Invoice/Bill lines by default.
+                </li>
+                <li><i class="fa fa-check text-primary"></i> Simplifies views for specific user roles or workflows.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h3 class="oe_slogan" style="color: var(--techouse-text);">Configuration & Usage Highlights</h3>
+        <div class="oe_span12">
+            <p class="oe_mt16">
+                <i class="fa fa-wrench" style="color: var(--techouse-primary);"></i> <b>Hide Taxes:</b> Configure under
+                Accounting -> Configuration -> Settings.
+            </p>
+            <p class="oe_mt16">
+                <i class="fa fa-wrench" style="color: var(--techouse-primary);"></i> <b>Manual Vendor Priority:</b> Edit
+                vendors on Product -> Purchase tab. Check "Priority" and set sequence to 0 or 1 to override lowest price
+                logic.
+            </p>
+            <p class="oe_mt16">
+                <i class="fa fa-pencil-square-o" style="color: var(--techouse-primary);"></i> <b>Effective Date:</b> Use
+                the "Effective Date" field found on POs, Pickings, Scraps, Inventory Adjustments, and Landed Costs to
+                control posting dates.
+            </p>
+            <p class="oe_mt16">
+                <i class="fa fa-undo" style="color: var(--techouse-primary);"></i> <b>Landed Cost Reversal:</b> Use the
+                "Cancel" button on a posted Landed Cost record to generate a reversing entry.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <div class="oe_span12 text-center">
+            <h3 class="oe_slogan">Developed by Techouse Solutions</h3>
+            <p>
+                <a href="https://www.techouse.ae" target="_blank">www.techouse.ae</a> | <a
+                    href="mailto:info@techouse.ae">info@techouse.ae</a>
+            </p>
+        </div>
+    </div>
+</section>
+</body>
+</html>

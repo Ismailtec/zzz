@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="partner_type_patient" model="ths.partner.type">
+        <field name="name">Patient</field>
+        <field name="parent_id" ref="ths_base.partner_type_individual"/>
+        <field name="is_company" eval="False"/>
+        <field name="is_individual" eval="True"/>
+        <field name="is_customer" eval="True"/>
+        <field name="is_patient" eval="True"/>
+        <field name="sequence_id" ref="seq_partner_ref_patient"/>
+    </record>
+
+    <record id="partner_type_walkin" model="ths.partner.type">
+        <field name="name">Walk-in</field>
+        <field name="parent_id" ref="ths_base.partner_type_individual"/>
+        <field name="is_company" eval="False"/>
+        <field name="is_individual" eval="True"/>
+        <field name="is_customer" eval="True"/>
+        <field name="is_patient" eval="True"/>
+        <field name="sequence_id" ref="seq_partner_ref_walkin"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_stock_landed_cost_form_inherit_ths_base" model="ir.ui.view">
+            <field name="name">stock.landed.cost.form.inherit.ths.base</field>
+            <field name="model">stock.landed.cost</field>
+            <field name="inherit_id" ref="stock_landed_costs.view_stock_landed_cost_form"/>
+            <field name="arch" type="xml">
+
+                <xpath expr="//header" position="inside">
+                    <button name="action_create_reversal" string="Cancel" type="object"
+                            groups="stock.group_stock_manager,account.group_account_user"
+                            invisible="state != 'done' or is_reversed or reversal_lc_id" class="oe_highlight"
+                            confirm="You are about to reverse the entry LC, as Odoo standard doesnt allow deleting/cancelling, this action will automatically create a reverse entry to this LC and will neutralize the effect, Are you sure to continue ?"/>
+                    <xpath expr="//button[@name='button_cancel']" position="move"/>
+                </xpath>
+
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_original_lc" type="object" icon="fa-exchange" class="oe_stat_button"
+                            invisible="not original_lc_id">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Original LC</span>
+                        </div>
+                    </button>
+                    <button name="action_view_reversal_lc" type="object" icon="fa-exchange" class="oe_stat_button"
+                            invisible="not reversal_lc_id">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Reversal LC</span>
+                        </div>
+                    </button>
+                </xpath>
+
+                <xpath expr="//sheet" position="before">
+                    <widget name="web_ribbon" title="Reversed" bg_color="bg-danger" invisible="not reversal_lc_id"/>
+                    <widget name="web_ribbon" title="Reversal Entry" bg_color="bg-success"
+                            invisible="not original_lc_id"/>
+                </xpath>
+
+                <xpath expr="//field[@name='vendor_bill_id']" position="before">
+                    <field name="purchase_order_id" options="{'no_create': True, 'no_quick_create': True}"
+                           readonly="state != 'draft'"/>
+                    <field name="bill_domain" invisible="1"/>
+                    <field name="picking_domain" invisible="1"/>
+                </xpath>
+
+                <xpath expr="//field[@name='date']" position="after">
+                    <field name="ths_effective_date" readonly="state != 'draft'"/>
+                </xpath>
+
+                <xpath expr="//field[@name='date']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='vendor_bill_id']" position="attributes">
+                    <attribute name="domain">bill_domain</attribute>
+                    <attribute name="options">{'no_create': True, 'no_quick_create': True}</attribute>
+                    <attribute name="readonly">state != 'draft'</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='picking_ids']" position="attributes">
+                    <attribute name="domain">picking_domain</attribute>
+                    <attribute name="options">{'no_create': True, 'no_quick_create': True}</attribute>
+                    <attribute name="readonly">state != 'draft'</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='cost_lines']" position="attributes">
+                    <attribute name="readonly">state != 'draft'</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='cost_lines']//field[@name='product_id']" position="attributes">
+                    <attribute name="readonly">parent.state != 'draft'</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='cost_lines']//field[@name='account_id']" position="attributes">
+                    <attribute name="readonly">parent.state != 'draft'</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='cost_lines']//field[@name='split_method']" position="attributes">
+                    <attribute name="readonly">parent.state != 'draft'</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='cost_lines']//field[@name='price_unit']" position="attributes">
+                    <attribute name="readonly">parent.state != 'draft'</attribute>
+                </xpath>
+
+                <!-- Remove the original Valuation Adjustments tab -->
+                <xpath expr="//page[@name='valuation_adjustments']" position="replace"/>
+
+                <!-- Add Valuation Adjustments under Additional Costs -->
+                <xpath expr="//page[@name='additional_costs']/group[hasclass('oe_subtotal_footer')]"
+                       position="after">
+                    <group string="Valuation Adjustments">
+                        <field name="valuation_adjustment_lines" readonly="state == 'done'" nolabel="1">
+                            <form string="Valuation Adjustments">
+                                <group>
+                                    <group>
+                                        <field name="product_id"/>
+                                        <field name="quantity"/>
+                                    </group>
+                                    <group>
+                                        <field name="currency_id" invisible="1"/>
+                                        <field name="former_cost"/>
+                                        <field name="additional_landed_cost"/>
+                                    </group>
+                                </group>
+                            </form>
+                            <list string="Valuation Adjustments" editable="bottom" create="0">
+                                <field name="cost_line_id" readonly="1"/>
+                                <field name="product_id" readonly="1"/>
+                                <field name="weight" readonly="1" optional="hide"/>
+                                <field name="volume" readonly="1" optional="hide"/>
+                                <field name="quantity" readonly="1"/>
+                                <field name="currency_id" column_invisible="True"/>
+                                <field name="former_cost" readonly="1"/>
+                                <field name="final_cost" readonly="1"/>
+                                <field name="additional_landed_cost"/>
+                            </list>
+                        </field>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

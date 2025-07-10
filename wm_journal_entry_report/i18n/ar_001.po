@@ -1,0 +1,168 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* wm_journal_entry_report
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-06-26 09:59+0000\n"
+"PO-Revision-Date: 2024-06-26 13:00+0300\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+"X-Generator: Poedit 3.4.4\n"
+
+#. module: wm_journal_entry_report
+#: model:ir.actions.report,print_report_name:wm_journal_entry_report.account_journal
+msgid "(object._get_report_base_filename())"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "0.00"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "2023-09-12"
+msgstr ""
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Account</span>"
+msgstr "<span>الحساب</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Amount Currency</span>"
+msgstr "<span>المبلغ بالعملة</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Analytic Account</span>"
+msgstr "<span>الحساب التحليلي</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Credit</span>"
+msgstr "<span>دائن</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Debit</span>"
+msgstr "<span>مدين</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Disc Amount</span>"
+msgstr "<span>مبلغ التخفيض</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Due Date</span>"
+msgstr "<span>تاريخ الاستحقاق</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Journal Entry</span>"
+msgstr "<span>قيد اليومية</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Label</span>"
+msgstr "<span>البيان</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Partner</span>"
+msgstr "<span>الشريك</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "<span>Taxes</span>"
+msgstr "<span>الضريبه</span>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid ""
+"<strong>Accounting Date:</strong>\n"
+"                                <br/>"
+msgstr ""
+"<strong>تاريخ المحاسبة:</strong>\n"
+"                                <br/>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid ""
+"<strong>Company:</strong>\n"
+"                                <br/>"
+msgstr ""
+"<strong>الشركة:</strong>\n"
+"                                <br/>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid ""
+"<strong>Fiscal Position:</strong>\n"
+"                                <br/>"
+msgstr ""
+"<strong>الوضع المالي:</strong>\n"
+"                                <br/>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid ""
+"<strong>Journal:</strong>\n"
+"                                <br/>"
+msgstr ""
+"<strong>دفتر اليومية:</strong>\n"
+"                                <br/>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid ""
+"<strong>Reference:</strong>\n"
+"                                <br/>"
+msgstr ""
+"<strong>المرجع:</strong>\n"
+"                                <br/>"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "INV/2023/0001"
+msgstr "INV/2023/0001"
+
+#. module: wm_journal_entry_report
+#: model:ir.actions.report,name:wm_journal_entry_report.account_journal
+msgid "Journal Entries"
+msgstr "القيود اليومية"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "Miscellaneous Operations"
+msgstr "عمليات متنوعة"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "Tax 15%"
+msgstr "ضريبة 15%"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "Total"
+msgstr "الإجمالي"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "Your Company"
+msgstr "شركتك"
+
+#. module: wm_journal_entry_report
+#: model_terms:ir.ui.view,arch_db:wm_journal_entry_report.report_journal_document
+msgid "Your Reference"
+msgstr "رقمك المرجعي"

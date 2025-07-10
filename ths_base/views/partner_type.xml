@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_type_list" model="ir.ui.view">
+        <field name="name">ths.partner.type.list</field>
+        <field name="model">ths.partner.type</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+            <list string="Partner Types">
+                <field name="name"/>
+                <field name="parent_id"/>
+                <field name="sequence_id"/>
+                <field name="is_company" widget="boolean_toggle"/>
+                <field name="is_individual" widget="boolean_toggle"/>
+                <field name="is_customer" string="Customer" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_partner_type_form" model="ir.ui.view">
+        <field name="name">ths.partner.type.form</field>
+        <field name="model">ths.partner.type</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Partner Type">
+                <sheet>
+                    <group col="2">
+                        <strong>
+                            <group class="mb-0 fw-bolder fs-4">
+                                <field name="name"/>
+                                <field name="parent_id"/>
+                                <field name="sequence_id"/>
+                            </group>
+                        </strong>
+                        <group>
+                            <field name="is_company" widget="boolean_toggle"/>
+                            <field name="is_individual" widget="boolean_toggle"/>
+                            <field name="is_customer" widget="boolean_toggle"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_partner_type_search" model="ir.ui.view">
+        <field name="name">ths.partner.type.search</field>
+        <field name="model">ths.partner.type</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Search Partner Types">
+                <field name="name"/>
+                <filter name="filter_companies"
+                        string="Companies"
+                        domain="[('is_company','=',True)]"/>
+                <filter name="filter_individuals"
+                        string="Individuals"
+                        domain="[('is_individual','=',True)]"/>
+                <filter name="filter_customers"
+                        string="Customers"
+                        domain="[('is_customer','=',True)]"/>
+                <filter name="groupby_companies"
+                        string="Companies"
+                        context="{'group_by': 'is_company'}"/>
+                <filter name="groupby_individuals"
+                        string="Individuals"
+                        context="{'group_by': 'is_individual'}"/>
+                <filter name="groupby_customers"
+                        string="Customers"
+                        context="{'group_by': 'is_customer'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION + MENU -->
+    <record id="action_partner_type" model="ir.actions.act_window">
+        <field name="name">Partner Types</field>
+        <field name="res_model">ths.partner.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_partner_type_list"/>
+        <field name="search_view_id" ref="view_partner_type_search"/>
+    </record>
+    <menuitem id="menu_partner_type"
+              name="Partner Types"
+              parent="contacts.res_partner_menu_config"
+              action="action_partner_type"
+              sequence="0"/>
+</odoo>

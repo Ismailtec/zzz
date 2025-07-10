@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <record id="module_category_techouse" model="ir.module.category">
+            <field name="name">TecHouse Applications</field>
+            <field name="description">Manage access rights for TecHouse specific applications and modules.</field>
+            <field name="sequence">200</field>
+        </record>
+
+        <record id="group_ths_manage_services" model="res.groups">
+            <field name="name">Manage Services</field>
+            <field name="category_id" ref="ths_base.module_category_techouse"/>
+            <field name="comment">User group for managing dedicated service products within THS Base.</field>
+        </record>
+
+    </data>
+</odoo>
