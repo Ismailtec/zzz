@@ -12,13 +12,13 @@
                     <div style="max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 10px;">
                         <h2>Appointment Reminder</h2>
                         <p>Dear ${object.partner_id.name or ''},</p>
-                        <p>This is a reminder of your appointment:</p>
+                        <p>This is a reminder of your pet's appointment:</p>
                         <p><strong>Date:</strong> ${format_datetime(object.start, 'MMMM d, yyyy')}</p>
                         <p><strong>Time:</strong> ${format_datetime(object.start, 'hh:mm a')}</p>
                         <p><strong>Type:</strong> ${object.appointment_type_id.name or ''}</p>
 
                         % if object.practitioner_id:
-                        <p><strong>Doctor:</strong> ${object.practitioner_id.name}</p>
+                        <p><strong>Practitioner:</strong> ${object.practitioner_id.name}</p>
                         % endif
 
                         % if object.room_id:
@@ -27,19 +27,19 @@
 
                         <!-- Handle Many2many field for patients -->
                         % if object.patient_ids:
-                        <p><strong>Patients:</strong>
+                        <p><strong>Pets:</strong>
                             % for patient in object.patient_ids:
-                                ${patient.name}
-                                % if not loop.last:
-                                    ,
-                                % endif
+                            ${patient.name}
+                            % if not loop.last:
+                            ,
+                            % endif
                             % endfor
                         </p>
                         % endif
 
-                        % if object.ths_reason_for_visit:
-                        <p><strong>Reason:</strong> ${object.ths_reason_for_visit}</p>
-                        % endif
+                        <!--                        % if object.ths_reason_for_visit:-->
+                        <!--                        <p><strong>Reason:</strong> ${object.ths_reason_for_visit}</p>-->
+                        <!--                        % endif-->
 
                         <p>Please arrive 10 minutes early.</p>
                         <hr/>
@@ -52,6 +52,81 @@
                             % if object.company_id.email:
                             Email: ${object.company_id.email}<br/>
                             % endif
+                        </p>
+                    </div>
+                </div>
+            </field>
+        </record>
+
+        <record id="email_template_membership_expiry" model="mail.template">
+            <field name="name">Membership Expiry Reminder</field>
+            <field name="model_id" ref="ths_vet_base.model_vet_pet_membership"/>
+            <field name="email_from">${object.partner_id.email or ''}</field>
+            <field name="subject">Membership Expiry Reminder for ${object.patient_ids.name}</field>
+            <field name="body_html"><![CDATA[
+            <p>Dear ${object.partner_id.name},</p>
+            <p>Your membership for ${object.patient_ids.name} is expiring soon on ${object.valid_to}.</p>
+            <p>Please renew at your earliest convenience.</p>
+        ]]></field>
+        </record>
+
+        <record id="email_template_boarding_pickup_reminder" model="mail.template">
+            <field name="name">Boarding Pickup Reminder</field>
+            <field name="model_id" ref="ths_vet_base.model_vet_boarding_stay"/>
+            <field name="email_from">${object.partner_id.email or ''}</field>
+            <field name="subject">Boarding Pickup Reminder for ${object.patient_ids.name}</field>
+            <field name="body_html"><![CDATA[
+            <p>Dear ${object.partner_id.name},</p>
+            <p>Reminder: Pickup time for ${object.patient_ids.name} is ${object.expected_check_out_datetime}.</p>
+        ]]></field>
+        </record>
+
+        <record id="email_template_daily_encounter_summary" model="mail.template">
+            <field name="name">Daily Encounter Summary</field>
+            <field name="model_id" ref="base.model_res_users"/>
+            <field name="email_from">${object.company_id.email or ''}</field>
+            <field name="email_to">${object.email or ''}</field>
+            <field name="subject">Daily Encounter Summary - ${summary_data.get('date', '')}</field>
+            <field name="body_html" type="html">
+                <div style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                    <div style="max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 10px;">
+                        <h2>Daily Encounter Summary</h2>
+                        <p>Dear ${object.name},</p>
+
+                        <p>Here's your daily encounter summary for <strong>${summary_data.get('date', '')}</strong>:</p>
+
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <tr style="background-color: #f8f9fa;">
+                                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Total Encounters</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">${summary_data.get('total_encounters', 0)}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Total Revenue</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">${summary_data.get('total_revenue', 0)} ${object.company_id.currency_id.symbol}</td>
+                            </tr>
+                            <tr style="background-color: #f8f9fa;">
+                                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Pending Amount</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">${summary_data.get('pending_amount', 0)} ${object.company_id.currency_id.symbol}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: bold;">Total Patients</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">${summary_data.get('total_patients', 0)}</td>
+                            </tr>
+                        </table>
+
+                        % if summary_data.get('pending_amount', 0) > 0:
+                        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <strong>⚠️ Attention Required:</strong> There are pending payments totaling ${summary_data.get('pending_amount', 0)}
+                            ${object.company_id.currency_id.symbol}
+                        </div>
+                        % endif
+
+                        <p>For detailed reports, please check the veterinary management system.</p>
+
+                        <hr style="margin: 30px 0;"/>
+                        <p>Best regards,<br/>
+                            ${object.company_id.name}<br/>
+                            Veterinary Management System
                         </p>
                     </div>
                 </div>

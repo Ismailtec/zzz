@@ -1,0 +1,768 @@
+<odoo>
+    <data noupdate="0">
+        <!-- Species: Cat (Most popular pet in Kuwait/GCC) -->
+        <record id="vet_species_cat" model="vet.species">
+            <field name="name">Cat</field>
+            <field name="sequence">10</field>
+            <field name="color">3</field> <!-- Yellow for golden eyes -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/cat.svg"/>
+        </record>
+
+        <!-- Cat Breeds -->
+        <record id="vet_breed_cat_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_persian" model="vet.breed">
+            <field name="name">Persian</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_siamese" model="vet.breed">
+            <field name="name">Siamese</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_domestic_shorthair" model="vet.breed">
+            <field name="name">Domestic Shorthair</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_domestic_longhair" model="vet.breed">
+            <field name="name">Domestic Longhair</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="vet_breed_maine_coon" model="vet.breed">
+            <field name="name">Maine Coon</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="vet_breed_british_shorthair" model="vet.breed">
+            <field name="name">British Shorthair</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">60</field>
+        </record>
+        <record id="vet_breed_scottish_fold" model="vet.breed">
+            <field name="name">Scottish Fold</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">70</field>
+        </record>
+        <record id="vet_breed_ragdoll" model="vet.breed">
+            <field name="name">Ragdoll</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">80</field>
+        </record>
+        <record id="vet_breed_bengal" model="vet.breed">
+            <field name="name">Bengal</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">90</field>
+        </record>
+        <record id="vet_breed_abyssinian" model="vet.breed">
+            <field name="name">Abyssinian</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">100</field>
+        </record>
+        <record id="vet_breed_russian_blue" model="vet.breed">
+            <field name="name">Russian Blue</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">110</field>
+        </record>
+        <record id="vet_breed_sphinx" model="vet.breed">
+            <field name="name">Sphynx</field>
+            <field name="species_id" ref="vet_species_cat"/>
+            <field name="sequence">120</field>
+        </record>
+
+        <!-- Species: Dog -->
+        <record id="vet_species_dog" model="vet.species">
+            <field name="name">Dog</field>
+            <field name="sequence">20</field>
+            <field name="color">2</field> <!-- Orange for warmth -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/dog.svg"/>
+        </record>
+
+        <!-- Dog Breeds -->
+        <record id="vet_breed_dog_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_golden_retriever" model="vet.breed">
+            <field name="name">Golden Retriever</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_labrador_retriever" model="vet.breed">
+            <field name="name">Labrador Retriever</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_german_shepherd" model="vet.breed">
+            <field name="name">German Shepherd</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_poodle" model="vet.breed">
+            <field name="name">Poodle</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="vet_breed_husky" model="vet.breed">
+            <field name="name">Siberian Husky</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="vet_breed_shih_tzu" model="vet.breed">
+            <field name="name">Shih Tzu</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">60</field>
+        </record>
+        <record id="vet_breed_bulldog" model="vet.breed">
+            <field name="name">Bulldog</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">70</field>
+        </record>
+        <record id="vet_breed_chihuahua" model="vet.breed">
+            <field name="name">Chihuahua</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">80</field>
+        </record>
+        <record id="vet_breed_yorkshire_terrier" model="vet.breed">
+            <field name="name">Yorkshire Terrier</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">90</field>
+        </record>
+        <record id="vet_breed_beagle" model="vet.breed">
+            <field name="name">Beagle</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">100</field>
+        </record>
+        <record id="vet_breed_rottweiler" model="vet.breed">
+            <field name="name">Rottweiler</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">110</field>
+        </record>
+        <record id="vet_breed_doberman" model="vet.breed">
+            <field name="name">Doberman</field>
+            <field name="species_id" ref="vet_species_dog"/>
+            <field name="sequence">120</field>
+        </record>
+
+        <!-- Species: Bird (Very popular in GCC) -->
+        <record id="vet_species_bird" model="vet.species">
+            <field name="name">Bird</field>
+            <field name="sequence">30</field>
+            <field name="color">4</field> <!-- Light blue for sky -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/bird.svg"/>
+        </record>
+
+        <!-- Bird Breeds -->
+        <record id="vet_breed_bird_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_budgerigar" model="vet.breed">
+            <field name="name">Budgerigar</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_cockatiel" model="vet.breed">
+            <field name="name">Cockatiel</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_lovebird" model="vet.breed">
+            <field name="name">Lovebird</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_canary" model="vet.breed">
+            <field name="name">Canary</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="vet_breed_finch" model="vet.breed">
+            <field name="name">Finch</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="vet_breed_african_grey" model="vet.breed">
+            <field name="name">African Grey Parrot</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">60</field>
+        </record>
+        <record id="vet_breed_macaw" model="vet.breed">
+            <field name="name">Macaw</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">70</field>
+        </record>
+        <record id="vet_breed_conure" model="vet.breed">
+            <field name="name">Conure</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">80</field>
+        </record>
+        <record id="vet_breed_cockatoo" model="vet.breed">
+            <field name="name">Cockatoo</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">90</field>
+        </record>
+        <record id="vet_breed_parakeet" model="vet.breed">
+            <field name="name">Parakeet</field>
+            <field name="species_id" ref="vet_species_bird"/>
+            <field name="sequence">100</field>
+        </record>
+
+        <!-- Species: Fish -->
+        <record id="vet_species_fish" model="vet.species">
+            <field name="name">Fish</field>
+            <field name="sequence">40</field>
+            <field name="color">8</field> <!-- Dark blue for water -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/fish.svg"/>
+        </record>
+
+        <!-- Fish Breeds -->
+        <record id="vet_breed_fish_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_fish"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_goldfish" model="vet.breed">
+            <field name="name">Goldfish</field>
+            <field name="species_id" ref="vet_species_fish"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_betta" model="vet.breed">
+            <field name="name">Betta</field>
+            <field name="species_id" ref="vet_species_fish"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_guppy" model="vet.breed">
+            <field name="name">Guppy</field>
+            <field name="species_id" ref="vet_species_fish"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_angelfish" model="vet.breed">
+            <field name="name">Angelfish</field>
+            <field name="species_id" ref="vet_species_fish"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="vet_breed_tetra" model="vet.breed">
+            <field name="name">Tetra</field>
+            <field name="species_id" ref="vet_species_fish"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="vet_breed_cichlid" model="vet.breed">
+            <field name="name">Cichlid</field>
+            <field name="species_id" ref="vet_species_fish"/>
+            <field name="sequence">60</field>
+        </record>
+        <record id="vet_breed_clownfish" model="vet.breed">
+            <field name="name">Clownfish</field>
+            <field name="species_id" ref="vet_species_fish"/>
+            <field name="sequence">70</field>
+        </record>
+        <record id="vet_breed_molly" model="vet.breed">
+            <field name="name">Molly</field>
+            <field name="species_id" ref="vet_species_fish"/>
+            <field name="sequence">80</field>
+        </record>
+        <record id="vet_breed_platy" model="vet.breed">
+            <field name="name">Platy</field>
+            <field name="species_id" ref="vet_species_fish"/>
+            <field name="sequence">90</field>
+        </record>
+
+        <!-- Species: Falcon (Traditional GCC bird) -->
+        <record id="vet_species_falcon" model="vet.species">
+            <field name="name">Falcon</field>
+            <field name="sequence">50</field>
+            <field name="color">7</field> <!-- Medium blue for sky -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/falcon.svg"/>
+        </record>
+
+        <!-- Falcon Breeds -->
+        <record id="vet_breed_falcon_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_falcon"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_peregrine_falcon" model="vet.breed">
+            <field name="name">Peregrine Falcon</field>
+            <field name="species_id" ref="vet_species_falcon"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_saker_falcon" model="vet.breed">
+            <field name="name">Saker Falcon</field>
+            <field name="species_id" ref="vet_species_falcon"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_gyrfalcon" model="vet.breed">
+            <field name="name">Gyrfalcon</field>
+            <field name="species_id" ref="vet_species_falcon"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_lanner_falcon" model="vet.breed">
+            <field name="name">Lanner Falcon</field>
+            <field name="species_id" ref="vet_species_falcon"/>
+            <field name="sequence">40</field>
+        </record>
+
+        <!-- Species: Horse (Common in GCC) -->
+        <record id="vet_species_horse" model="vet.species">
+            <field name="name">Horse</field>
+            <field name="sequence">60</field>
+            <field name="color">1</field> <!-- Red for power/strength -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/horse.svg"/>
+        </record>
+
+        <!-- Horse Breeds -->
+        <record id="vet_breed_horse_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_horse"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_arabian" model="vet.breed">
+            <field name="name">Arabian</field>
+            <field name="species_id" ref="vet_species_horse"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_thoroughbred" model="vet.breed">
+            <field name="name">Thoroughbred</field>
+            <field name="species_id" ref="vet_species_horse"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_quarter_horse" model="vet.breed">
+            <field name="name">Quarter Horse</field>
+            <field name="species_id" ref="vet_species_horse"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_friesian" model="vet.breed">
+            <field name="name">Friesian</field>
+            <field name="species_id" ref="vet_species_horse"/>
+            <field name="sequence">40</field>
+        </record>
+
+        <!-- Species: Eagle (Cultural Animal) -->
+        <record id="vet_species_eagle" model="vet.species">
+            <field name="name">Eagle</field>
+            <field name="sequence">70</field>
+            <field name="color">5</field> <!-- Dark purple for majesty -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/eagle.svg"/>
+        </record>
+
+        <!-- Eagle Breeds -->
+        <record id="vet_breed_eagle_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_eagle"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_golden_eagle" model="vet.breed">
+            <field name="name">Golden Eagle</field>
+            <field name="species_id" ref="vet_species_eagle"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_bald_eagle" model="vet.breed">
+            <field name="name">Bald Eagle</field>
+            <field name="species_id" ref="vet_species_eagle"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_imperial_eagle" model="vet.breed">
+            <field name="name">Imperial Eagle</field>
+            <field name="species_id" ref="vet_species_eagle"/>
+            <field name="sequence">30</field>
+        </record>
+
+        <!-- Species: Rabbit -->
+        <record id="vet_species_rabbit" model="vet.species">
+            <field name="name">Rabbit</field>
+            <field name="sequence">80</field>
+            <field name="color">10</field> <!-- Green for vegetation -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/rabbit.svg"/>
+        </record>
+
+        <!-- Rabbit Breeds -->
+        <record id="vet_breed_rabbit_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_rabbit"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_holland_lop" model="vet.breed">
+            <field name="name">Holland Lop</field>
+            <field name="species_id" ref="vet_species_rabbit"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_netherland_dwarf" model="vet.breed">
+            <field name="name">Netherland Dwarf</field>
+            <field name="species_id" ref="vet_species_rabbit"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_mini_lop" model="vet.breed">
+            <field name="name">Mini Lop</field>
+            <field name="species_id" ref="vet_species_rabbit"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_lionhead" model="vet.breed">
+            <field name="name">Lionhead</field>
+            <field name="species_id" ref="vet_species_rabbit"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="vet_breed_angora" model="vet.breed">
+            <field name="name">Angora</field>
+            <field name="species_id" ref="vet_species_rabbit"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="vet_breed_rex_rabbit" model="vet.breed">
+            <field name="name">Rex</field>
+            <field name="species_id" ref="vet_species_rabbit"/>
+            <field name="sequence">60</field>
+        </record>
+
+        <!-- Species: Guinea Pig -->
+        <record id="vet_species_guinea_pig" model="vet.species">
+            <field name="name">Guinea Pig</field>
+            <field name="sequence">90</field>
+            <field name="color">6</field> <!-- Salmon pink for their noses -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/pig.svg"/>
+        </record>
+
+        <!-- Guinea Pig Breeds -->
+        <record id="vet_breed_guinea_pig_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_guinea_pig"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_american_guinea_pig" model="vet.breed">
+            <field name="name">American</field>
+            <field name="species_id" ref="vet_species_guinea_pig"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_abyssinian_guinea_pig" model="vet.breed">
+            <field name="name">Abyssinian</field>
+            <field name="species_id" ref="vet_species_guinea_pig"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_peruvian_guinea_pig" model="vet.breed">
+            <field name="name">Peruvian</field>
+            <field name="species_id" ref="vet_species_guinea_pig"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_teddy_guinea_pig" model="vet.breed">
+            <field name="name">Teddy</field>
+            <field name="species_id" ref="vet_species_guinea_pig"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="vet_breed_skinny_pig" model="vet.breed">
+            <field name="name">Skinny Pig</field>
+            <field name="species_id" ref="vet_species_guinea_pig"/>
+            <field name="sequence">50</field>
+        </record>
+
+        <!-- Species: Hamster -->
+        <record id="vet_species_hamster" model="vet.species">
+            <field name="name">Hamster</field>
+            <field name="sequence">100</field>
+            <field name="color">3</field> <!-- Yellow for golden hamsters -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/hamster.svg"/>
+        </record>
+
+        <!-- Hamster Breeds -->
+        <record id="vet_breed_hamster_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_hamster"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_syrian_hamster" model="vet.breed">
+            <field name="name">Syrian</field>
+            <field name="species_id" ref="vet_species_hamster"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_dwarf_hamster" model="vet.breed">
+            <field name="name">Dwarf Russian</field>
+            <field name="species_id" ref="vet_species_hamster"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_roborovski_hamster" model="vet.breed">
+            <field name="name">Roborovski</field>
+            <field name="species_id" ref="vet_species_hamster"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_chinese_hamster" model="vet.breed">
+            <field name="name">Chinese</field>
+            <field name="species_id" ref="vet_species_hamster"/>
+            <field name="sequence">40</field>
+        </record>
+
+        <!-- Species: Camel (Traditional GCC) -->
+        <record id="vet_species_camel" model="vet.species">
+            <field name="name">Camel</field>
+            <field name="sequence">110</field>
+            <field name="color">2</field> <!-- Orange for desert -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/camel.svg"/>
+        </record>
+
+        <!-- Camel Breeds -->
+        <record id="vet_breed_camel_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_camel"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_dromedary" model="vet.breed">
+            <field name="name">Dromedary (One-humped)</field>
+            <field name="species_id" ref="vet_species_camel"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_racing_camel" model="vet.breed">
+            <field name="name">Racing Camel</field>
+            <field name="species_id" ref="vet_species_camel"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_bactrian_camel" model="vet.breed">
+            <field name="name">Bactrian (Two-humped)</field>
+            <field name="species_id" ref="vet_species_camel"/>
+            <field name="sequence">30</field>
+        </record>
+
+        <!-- Species: Turtle -->
+        <record id="vet_species_turtle" model="vet.species">
+            <field name="name">Turtle</field>
+            <field name="sequence">120</field>
+            <field name="color">10</field> <!-- Green for nature -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/turtle.svg"/>
+        </record>
+
+        <!-- Turtle Breeds -->
+        <record id="vet_breed_turtle_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_turtle"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_red_eared_slider" model="vet.breed">
+            <field name="name">Red-Eared Slider</field>
+            <field name="species_id" ref="vet_species_turtle"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_russian_tortoise" model="vet.breed">
+            <field name="name">Russian Tortoise</field>
+            <field name="species_id" ref="vet_species_turtle"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_hermann_tortoise" model="vet.breed">
+            <field name="name">Hermann's Tortoise</field>
+            <field name="species_id" ref="vet_species_turtle"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_box_turtle" model="vet.breed">
+            <field name="name">Box Turtle</field>
+            <field name="species_id" ref="vet_species_turtle"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="vet_breed_painted_turtle" model="vet.breed">
+            <field name="name">Painted Turtle</field>
+            <field name="species_id" ref="vet_species_turtle"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="vet_breed_map_turtle" model="vet.breed">
+            <field name="name">Map Turtle</field>
+            <field name="species_id" ref="vet_species_turtle"/>
+            <field name="sequence">60</field>
+        </record>
+        <record id="vet_breed_sulcata_tortoise" model="vet.breed">
+            <field name="name">Sulcata Tortoise</field>
+            <field name="species_id" ref="vet_species_turtle"/>
+            <field name="sequence">70</field>
+        </record>
+
+        <!-- Species: Snake -->
+        <record id="vet_species_snake" model="vet.species">
+            <field name="name">Snake</field>
+            <field name="sequence">130</field>
+            <field name="color">10</field> <!-- Green for nature -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/snake.svg"/>
+        </record>
+
+        <!-- Snake Breeds -->
+        <record id="vet_breed_snake_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_snake"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_ball_python" model="vet.breed">
+            <field name="name">Ball Python</field>
+            <field name="species_id" ref="vet_species_snake"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_corn_snake" model="vet.breed">
+            <field name="name">Corn Snake</field>
+            <field name="species_id" ref="vet_species_snake"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_king_snake" model="vet.breed">
+            <field name="name">King Snake</field>
+            <field name="species_id" ref="vet_species_snake"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_milk_snake" model="vet.breed">
+            <field name="name">Milk Snake</field>
+            <field name="species_id" ref="vet_species_snake"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="vet_breed_boa_constrictor" model="vet.breed">
+            <field name="name">Boa Constrictor</field>
+            <field name="species_id" ref="vet_species_snake"/>
+            <field name="sequence">50</field>
+        </record>
+        <record id="vet_breed_royal_python" model="vet.breed">
+            <field name="name">Royal Python</field>
+            <field name="species_id" ref="vet_species_snake"/>
+            <field name="sequence">60</field>
+        </record>
+        <record id="vet_breed_garter_snake" model="vet.breed">
+            <field name="name">Garter Snake</field>
+            <field name="species_id" ref="vet_species_snake"/>
+            <field name="sequence">70</field>
+        </record>
+
+        <!-- Species: Frog -->
+        <record id="vet_species_frog" model="vet.species">
+            <field name="name">Frog</field>
+            <field name="sequence">140</field>
+            <field name="color">10</field> <!-- Green for nature -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/frog.svg"/>
+        </record>
+
+        <!-- Frog Breeds -->
+        <record id="vet_breed_frog_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_frog"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_tree_frog" model="vet.breed">
+            <field name="name">Tree Frog</field>
+            <field name="species_id" ref="vet_species_frog"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_poison_dart_frog" model="vet.breed">
+            <field name="name">Poison Dart Frog</field>
+            <field name="species_id" ref="vet_species_frog"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_pacman_frog" model="vet.breed">
+            <field name="name">Pacman Frog</field>
+            <field name="species_id" ref="vet_species_frog"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_whites_tree_frog" model="vet.breed">
+            <field name="name">White's Tree Frog</field>
+            <field name="species_id" ref="vet_species_frog"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="vet_breed_fire_bellied_toad" model="vet.breed">
+            <field name="name">Fire-Bellied Toad</field>
+            <field name="species_id" ref="vet_species_frog"/>
+            <field name="sequence">50</field>
+        </record>
+
+        <!-- Species: Reptile (General) -->
+        <record id="vet_species_reptile" model="vet.species">
+            <field name="name">Reptile</field>
+            <field name="sequence">150</field>
+            <field name="color">10</field> <!-- Green for typical coloration -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/reptile.svg"/>
+        </record>
+
+        <!-- Reptile Breeds -->
+        <record id="vet_breed_reptile_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_reptile"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_bearded_dragon" model="vet.breed">
+            <field name="name">Bearded Dragon</field>
+            <field name="species_id" ref="vet_species_reptile"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_leopard_gecko" model="vet.breed">
+            <field name="name">Leopard Gecko</field>
+            <field name="species_id" ref="vet_species_reptile"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_iguana" model="vet.breed">
+            <field name="name">Iguana</field>
+            <field name="species_id" ref="vet_species_reptile"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="vet_breed_chameleon" model="vet.breed">
+            <field name="name">Chameleon</field>
+            <field name="species_id" ref="vet_species_reptile"/>
+            <field name="sequence">40</field>
+        </record>
+        <record id="vet_breed_monitor_lizard" model="vet.breed">
+            <field name="name">Monitor Lizard</field>
+            <field name="species_id" ref="vet_species_reptile"/>
+            <field name="sequence">50</field>
+        </record>
+
+        <!-- Species: Goat (Some keep as pets in GCC) -->
+        <record id="vet_species_goat" model="vet.species">
+            <field name="name">Goat</field>
+            <field name="sequence">160</field>
+            <field name="color">11</field> <!-- Purple for uniqueness -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/goat.svg"/>
+        </record>
+
+        <!-- Goat Breeds -->
+        <record id="vet_breed_goat_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_goat"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_nubian_goat" model="vet.breed">
+            <field name="name">Nubian</field>
+            <field name="species_id" ref="vet_species_goat"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_boer_goat" model="vet.breed">
+            <field name="name">Boer</field>
+            <field name="species_id" ref="vet_species_goat"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_nigerian_dwarf" model="vet.breed">
+            <field name="name">Nigerian Dwarf</field>
+            <field name="species_id" ref="vet_species_goat"/>
+            <field name="sequence">30</field>
+        </record>
+
+        <!-- Species: Sheep -->
+        <record id="vet_species_sheep" model="vet.species">
+            <field name="name">Sheep</field>
+            <field name="sequence">170</field>
+            <field name="color">4</field> <!-- Light blue for fluffy white wool -->
+            <field name="image" type="base64" file="ths_vet_base/static/src/img/species/sheep.svg"/>
+        </record>
+
+        <!-- Sheep Breeds -->
+        <record id="vet_breed_sheep_other" model="vet.breed">
+            <field name="name">Other</field>
+            <field name="species_id" ref="vet_species_sheep"/>
+            <field name="sequence">1</field>
+        </record>
+        <record id="vet_breed_awassi" model="vet.breed">
+            <field name="name">Awassi</field>
+            <field name="species_id" ref="vet_species_sheep"/>
+            <field name="sequence">10</field>
+        </record>
+        <record id="vet_breed_najdi" model="vet.breed">
+            <field name="name">Najdi</field>
+            <field name="species_id" ref="vet_species_sheep"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="vet_breed_barbari" model="vet.breed">
+            <field name="name">Barbari</field>
+            <field name="species_id" ref="vet_species_sheep"/>
+            <field name="sequence">30</field>
+        </record>
+    </data>
+</odoo>

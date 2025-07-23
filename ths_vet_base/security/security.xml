@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <record id="group_vet_user" model="res.groups">
+            <field name="name">Veterinary User (THS)</field>
+            <field name="category_id" ref="ths_base.module_category_techouse"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user')), (4, ref('hr.group_hr_user'))]"/>
+            <field name="comment">THS Veterinary User: Can view Veterinary related information and perform basic operations.</field>
+        </record>
+
+        <record id="group_vet_manager" model="res.groups">
+            <field name="name">Veterinary Manager (THS)</field>
+            <field name="category_id" ref="ths_base.module_category_techouse"/>
+            <field name="implied_ids" eval="[(4, ref('group_vet_user'))]"/>
+            <field name="comment">THS Veterinary Manager: Full access to THS Veterinary functionalities.</field>
+        </record>
+
+        <record id="group_vet_receptionist" model="res.groups">
+            <field name="name">Veterinary Receptionist (THS)</field>
+            <field name="category_id" ref="ths_base.module_category_techouse"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">THS Veterinary Receptionist: Can handle appointments, basic pet records, and front desk operations.</field>
+        </record>
+
+    </data>
+</odoo>

@@ -135,12 +135,77 @@
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
-    <record id="seq_partner_ref_walkin" model="ir.sequence">
-        <field name="name">Walk-in Patient</field>
-        <field name="code">res.partner.ref.walkin</field>
-        <field name="prefix">WALK-</field>
+    <record id="seq_partner_ref_pet_owner" model="ir.sequence">
+        <field name="name">Pet Owner</field>
+        <field name="code">res.partner.ref.pet.owner</field>
+        <field name="prefix">OWN-</field>
         <field name="padding">6</field>
         <field name="company_id" eval="False"/>
     </record>
+
+    <record id="seq_partner_ref_pet" model="ir.sequence">
+        <field name="name">Pet File</field>
+        <field name="code">res.partner.ref.pet</field>
+        <field name="prefix">PET-</field>
+        <field name="padding">6</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_vet_boarding_stay" model="ir.sequence">
+        <field name="name">Boarding Stay</field>
+        <field name="code">vet.boarding.stay</field>
+        <field name="prefix">BRD-</field>
+        <field name="padding">7</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_product_sub_type_grm" model="ir.sequence">
+        <field name="name">Product Sub Type - Grooming (GRM)</field>
+        <field name="code">product.sub.type.seq.GRM</field>
+        <field name="prefix">GRM-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_product_sub_type_brd" model="ir.sequence">
+        <field name="name">Product Sub Type - Boarding (BRD)</field>
+        <field name="code">product.sub.type.seq.BRD</field>
+        <field name="prefix">BRD-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_product_sub_type_member" model="ir.sequence">
+        <field name="name">Product Sub Type - Membership (MEM)</field>
+        <field name="code">product.sub.type.seq.MEM</field>
+        <field name="prefix">MEM-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_park_checkin" model="ir.sequence">
+        <field name="name">Park Check-in</field>
+        <field name="code">park.checkin</field>
+        <field name="prefix">PARK-</field>
+        <field name="padding">6</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_vet_pet_membership" model="ir.sequence">
+        <field name="name">Pet Membership</field>
+        <field name="code">vet.pet.membership</field>
+        <field name="prefix">MEM-</field>
+        <field name="padding">6</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_vet_treatment_plan" model="ir.sequence">
+        <field name="name">Treatment Plan</field>
+        <field name="code">vet.treatment.plan</field>
+        <field name="prefix">TRP-</field>
+        <field name="padding">7</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
 
 </odoo>

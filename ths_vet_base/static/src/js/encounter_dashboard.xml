@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates>
+    <t t-name="ths_vet_base.vet_encounter_dashboard_template">
+        <div class="o_vet_dashboard">
+            <div class="container-fluid">
+                <!-- Header -->
+                <div class="row">
+                    <div class="col-12">
+                        <h1 class="o_dashboard_title">Encounter Dashboard</h1>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 class="card-title">Today's Encounters</h4>
+                                        <h2 class="mb-0" t-esc="state.dashboardData?.daily_encounters || 0"/>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fa fa-stethoscope fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 class="card-title">Daily Revenue</h4>
+                                        <h2 class="mb-0" t-esc="'$' + (state.dashboardData?.daily_revenue || 0).toLocaleString()"/>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fa fa-dollar-sign fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 class="card-title">Patients Today</h4>
+                                        <h2 class="mb-0" t-esc="state.dashboardData?.daily_patients || 0"/>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fa fa-paw fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4 class="card-title">Pending Payments</h4>
+                                        <h2 class="mb-0" t-esc="'$' + (state.dashboardData?.pending_amount || 0).toLocaleString()"/>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fa fa-clock fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Encounters Over Time</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas t-ref="encountersChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Encounter Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas t-ref="statusChart" width="200" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Quick Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <button type="button" class="btn btn-primary btn-block mb-2" t-on-click="() => this.executeAction('action_medical_encounter_vet')">
+                                            <i class="fa fa-list"></i> View All Encounters
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button type="button" class="btn btn-success btn-block mb-2" t-on-click="() => this.executeAction('action_vet_encounter_line_item')">
+                                            <i class="fa fa-receipt"></i> Billing Items
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button type="button" class="btn btn-info btn-block mb-2" t-on-click="() => this.executeAction('action_encounter_analytics_wizard')">
+                                            <i class="fa fa-chart-bar"></i> Analytics
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button type="button" class="btn btn-warning btn-block mb-2" t-on-click="refreshDashboard">
+                                            <i class="fa fa-refresh"></i> Refresh Data
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

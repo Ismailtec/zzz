@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Boarding Pickup Reminders -->
+        <record id="cron_boarding_pickup_reminders" model="ir.cron">
+            <field name="name">Boarding Pickup Reminders</field>
+            <field name="model_id" ref="model_vet_boarding_stay"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_boarding_pickup_reminders()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">True</field>
+        </record>
+
+        <!-- Boarding Schedule Reminders -->
+        <record id="cron_boarding_schedule_reminders" model="ir.cron">
+            <field name="name">Boarding Schedule Reminders</field>
+            <field name="model_id" ref="model_vet_boarding_stay"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_schedule_reminders()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="ir_cron_appointment_reminder" model="ir.cron">
+            <field name="name">Medical: Send Appointment Reminders</field>
+            <field name="model_id" ref="model_calendar_event"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_send_appointment_reminders()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

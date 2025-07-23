@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ths.hr.employee.type.config -->
+    <data>
+        <record id="view_ths_hr_employee_type_config_list" model="ir.ui.view">
+            <field name="name">ths.hr.employee.type.config.list</field>
+            <field name="model">ths.hr.employee.type.config</field>
+            <field name="arch" type="xml">
+                <list string="Employee Type Medical Config" create="false" editable="bottom">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name" readonly="1"/>
+                    <field name="employee_type_key" readonly="1"/>
+                    <field name="is_medical"/>
+                    <field name="employee_count" readonly="1"/>
+                    <field name="active" widget="boolean_toggle" column_invisible="1"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_ths_hr_employee_type_config_form" model="ir.ui.view">
+            <field name="name">ths.hr.employee.type.config.form</field>
+            <field name="model">ths.hr.employee.type.config</field>
+            <field name="arch" type="xml">
+                <form string="Employee Type Config" create="false">
+                    <sheet>
+                        <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+
+                        <div class="oe_button_box" name="button_box">
+                            <button class="oe_stat_button" type="object" name="action_view_employees" icon="fa-users" invisible="employee_count == 0">
+                                <field name="employee_count" widget="statinfo" string="Employees"/>
+                            </button>
+                        </div>
+
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="employee_type_key" readonly="1"/>
+                                <field name="is_medical"/>
+                            </group>
+                            <group>
+                                <field name="sequence"/>
+                                <field name="active" invisible="1"/>
+                            </group>
+                        </group>
+                        <field name="description" placeholder="Description of this employee type and its medical relevance..."/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_ths_hr_employee_type_config_search" model="ir.ui.view">
+            <field name="name">ths.hr.employee.type.config.search</field>
+            <field name="model">ths.hr.employee.type.config</field>
+            <field name="arch" type="xml">
+                <search string="Employee Type Config">
+                    <field name="name"/>
+                    <field name="employee_type_key"/>
+                    <filter string="Medical Types" name="filter_medical" domain="[('is_medical', '=', True)]"/>
+                    <filter string="Non-Medical Types" name="filter_non_medical" domain="[('is_medical', '=', False)]"/>
+                    <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Is Medical" name="groupby_is_medical" context="{'group_by': 'is_medical'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_ths_hr_employee_type_config" model="ir.actions.act_window">
+            <field name="name">Employee Type Medical Config</field>
+            <field name="res_model">ths.hr.employee.type.config</field>
+            <field name="view_mode">list,form</field>
+            <field name="context">{'create': False}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Configure Medical Status Defaults
+                </p>
+                <p>
+                    Define which standard employee types should be considered medical staff by default.
+                    Creation of new type keys is disabled; this configuration maps existing keys.
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="menu_ths_hr_employee_type_config"
+                  name="Medical Type Defaults"
+                  parent="hr.menu_human_resources_configuration"
+                  action="action_ths_hr_employee_type_config"
+                  sequence="99"/>
+    </data>
+
+
+    <!-- hr.department -->
+    <record id="view_department_form_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">hr.department.form.inherit.ths.medical</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="ths_hr.view_department_form_inherit_ths_hr"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_medical_staff" icon="fa-user-md" invisible="not is_medical_dep or medical_staff_count == 0">
+                    <field name="medical_staff_count" widget="statinfo" string="Medical Staff"/>
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_view_treatment_rooms" icon="fa-bed" invisible="not is_medical_dep or treatment_room_count == 0">
+                    <field name="treatment_room_count" widget="statinfo" string="Treatment Rooms"/>
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_view_appointment_types" icon="fa-calendar-check-o"
+                        invisible="not is_medical_dep or appointment_type_count == 0">
+                    <field name="appointment_type_count" widget="statinfo" string="Appointment Types"/>
+                </button>
+            </xpath>
+            <xpath expr="//field[@name='color']" position="after">
+                <field name="is_medical_dep" widget="boolean_toggle"/>
+                <field name="department_head_medical" invisible="not is_medical_dep" options="{'no_create': True, 'no_quick_create': True}"/>
+                <field name="medical_specialties" invisible="not is_medical_dep" placeholder="List medical specialties offered by this department..."/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_department_list_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">hr.department.list.inherit.ths.medical</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="ths_hr.view_department_tree_inherit_ths_hr"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='ths_inv_location_id']" position="after">
+                <field name="is_medical_dep" optional="show" widget="boolean_toggle"/>
+                <field name="medical_staff_count" optional="show" string="Medical Staff"/>
+                <field name="treatment_room_count" optional="show" string="Rooms"/>
+                <field name="department_head_medical" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_department_filter_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">hr.department.search.inherit.ths.medical</field>
+        <field name="model">hr.department</field>
+        <field name="inherit_id" ref="ths_hr.view_department_filter_inherit_ths_hr"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='ths_inv_location_id']" position="after">
+                <field name="is_medical_dep"/>
+                <field name="department_head_medical"/>
+                <field name="medical_specialties"/>
+            </xpath>
+            <xpath expr="//filter[@name='filter_missing_analytic']" position="after">
+                <separator/>
+                <filter string="Medical Departments" name="filter_is_medical" domain="[('is_medical_dep', '=', True)]"/>
+                <filter string="Non-Medical Departments" name="filter_non_medical" domain="[('is_medical_dep', '=', False)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='groupby_analytic']" position="after">
+                <filter string="Is Medical Department" name="groupby_is_medical" context="{'group_by': 'is_medical_dep'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- vet.treatment.room -->
+    <record id="view_treatment_room_list" model="ir.ui.view">
+        <field name="name">vet.treatment.room.list</field>
+        <field name="model">vet.treatment.room</field>
+        <field name="arch" type="xml">
+            <list string="Treatment Rooms" default_order="sequence,name">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="department_id"/>
+                <field name="room_type" optional="show"/>
+                <field name="max_capacity" optional="show"/>
+                <field name="medical_staff_ids" widget="many2many_tags" optional="show"/>
+                <field name="add_to_calendar_resource" optional="show" widget="boolean_toggle"/>
+                <field name="maintenance_mode" optional="show" widget="boolean_toggle" decoration-warning="maintenance_mode == True"/>
+                <field name="appointment_count" optional="show"/>
+                <field name="active" widget="boolean_toggle" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_treatment_room_form" model="ir.ui.view">
+        <field name="name">vet.treatment.room.form</field>
+        <field name="model">vet.treatment.room</field>
+        <field name="arch" type="xml">
+            <form string="Treatment Room">
+                <header>
+                    <button name="action_toggle_maintenance" string="Toggle Maintenance" type="object" class="btn-warning" help="Toggle maintenance mode for this room"/>
+                </header>
+
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                    <widget name="web_ribbon" title="Under Maintenance" bg_color="bg-warning" invisible="not maintenance_mode"/>
+
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_appointments" icon="fa-calendar" invisible="appointment_count == 0">
+                            <field name="appointment_count" widget="statinfo" string="Appointments"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="e.g., Room 101, Consultation Room A..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="department_id" options="{'no_create': True, 'no_quick_create': True}"/>
+                            <field name="room_type"/>
+                            <field name="max_capacity"/>
+                            <field name="room_size"/>
+                        </group>
+                        <group>
+                            <field name="add_to_calendar_resource"/>
+                            <field name="maintenance_mode" widget="boolean_toggle"/>
+                            <field name="active" invisible="1"/>
+                            <field name="sequence" groups="base.group_no_one"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Staff Assignment" name="staff">
+                            <field name="medical_staff_ids" widget="many2many"
+                                   placeholder="Add medical staff who can use this room...">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="job_title"/>
+                                    <field name="employee_type"/>
+                                    <field name="work_email"/>
+                                    <field name="medical_specialties"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Equipment &amp; Setup" name="equipment">
+                            <group>
+                                <field name="equipment_available"
+                                       placeholder="List medical equipment available in this room..."/>
+                            </group>
+                        </page>
+
+                        <page string="Notes &amp; Information" name="notes">
+                            <field name="notes" placeholder="Add internal notes about the room..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_treatment_room_search" model="ir.ui.view">
+        <field name="name">vet.treatment.room.search</field>
+        <field name="model">vet.treatment.room</field>
+        <field name="arch" type="xml">
+            <search string="Search Treatment Rooms">
+                <field name="name" string="Room"/>
+                <field name="department_id"/>
+                <field name="room_type"/>
+                <field name="medical_staff_ids" string="Assigned Staff"/>
+                <field name="equipment_available"/>
+
+                <!-- Filters -->
+                <filter string="Available" name="filter_available" domain="[('maintenance_mode', '=', False), ('active', '=', True)]"/>
+                <filter string="Under Maintenance" name="filter_maintenance" domain="[('maintenance_mode', '=', True)]"/>
+                <filter string="Add to Calendar" name="filter_add_to_calendar" domain="[('add_to_calendar_resource', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+
+                <!-- Group by -->
+                <group expand="0" string="Group By">
+                    <filter string="Department" name="groupby_department" context="{'group_by': 'department_id'}"/>
+                    <filter string="Room Type" name="groupby_room_type" context="{'group_by': 'room_type'}"/>
+                    <filter string="Calendar Integration" name="groupby_calendar" context="{'group_by': 'add_to_calendar_resource'}"/>
+                    <filter string="Maintenance Status" name="groupby_maintenance" context="{'group_by': 'maintenance_mode'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_treatment_room_kanban" model="ir.ui.view">
+        <field name="name">vet.treatment.room.kanban</field>
+        <field name="model">vet.treatment.room</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="department_id"/>
+                <field name="room_type"/>
+                <field name="max_capacity"/>
+                <field name="maintenance_mode"/>
+                <field name="appointment_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click #{record.maintenance_mode.raw_value ? 'o_kanban_color_5' : ''}">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <div class="o_kanban_record_subtitle">
+                                        <field name="department_id"/>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_manage_button_section">
+                                    <a class="o_kanban_manage_toggle_button" href="#">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="o_kanban_record_body">
+                                <div class="o_kanban_tags_section">
+                                    <span class="badge rounded-pill text-bg-info">
+                                        <field name="room_type"/>
+                                    </span>
+                                    <span t-if="record.maintenance_mode.raw_value"
+                                          class="badge rounded-pill text-bg-warning">
+                                        Maintenance
+                                    </span>
+                                </div>
+
+                                <div class="mt-2">
+                                    <i class="fa fa-users" title="Capacity"/>
+                                    <field name="max_capacity"/> capacity
+                                </div>
+
+                                <div t-if="record.appointment_count.raw_value > 0">
+                                    <i class="fa fa-calendar" title="Appointments"/>
+                                    <field name="appointment_count"/> appointments
+                                </div>
+                            </div>
+
+                            <div class="o_kanban_manage_button_section o_kanban_manage_view">
+                                <a type="edit">Edit</a>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_treatment_room" model="ir.actions.act_window">
+        <field name="name">Treatment Rooms</field>
+        <field name="res_model">vet.treatment.room</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_treatment_room_search"/>
+        <field name="context">{'search_default_filter_available': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new Treatment Room
+            </p>
+            <p>
+                Define the rooms available in your medical departments for consultations, procedures, etc.
+            </p>
+        </field>
+    </record>
+
+    <!-- hr.employee -->
+    <record id="view_employee_form_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.ths.medical</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="ths_hr.view_employee_form_inherit_ths_hr"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_appointments" icon="fa-calendar" invisible="not is_medical or appointment_count == 0">
+                    <field name="appointment_count" widget="statinfo" string="Appointments"/>
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_view_patients" icon="fa-paw" invisible="not is_medical or patient_count == 0">
+                    <field name="patient_count" widget="statinfo" string="Patients"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//page[@name='hr_settings']//field[@name='employee_type']" position="after">
+                <field name="is_medical" readonly="0"/>
+                <field name="add_to_calendar" invisible="not is_medical"/>
+            </xpath>
+
+            <xpath expr="//page[@name='hr_settings']" position="after">
+                <page string="Medical Information" name="medical_info" invisible="not is_medical">
+                    <group>
+                        <group string="Medical Credentials">
+                            <field name="medical_license_number"/>
+                            <field name="medical_license_expiry" decoration-danger="medical_license_expiry and medical_license_expiry &lt; context_today()"/>
+                        </group>
+                        <group string="Appointment Configuration">
+                            <field name="appointment_resource_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Specializations &amp; Preferences">
+                        <field name="medical_specialties" placeholder="e.g., Surgery, Internal Medicine, Dentistry..."/>
+                        <field name="preferred_treatment_rooms" widget="many2many_tags" options="{'no_create': True, 'no_quick_create': True}"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_list_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">hr.employee.list.inherit.ths.medical</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="ths_hr.view_employee_tree_inherit_ths_hr"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='employee_type']" position="after">
+                <field name="is_medical" optional="show" widget="boolean_toggle"/>
+                <field name="add_to_calendar" optional="show" widget="boolean_toggle"/>
+                <field name="medical_specialties" optional="hide"/>
+                <field name="medical_license_expiry" optional="hide" decoration-danger="medical_license_expiry and medical_license_expiry &lt; context_today()"/>
+                <field name="appointment_count" optional="hide"/>
+                <field name="patient_count" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_filter_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">hr.employee.search.inherit.ths.medical</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="ths_hr.view_employee_filter_inherit_ths_hr"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <field name="is_medical"/>
+                <field name="add_to_calendar"/>
+                <field name="medical_specialties"/>
+                <field name="medical_license_number"/>
+            </xpath>
+            <xpath expr="//filter[@name='inactive']" position="before">
+                <filter string="Medical Staff" name="filter_medical_staff" domain="[('is_medical', '=', True)]"/>
+                <filter string="In Calendar" name="filter_add_to_calendar" domain="[('add_to_calendar', '=', True)]"/>
+                <filter string="License Expiring Soon" name="filter_license_expiring"
+                        domain="[('medical_license_expiry', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d')),
+                                ('medical_license_expiry', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Expired License" name="filter_license_expired" domain="[('medical_license_expiry', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_job']" position="after">
+                <filter string="Medical Status" name="groupby_is_medical" context="{'group_by': 'is_medical'}"/>
+                <filter string="Available on Calendar" name="groupby_add_to_calendar" context="{'group_by': 'add_to_calendar'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_employee_medical_kanban" model="ir.ui.view">
+        <field name="name">hr.employee.medical.kanban</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <kanban class="o_hr_employee_kanban" sample="1">
+                <field name="id"/>
+                <field name="is_medical"/>
+                <field name="medical_specialties"/>
+                <field name="appointment_count"/>
+                <field name="patient_count"/>
+                <field name="medical_license_expiry"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_image">
+                                <img t-att-src="kanban_image('hr.employee', 'avatar_128', record.id.raw_value)"
+                                     alt="Employee" class="o_kanban_image_inner_pic"/>
+                            </div>
+
+                            <div class="oe_kanban_details">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                        </strong>
+                                        <div class="o_kanban_record_subtitle">
+                                            <field name="job_title"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="o_kanban_record_body">
+                                    <div t-if="record.medical_specialties.raw_value" class="mb-2">
+                                        <i class="fa fa-stethoscope text-muted" title="Specialties"/>
+                                        <field name="medical_specialties"/>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-6" t-if="record.appointment_count.raw_value > 0">
+                                            <i class="fa fa-calendar text-muted" title="Appointments"/>
+                                            <field name="appointment_count"/> appointments
+                                        </div>
+                                        <div class="col-6" t-if="record.patient_count.raw_value > 0">
+                                            <i class="fa fa-paw text-muted" title="Patients"/>
+                                            <field name="patient_count"/> patients
+                                        </div>
+                                    </div>
+
+                                    <div t-if="record.medical_license_expiry.raw_value" class="mt-2">
+                                        <span t-attf-class="badge rounded-pill
+                                                          #{record.medical_license_expiry.raw_value &lt; new Date().toISOString().split('T')[0] ? 'text-bg-danger' : 'text-bg-info'}">
+                                            License: <field name="medical_license_expiry"/>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_medical_staff" model="ir.actions.act_window">
+        <field name="name">Medical Staff</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('is_medical', '=', True)]</field>
+        <field name="context">{'default_is_medical': True}</field>
+        <field name="view_id" ref="view_employee_medical_kanban"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add medical staff member
+            </p>
+            <p>Medical staff can be assigned to appointments and treatment rooms</p>
+        </field>
+    </record>
+
+
+</odoo>

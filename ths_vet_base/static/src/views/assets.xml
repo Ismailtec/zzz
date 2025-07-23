@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <!-- Dashboard Assets Bundle -->
+        <record id="vet_dashboard_assets" model="ir.asset">
+            <field name="name">Veterinary Dashboard Assets</field>
+            <field name="bundle">web.assets_backend</field>
+            <field name="path">ths_vet_base/static/src/js/executive_dashboard.js</field>
+        </record>
+
+        <record id="vet_executive_dashboard" model="ir.asset">
+            <field name="name">Veterinary Dashboard Templates</field>
+            <field name="bundle">web.assets_backend</field>
+            <field name="path">ths_vet_base/static/src/js/executive_dashboard.xml</field>
+        </record>
+
+        <record id="vet_dashboard_css" model="ir.asset">
+            <field name="name">Veterinary Dashboard CSS</field>
+            <field name="bundle">web.assets_backend</field>
+            <field name="path">ths_vet_base/static/src/style.scss</field>
+        </record>
+
+        <!-- Chart.js Library -->
+        <record id="chartjs_library" model="ir.asset">
+            <field name="name">Chart.js Library</field>
+            <field name="bundle">web.assets_backend</field>
+            <field name="path">https://cdn.jsdelivr.net/npm/chart.js</field>
+        </record>
+</odoo>

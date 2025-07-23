@@ -1,0 +1,560 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- appointment_resource -->
+    <record id="appointment_resource_view_form_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">appointment.resource.form.inherit.ths.medical</field>
+        <field name="model">appointment.resource</field>
+        <field name="inherit_id" ref="appointment.appointment_resource_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='capacity']" position="before">
+                <field name="resource_category" required="1"/>
+                <field name="employee_id" invisible="resource_category != 'practitioner'" readonly="1" options="{'no_create': True, 'no_quick_create': True}"/>
+                <field name="treatment_room_id" invisible="resource_category != 'location'" readonly="1" options="{'no_create': True, 'no_quick_create': True}"/>
+                <field name="medical_specialties" invisible="resource_category != 'practitioner'" placeholder="e.g., Surgery, Dentistry, Veterinary"/>
+                <field name="room_capacity" invisible="resource_category != 'location'"/>
+            </xpath>
+            <xpath expr="//field[@name='resource_calendar_id']" position="after">
+                <field name="ths_department_id" string="Department" readonly="1" invisible="not ths_department_id"/>
+            </xpath>
+            <xpath expr="//field[@name='capacity']" position="after">
+                <field name="equipment_available" invisible="resource_category != 'location'" placeholder="List equipment available in this room..."/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="appointment_resource_view_list_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">appointment.resource.list.inherit.ths.medical</field>
+        <field name="model">appointment.resource</field>
+        <field name="inherit_id" ref="appointment.appointment_resource_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='capacity']" position="before">
+                <field name="resource_category" optional="show"/>
+                <field name="employee_id" optional="show"/>
+                <field name="treatment_room_id" optional="show"/>
+                <field name="ths_department_id" string="Department" optional="show" readonly="1"/>
+                <field name="medical_specialties" optional="hide"/>
+                <field name="company_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="appointment_resource_view_search_inherit_ths_medical" model="ir.ui.view">
+        <field name="name">appointment.resource.search.inherit.ths.medical</field>
+        <field name="model">appointment.resource</field>
+        <field name="inherit_id" ref="appointment.appointment_resource_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='capacity']" position="after">
+                <field name="resource_category"/>
+                <field name="employee_id"/>
+                <field name="treatment_room_id"/>
+                <field name="medical_specialties"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_by_appointment_type']" position="before">
+                <filter string="Medical Category" name="group_by_resource_category" context="{'group_by': 'resource_category'}"/>
+                <filter string="Department" name="group_by_department" context="{'group_by': 'ths_department_id'}"/>
+                <separator/>
+                <filter string="Practitioners" name="filter_practitioners" domain="[('resource_category', '=', 'practitioner')]"/>
+                <filter string="Treatment Rooms" name="filter_locations" domain="[('resource_category', '=', 'location')]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- appointment_type -->
+    <record id="ths_medical_appointment_type_view_form" model="ir.ui.view">
+        <field name="name">appointment.type.form.ths.medical.extension</field>
+        <field name="model">appointment.type</field>
+        <field name="inherit_id" ref="appointment.appointment_type_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_practitioners" icon="fa-user-md" invisible="schedule_based_on != 'resources'">
+                    <field name="practitioner_count" widget="statinfo" string="Practitioners"/>
+                </button>
+                <button class="oe_stat_button" type="object" name="action_view_locations" icon="fa-building" invisible="schedule_based_on != 'resources'">
+                    <field name="location_count" widget="statinfo" string="Rooms"/>
+                </button>
+            </xpath>
+
+            <field name="schedule_based_on" position="before">
+                <field name="ths_source_department_id" invisible="1"/>
+                <field name="resource_domain_char" invisible="1"/>
+            </field>
+
+            <xpath expr="//field[@name='staff_user_ids']" position="before">
+                <group>
+                    <field name="department_ids" widget="many2many_tags" invisible="schedule_based_on != 'resources'" required="schedule_based_on == 'resources'"
+                           options="{'no_create': True, 'no_create_edit': True}"/>
+                    <field name="medical_priority" invisible="schedule_based_on != 'resources'"/>
+                    <field name="default_duration_hours" invisible="schedule_based_on != 'resources'"/>
+                    <field name="requires_followup" widget="boolean_toggle" invisible="schedule_based_on != 'resources'"/>
+                    <field name="followup_days" invisible="not requires_followup or schedule_based_on != 'resources'"/>
+                </group>
+            </xpath>
+
+            <xpath expr="//field[@name='staff_user_ids']" position="attributes">
+                <attribute name="invisible">schedule_based_on != 'users'</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='resource_ids']" position="attributes">
+                <attribute name="invisible">schedule_based_on != 'resources'</attribute>
+                <attribute name="domain">resource_domain_char</attribute>
+                <attribute name="context">{'default_resource_category': 'practitioner',
+                                           'list_view_ref': 'ths_vet_base.appointment_resource_view_list_inherit_ths_medical'}</attribute>
+                <attribute name="options">{'no_create': True, 'no_create_edit': True}</attribute>
+                <attribute name="nolabel">0</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='resource_ids']" position="after">
+                <group string="Resource Summary" invisible="schedule_based_on != 'resources'" col="2">
+                    <field name="practitioner_ids" widget="many2many_tags" readonly="1" string="Available Practitioners"/>
+                    <field name="location_ids" widget="many2many_tags" readonly="1" string="Available Rooms"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- vet.reason.visit views -->
+    <record id="view_vet_reason_visit_list" model="ir.ui.view">
+        <field name="name">vet.reason.visit.list</field>
+        <field name="model">vet.reason.visit</field>
+        <field name="arch" type="xml">
+            <list string="Visit Reasons" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name" required="1"/>
+                <field name="category"/>
+                <field name="estimated_duration"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vet_reason_visit_form" model="ir.ui.view">
+        <field name="name">vet.reason.visit.form</field>
+        <field name="model">vet.reason.visit</field>
+        <field name="arch" type="xml">
+            <form string="Visit Reason">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="category"/>
+                            <field name="estimated_duration"/>
+                        </group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Description of this visit reason..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vet_reason_visit" model="ir.actions.act_window">
+        <field name="name">Visit Reasons</field>
+        <field name="res_model">vet.reason.visit</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create visit reason
+            </p>
+            <p>Define standardized reasons for veterinary visits</p>
+        </field>
+    </record>
+
+    <!-- appointment.cancel.wizard -->
+    <record id="view_appointment_cancel_wizard_form" model="ir.ui.view">
+        <field name="name">appointment.cancel.wizard.form</field>
+        <field name="model">appointment.cancel.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Cancel Appointment">
+                <group>
+                    <group>
+                        <field name="blame" widget="radio" required="1"/>
+                        <field name="description" required="1"
+                               placeholder="Please specify the reason for cancellation..."/>
+                    </group>
+                    <group>
+                        <field name="reschedule_immediately" widget="boolean_toggle"/>
+                        <field name="notify_customer" widget="boolean_toggle"/>
+                    </group>
+                </group>
+
+                <footer>
+                    <button name="action_confirm_cancel" string="Confirm Cancellation"
+                            type="object" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_appointment_cancel_wizard" model="ir.actions.act_window">
+        <field name="name">Cancel Appointment</field>
+        <field name="res_model">appointment.cancel.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- appointment.reschedule.wizard -->
+    <record id="view_appointment_reschedule_wizard_form" model="ir.ui.view">
+        <field name="name">appointment.reschedule.wizard.form</field>
+        <field name="model">appointment.reschedule.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reschedule Appointment">
+                <group>
+                    <group>
+                        <field name="new_start"/>
+                        <field name="new_stop"/>
+                    </group>
+                    <group>
+                        <field name="new_practitioner_id"/>
+                        <field name="new_room_id"/>
+                    </group>
+                </group>
+                <field name="notes" placeholder="Reason for rescheduling..."/>
+
+                <!-- Conflict warning -->
+                <div class="alert alert-warning" role="alert" invisible="not has_conflicts">
+                    <strong>Scheduling Conflicts Detected:</strong>
+                    <field name="conflict_details" readonly="1"/>
+                </div>
+
+                <field name="has_conflicts" invisible="1"/>
+
+                <footer>
+                    <button name="action_confirm_reschedule" string="Confirm" type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_appointment_reschedule_wizard" model="ir.actions.act_window">
+        <field name="name">Reschedule Appointment</field>
+        <field name="res_model">appointment.reschedule.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+
+    <!-- calendar.event -->
+    <record id="view_calendar_event_form_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">calendar.event.form.inherit.ths.vet</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <!-- Status Bar -->
+                    <field name="appointment_status" widget="statusbar" options="{'clickable': '1'}" statusbar_visible="request,booked,attended,,completed,paid"
+                           invisible="not appointment_type_id"/>
+                    <button name="action_check_in" string="Check-In" type="object" class="oe_highlight" invisible="appointment_status not in ('request', 'booked')"/>
+                    <button name="action_complete_and_bill" string="Complete &amp; Ready for Billing" type="object" class="oe_highlight"
+                            invisible="appointment_status != 'attended'"/>
+                    <button name="action_mark_no_show" string="Mark No Show" type="object" invisible="appointment_status not in ('request', 'booked')"/>
+                    <button name="action_cancel_appointment" string="Cancel Appointment" type="object"
+                            invisible="appointment_status in ('completed', 'paid', 'cancelled', 'no_show')"/>
+                    <button name="action_reschedule" string="Reschedule" type="object" invisible="appointment_status in ('attended', 'completed', 'paid')"/>
+                </header>
+            </xpath>
+
+            <xpath expr="//field[@name='state']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_encounter" icon="fa-file-medical" invisible="not encounter_id" string="Encounters">
+                </button>
+            </xpath>
+
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="string">Appointment</attribute>
+                <attribute name="readonly">True</attribute>
+            </xpath>
+
+            <xpath expr="//form//sheet//group[1]" position="before">
+
+                <group string="Visit Information" name="medical_top">
+                    <group name="medical_col_1">
+                        <field name="partner_ids" string="Attendees (Auto-populated)" widget="many2many_tags" invisible="1" readonly="1"
+                               help="Automatically populated with pet owner and selected pets."/>
+                        <field name="is_emergency" widget="boolean_toggle" decoration-danger="is_emergency == True"/>
+                        <field name="pet_owner_id" placeholder="Select pet owner first..." options="{'no_create': True, 'no_quick_create': True}"
+                               help="Pet owner responsible for billing. Select this first to filter available pets."/>
+                        <field name="patient_ids" widget="many2many_tags" options="{'no_create': True, 'no_quick_create': True}" placeholder="Select pets..."
+                               groups="base.group_user" help="Pets attending the appointment." domain="[('is_pet', '=', True), ('pet_owner_id', '=?', pet_owner_id)]"/>
+                        <field name="practitioner_id" invisible="not is_resource_based_type" required="is_resource_based_type"
+                               options="{'no_create': True, 'no_quick_create': True}" domain="practitioner_id_domain"/>
+                        <field name="room_id" invisible="not is_resource_based_type" options="{'no_create': True, 'no_create_edit': True}" domain="room_id_domain"/>
+                        <field name="reason_for_visit" widget="many2many_tags" placeholder="e.g., General Checkup, Consultation for ..."
+                               options="{'no_create': True, 'no_quick_create': True}"/>
+                        <field name="cancellation_reason" invisible="[('appointment_status', '!=', 'cancelled')]" options="{'no_create': True, 'no_quick_create': True}"/>
+                    </group>
+                    <group name="medical_col_2" col="2">
+
+                        <field name="ths_check_in_time" readonly="1"/>
+                        <field name="ths_check_out_time" readonly="1"/>
+                        <field name="actual_duration" readonly="1" widget="float_time" help="Actual appointment duration in hours"/>
+                    </group>
+                </group>
+
+                <field name="encounter_id" readonly="1" invisible="1"/>
+                <field name="is_resource_based_type" readonly="1" invisible="1"/>
+                <field name="practitioner_id_domain" invisible="1"/>
+                <field name="room_id_domain" invisible="1"/>
+                <!--                <field name="patient_ids_domain" invisible="1"/>-->
+
+                <div class="text-center py-2 px-3 mb-3 font-weight-bold" style="background-color: #f8f9fa; border: 1px solid #dee2e6; color: #6c757d;">
+                    Advanced Settings
+                </div>
+            </xpath>
+
+            <xpath expr="//field[@name='appointment_type_id']" position="attributes">
+                <attribute name="invisible"></attribute>
+            </xpath>
+
+
+            <xpath expr="//field[@name='ths_check_in_time']" position="before">
+                <xpath expr="//field[@name='appointment_type_id']" position="move"/>
+                <xpath expr="//field[@name='resource_ids']" position="move"/>
+                <xpath expr="//field[@name='start_date']" position="move"/>
+                <xpath expr="//field[@name='start']" position="move"/>
+                <xpath expr="//field[@name='stop_date']" position="move"/>
+                <xpath expr="//field[@name='stop']" position="move"/>
+                <xpath expr="//label[@for='duration']" position="move"/>
+                <xpath expr="//div[.//field[@name='duration']]" position="move"/>
+                <xpath expr="//field[@name='event_tz']" position="move"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_calendar_event_list_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">calendar.event.list.inherit.ths.vet</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_ids']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='location']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='appointment_resource_ids']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="string">Appointment</attribute>
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='partner_ids']" position="after">
+                <field name="pet_owner_id" optional="show" string="Pet Owner"/>
+                <field name="patient_ids" string="Pets" widget="many2many_tags"/>
+                <field name="practitioner_id" optional="show" string="Practitioner"/>
+                <field name="room_id" optional="show"/>
+                <field name="appointment_type_id" optional="hide" string="Type"/>
+                <field name="appointment_status" optional="show" widget="badge" string="Status"
+                       decoration-success="appointment_status in ('paid','completed')"
+                       decoration-info="appointment_status in ('request', 'booked')"
+                       decoration-warning="appointment_status == 'attended'"
+                       decoration-danger="appointment_status in ('cancelled', 'no_show')"/>
+                <field name="is_emergency" widget="boolean_toggle" optional="show" readonly="1"/>
+                <field name="reason_for_visit" widget="many2many_tags" optional="show"/>
+                <field name="actual_duration" optional="hide" widget="float_time"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_calendar_event_calendar_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">calendar.event.calendar.inherit.ths.vet</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_calendar"/>
+        <field name="arch" type="xml">
+            <xpath expr="//calendar" position="attributes">
+                <attribute name="color">appointment_status</attribute>
+                <attribute name="event_limit">5</attribute>
+            </xpath>
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="pet_owner_id"/>
+                <field name="patient_ids"/>
+                <field name="practitioner_id"/>
+                <field name="room_id"/>
+                <field name="appointment_status"/>
+                <field name="is_emergency"/>
+                <field name="reason_for_visit"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_calendar_event_search_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">calendar.event.search.inherit.ths.vet</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="calendar.view_calendar_event_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_ids']" position="after">
+                <field name="pet_owner_id" string="Pet Owner"/>
+                <field name="patient_ids" string="Pets"/>
+                <field name="practitioner_id"/>
+                <field name="room_id"/>
+                <field name="appointment_type_id"/>
+                <field name="reason_for_visit"/>
+            </xpath>
+            <xpath expr="//filter[@name='mymeetings']" position="after">
+                <separator/>
+                <!-- FILTERS -->
+                <filter string="Emergency" name="filter_emergency" domain="[('is_emergency', '=', True)]"/>
+                <separator/>
+                <filter string="Request" name="filter_request" domain="[('appointment_status', '=', 'request')]"/>
+                <filter string="Booked" name="filter_booked" domain="[('appointment_status', '=', 'booked')]"/>
+                <filter string="Checked-In" name="filter_checked_in" domain="[('appointment_status', '=', 'attended')]"/>
+                <filter string="Completed" name="filter_completed" domain="[('appointment_status', '=', 'completed')]"/>
+                <filter string="Paid" name="filter_billed" domain="[('appointment_status', '=', 'paid')]"/>
+                <filter string="Cancelled" name="filter_cancelled" domain="[('appointment_status', '=', 'cancelled')]"/>
+                <filter string="No Show" name="filter_no_show" domain="[('appointment_status', '=', 'no_show')]"/>
+                <separator/>
+                <filter string="Today" name="filter_today"
+                        domain="[('start', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0))),
+                                ('start', '&lt;', datetime.datetime.combine(context_today() + datetime.timedelta(days=1), datetime.time(0,0,0)))]"/>
+                <filter string="This Week" name="filter_this_week"
+                        domain="[('start', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%%Y-%%m-%%d')),
+                                ('start', '&lt;', (context_today() + datetime.timedelta(days=7-context_today().weekday())).strftime('%%Y-%%m-%%d'))]"/>
+            </xpath>
+
+            <xpath expr="//filter[@name='responsible']" position="after">
+                <filter string="Appointment Status" name="groupby_appointment_status" context="{'group_by': 'appointment_status'}"/>
+                <filter string="Pet Owner" name="groupby_pet_owner" context="{'group_by': 'pet_owner_id'}"/>
+                <filter string="Pet" name="groupby_pet" context="{'group_by': 'patient_ids'}"/>
+                <filter string="Practitioner" name="groupby_practitioner" context="{'group_by': 'practitioner_id'}"/>
+                <filter string="Room" name="groupby_room" context="{'group_by': 'room_id'}"/>
+                <filter string="Appointment Type" name="groupby_app_type" context="{'group_by': 'appointment_type_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="calendar_event_medical_resource_gantt_ths_vet" model="ir.ui.view">
+        <field name="name">calendar.event.medical.resource.gantt.ths.vet</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="appointment.calendar_event_view_gantt_booking_resource"/>
+        <field name="arch" type="xml">
+            <xpath expr="//gantt" position="inside">
+                <field name="practitioner_id"/>
+                <field name="room_id"/>
+                <field name="pet_owner_id"/>
+                <field name="patient_ids"/>
+                <field name="practitioner_id"/>
+                <field name="room_id"/>
+                <field name="appointment_status"/>
+                <field name="is_emergency"/>
+                <field name="reason_for_visit"/>
+            </xpath>
+
+            <!-- Update gantt decoration to use appointment_status -->
+            <xpath expr="//gantt" position="attributes">
+                <attribute name="color">appointment_status</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='appointment_resource_ids']" position="attributes">
+                <attribute name="string">Practitioner/Room</attribute>
+                <attribute name="invisible">0</attribute>
+            </xpath>
+
+            <!-- Template for popover -->
+            <xpath expr="//gantt//templates//div//ul/li[@t-if='appointment_type_id']" position="before">
+                <li class="mt-2"></li>
+                <li t-if="practitioner_id"><strong>Practitioner: </strong><t t-out="practitioner_id[1]"/></li>
+                <li t-if="room_id"><strong>Room: </strong><t t-out="room_id[1]"/></li>
+                <li t-if="pet_owner_id"><strong>Pet Owner: </strong><t t-out="pet_owner_id[1]"/></li>
+                <li t-if="patient_ids"><strong>Pets: </strong>
+                    <t t-foreach="patient_ids" t-as="pet"><t t-out="pet[1]"/><t t-if="!pet_last">, </t></t></li>
+                <li t-if="reason_for_visit"><strong>Reason: </strong><t t-foreach="reason_for_visit" t-as="reason"><t t-out="reason[1]"/><t t-if="!reason_last">, </t></t></li>
+                <li t-if="is_emergency" class="text-danger"><strong><i class="fa fa-exclamation-triangle"/> EMERGENCY</strong></li>
+                <li class="mb-2"></li>
+            </xpath>
+
+            <!-- Status selector in popover -->
+            <xpath expr="//li[@t-if='appointment_status']//select[hasclass('o_appointment_booking_status')]" position="replace">
+                <select t-if="can_edit" class="o_appointment_booking_status o_input">
+                    <option value="request" t-att-selected="appointment_status === 'request'">Request</option>
+                    <option value="booked" t-att-selected="appointment_status === 'booked'">Booked</option>
+                    <option value="attended" t-att-selected="appointment_status === 'attended'">Checked-In</option>
+                    <option value="completed" t-att-selected="appointment_status === 'completed'">Completed</option>
+                    <option value="paid" t-att-selected="appointment_status === 'paid'">Paid</option>
+                    <option value="cancelled" t-att-selected="appointment_status === 'cancelled'">Cancelled</option>
+                    <option value="no_show" t-att-selected="appointment_status === 'no_show'">No Show</option>
+                </select>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Gantt booking form -->
+    <record id="calendar_event_form_inherit_gantt_booking_ths_vet" model="ir.ui.view">
+        <field name="name">calendar.event.form.inherit.gantt.booking.ths.vet</field>
+        <field name="model">calendar.event</field>
+        <field name="inherit_id" ref="appointment.calendar_event_view_form_gantt_booking"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='appointment_type_id']" position="after">
+                <field name="pet_owner_id" string="Pet Owner" placeholder="Select pet owner..." options="{'no_create': True, 'no_quick_create': True}"
+                       domain="[('is_pet_owner', '=', True)]" help="Pet owner responsible for billing"/>
+                <field name="patient_ids" string="Pets" widget="many2many_tags" options="{'no_create': True, 'no_quick_create': True}" placeholder="Select pets..."
+                       domain="[('is_pet', '=', True), ('pet_owner_id', '=?', pet_owner_id)]" help="Pets receiving care"/>
+                <field name="is_emergency" widget="boolean_toggle"/>
+                <xpath expr="//field[@name='resource_ids']" position="move"/>
+                <xpath expr="//field[@name='partner_ids']" position="move"/>
+            </xpath>
+
+            <!-- Reorganize fields for better UX -->
+            <xpath expr="//field[@name='resource_ids']" position="attributes">
+                <attribute name="string">Practitioner/Room</attribute>
+            </xpath>
+            <xpath expr="//label[@for='duration']" position="before">
+                <xpath expr="//label[@for='start']" position="move"/>
+                <xpath expr="//div[hasclass('o_row')]" position="move"/>
+            </xpath>
+            <xpath expr="//field[@name='appointment_resource_ids']" position="attributes">
+                <attribute name="invisible">0</attribute>
+            </xpath>
+            <xpath expr="//field[@name='appointment_type_id']" position="attributes">
+                <attribute name="invisible">0</attribute>
+            </xpath>
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="readonly">1</attribute>
+                <attribute name="placeholder">Auto-generated appointment name</attribute>
+            </xpath>
+            <xpath expr="//label[@for='name']" position="attributes">
+                <attribute name="string">Appointment</attribute>
+            </xpath>
+            <xpath expr="//field[@name='user_id']" position="attributes">
+                <attribute name="string">Responsible</attribute>
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//div[.//field[@name='duration']]" position="after">
+                <field name="reason_for_visit" widget="many2many_tags"/>
+                <field name="practitioner_id"/>
+                <field name="room_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_calendar_event_vet_gantt" model="ir.actions.act_window">
+        <field name="name">Veterinary Schedule</field>
+        <field name="res_model">calendar.event</field>
+        <field name="view_mode">gantt,calendar,list,form</field>
+        <field name="view_id" ref="calendar_event_medical_resource_gantt_ths_vet"/>
+        <field name="domain">[('practitioner_id', '!=', False)]</field>
+        <field name="context">{'default_schedule_based_on': 'resources', 'default_appointment_status': 'request', 'search_default_filter_today': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No medical appointments found
+            </p>
+            <p>
+                Schedule your first veterinary appointment
+            </p>
+        </field>
+    </record>
+
+</odoo>

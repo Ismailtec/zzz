@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="0">
+    <!-- Appointment Reminder -->
+    <record id="whatsapp_template_appointment_reminder" model="whatsapp.template" forcecreate="0">
+        <field name="name">Appointment Reminder</field>
+        <field name="template_name">appointment_reminder</field>
+        <field name="lang_code">en</field>
+        <field name="template_type">utility</field>
+        <field name="header_type">none</field>
+        <field name="footer_text">Reply STOP to unsubscribe</field>
+        <field name="phone_field">partner_ids.mobile</field>
+        <field name="model_id" ref="calendar.model_calendar_event"/>
+        <field name="body">Hi {{1}}, reminder for your appointment tomorrow at {{2}}.</field>
+        <field name="variable_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'name': '{{1}}', 'demo_value': 'Customer', 'line_type': 'body', 'field_type': 'field', 'field_name': 'partner_ids.name'}),
+            (0, 0, {'name': '{{2}}', 'demo_value': '10:00 AM', 'line_type': 'body', 'field_type': 'field', 'field_name': 'start'})
+        ]"/>
+    </record>
+
+    <!-- Membership Expiry -->
+    <record id="whatsapp_template_membership_expiry" model="whatsapp.template" forcecreate="0">
+        <field name="name">Membership Expiry Reminder</field>
+        <field name="template_name">membership_expiry_reminder</field>
+        <field name="lang_code">en</field>
+        <field name="template_type">utility</field>
+        <field name="header_type">none</field>
+        <field name="footer_text">Reply STOP to unsubscribe</field>
+        <field name="phone_field">partner_id.mobile</field>
+        <field name="model_id" ref="ths_vet_base.model_vet_pet_membership"/>
+        <field name="body">Dear {{1}}, This is a friendly reminder that your pet's membership for {{2}} expires on {{3}}. To ensure uninterrupted access to our park, please renew your membership before it expires.</field>
+        <field name="variable_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'name': '{{1}}', 'demo_value': 'Customer', 'line_type': 'body', 'field_type': 'field', 'field_name': 'partner_id.name'}),
+            (0, 0, {'name': '{{2}}', 'demo_value': 'Pet Name', 'line_type': 'body', 'field_type': 'field', 'field_name': 'patient_ids.name'}),
+            (0, 0, {'name': '{{3}}', 'demo_value': '2025-07-31', 'line_type': 'body', 'field_type': 'field', 'field_name': 'valid_to'})
+        ]"/>
+    </record>
+
+    <!-- Boarding Pickup Reminder -->
+    <record id="whatsapp_template_boarding_pickup_reminder" model="whatsapp.template" forcecreate="0">
+        <field name="name">Boarding Pickup Reminder</field>
+        <field name="template_name">boarding_pickup_reminder</field>
+        <field name="lang_code">en</field>
+        <field name="template_type">utility</field>
+        <field name="header_type">none</field>
+        <field name="footer_text">Reply STOP to unsubscribe</field>
+        <field name="phone_field">partner_id.mobile</field>
+        <field name="model_id" ref="ths_vet_base.model_vet_boarding_stay"/>
+        <field name="body">Hi {{1}}, reminder to pickup {{2}} at {{3}}.</field>
+        <field name="variable_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'name': '{{1}}', 'demo_value': 'Customer', 'line_type': 'body', 'field_type': 'field', 'field_name': 'partner_id.name'}),
+            (0, 0, {'name': '{{2}}', 'demo_value': 'Pet Name', 'line_type': 'body', 'field_type': 'field', 'field_name': 'patient_ids.name'}),
+            (0, 0, {'name': '{{3}}', 'demo_value': '2025-07-17 10:00', 'line_type': 'body', 'field_type': 'field', 'field_name': 'expected_check_out_datetime'})
+        ]"/>
+    </record>
+
+    <!-- Park Check-in Confirmation -->
+    <record id="whatsapp_template_park_checkin_confirmation" model="whatsapp.template" forcecreate="0">
+        <field name="name">Park Check-in Confirmation</field>
+        <field name="template_name">park_checkin_confirmation</field>
+        <field name="lang_code">en</field>
+        <field name="template_type">utility</field>
+        <field name="header_type">none</field>
+        <field name="footer_text">Reply STOP to unsubscribe</field>
+        <field name="phone_field">partner_id.mobile</field>
+        <field name="model_id" ref="ths_vet_base.model_vet_park_checkin"/>
+        <field name="body">Hi {{1}}, {{2}} checked in to park at {{3}}.</field>
+        <field name="variable_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'name': '{{1}}', 'demo_value': 'Customer', 'line_type': 'body', 'field_type': 'field', 'field_name': 'partner_id.name'}),
+            (0, 0, {'name': '{{2}}', 'demo_value': 'Pet Name', 'line_type': 'body', 'field_type': 'field', 'field_name': 'patient_ids.name'}),
+            (0, 0, {'name': '{{3}}', 'demo_value': '2025-07-16 09:00', 'line_type': 'body', 'field_type': 'field', 'field_name': 'checkin_time'})
+        ]"/>
+    </record>
+
+    <!-- Park Check-out Confirmation -->
+    <record id="whatsapp_template_park_checkout_confirmation" model="whatsapp.template" forcecreate="0">
+        <field name="name">Park Check-out Confirmation</field>
+        <field name="template_name">park_checkout_confirmation</field>
+        <field name="lang_code">en</field>
+        <field name="template_type">utility</field>
+        <field name="header_type">none</field>
+        <field name="footer_text">Reply STOP to unsubscribe</field>
+        <field name="phone_field">partner_id.mobile</field>
+        <field name="model_id" ref="ths_vet_base.model_vet_park_checkin"/>
+        <field name="body">Hi {{1}}, {{2}} checked out after {{3}} hours.</field>
+        <field name="variable_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'name': '{{1}}', 'demo_value': 'Customer', 'line_type': 'body', 'field_type': 'field', 'field_name': 'partner_id.name'}),
+            (0, 0, {'name': '{{2}}', 'demo_value': 'Pet Name', 'line_type': 'body', 'field_type': 'field', 'field_name': 'patient_ids.name'}),
+            (0, 0, {'name': '{{3}}', 'demo_value': '2.5', 'line_type': 'body', 'field_type': 'field', 'field_name': 'duration_hours'})
+        ]"/>
+    </record>
+
+    <!-- Vaccination Reminder -->
+    <record id="whatsapp_template_vaccination_reminder" model="whatsapp.template" forcecreate="0">
+        <field name="name">Vaccination Reminder</field>
+        <field name="template_name">vaccination_reminder</field>
+        <field name="lang_code">en</field>
+        <field name="template_type">utility</field>
+        <field name="header_type">none</field>
+        <field name="footer_text">Reply STOP to unsubscribe</field>
+        <field name="phone_field">partner_id.mobile</field>
+        <field name="model_id" ref="ths_vet_base.model_vet_vaccination"/>
+        <field name="body">Hi {{1}}, {{2}}'s {{3}} expires on {{4}}. Schedule renewal!</field>
+        <field name="variable_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'name': '{{1}}', 'demo_value': 'Customer', 'line_type': 'body', 'field_type': 'field', 'field_name': 'partner_id.name'}),
+            (0, 0, {'name': '{{2}}', 'demo_value': 'Pet Name', 'line_type': 'body', 'field_type': 'field', 'field_name': 'patient_ids.name'}),
+            (0, 0, {'name': '{{3}}', 'demo_value': 'Vaccine Type', 'line_type': 'body', 'field_type': 'field', 'field_name': 'vaccine_type_id.name'}),
+            (0, 0, {'name': '{{4}}', 'demo_value': '2025-07-31', 'line_type': 'body', 'field_type': 'field', 'field_name': 'expiry_date'})
+        ]"/>
+    </record>
+
+    <!-- Membership Renewal Notification -->
+    <record id="whatsapp_template_membership_renewal" model="whatsapp.template" forcecreate="0">
+        <field name="name">Membership Renewal Notification</field>
+        <field name="template_name">membership_renewal</field>
+        <field name="lang_code">en</field>
+        <field name="template_type">utility</field>
+        <field name="header_type">none</field>
+        <field name="footer_text">Reply STOP to unsubscribe</field>
+        <field name="phone_field">partner_id.mobile</field>
+        <field name="model_id" ref="ths_vet_base.model_vet_pet_membership"/>
+        <field name="body">Hi {{1}}, membership for {{2}} renewed from {{3}}.</field>
+        <field name="variable_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'name': '{{1}}', 'demo_value': 'Customer', 'line_type': 'body', 'field_type': 'field', 'field_name': 'partner_id.name'}),
+            (0, 0, {'name': '{{2}}', 'demo_value': 'Pet Name', 'line_type': 'body', 'field_type': 'field', 'field_name': 'patient_ids.name'}),
+            (0, 0, {'name': '{{3}}', 'demo_value': '2025-07-16', 'line_type': 'body', 'field_type': 'field', 'field_name': 'valid_from'})
+        ]"/>
+    </record>
+
+    <!-- Boarding Check-in Confirmation -->
+    <record id="whatsapp_template_boarding_checkin" model="whatsapp.template" forcecreate="0">
+        <field name="name">Boarding Check-in Confirmation</field>
+        <field name="template_name">boarding_checkin_confirmation</field>
+        <field name="lang_code">en</field>
+        <field name="template_type">utility</field>
+        <field name="header_type">none</field>
+        <field name="footer_text">Reply STOP to unsubscribe</field>
+        <field name="phone_field">partner_id.mobile</field>
+        <field name="model_id" ref="ths_vet_base.model_vet_boarding_stay"/>
+        <field name="body">Hi {{1}}, {{2}} checked in for boarding at {{3}}.</field>
+        <field name="variable_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'name': '{{1}}', 'demo_value': 'Customer', 'line_type': 'body', 'field_type': 'field', 'field_name': 'partner_id.name'}),
+            (0, 0, {'name': '{{2}}', 'demo_value': 'Pet Name', 'line_type': 'body', 'field_type': 'field', 'field_name': 'patient_ids.name'}),
+            (0, 0, {'name': '{{3}}', 'demo_value': '2025-07-16 09:00', 'line_type': 'body', 'field_type': 'field', 'field_name': 'check_in_datetime'})
+        ]"/>
+    </record>
+
+    <!-- Boarding Check-out Confirmation -->
+    <record id="whatsapp_template_boarding_checkout" model="whatsapp.template" forcecreate="0">
+        <field name="name">Boarding Check-out Confirmation</field>
+        <field name="template_name">boarding_checkout_confirmation</field>
+        <field name="lang_code">en</field>
+        <field name="template_type">utility</field>
+        <field name="header_type">none</field>
+        <field name="footer_text">Reply STOP to unsubscribe</field>
+        <field name="phone_field">partner_id.mobile</field>
+        <field name="model_id" ref="ths_vet_base.model_vet_boarding_stay"/>
+        <field name="body">Hi {{1}}, {{2}} checked out from boarding.</field>
+        <field name="variable_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'name': '{{1}}', 'demo_value': 'Customer', 'line_type': 'body', 'field_type': 'field', 'field_name': 'partner_id.name'}),
+            (0, 0, {'name': '{{2}}', 'demo_value': 'Pet Name', 'line_type': 'body', 'field_type': 'field', 'field_name': 'patient_ids.name'})
+        ]"/>
+    </record>
+
+    <!-- Appointment Cancellation -->
+    <record id="whatsapp_template_appointment_cancellation" model="whatsapp.template" forcecreate="0">
+        <field name="name">Appointment Cancellation</field>
+        <field name="template_name">appointment_cancellation</field>
+        <field name="lang_code">en</field>
+        <field name="template_type">utility</field>
+        <field name="header_type">none</field>
+        <field name="footer_text">Reply STOP to unsubscribe</field>
+        <field name="phone_field">partner_ids.mobile</field>
+        <field name="model_id" ref="calendar.model_calendar_event"/>
+        <field name="body">Hi {{1}}, your appointment on {{2}} is cancelled. Reason: {{3}}.</field>
+        <field name="variable_ids" eval="[
+            (5, 0, 0),
+            (0, 0, {'name': '{{1}}', 'demo_value': 'Customer', 'line_type': 'body', 'field_type': 'field', 'field_name': 'partner_ids.name'}),
+            (0, 0, {'name': '{{2}}', 'demo_value': '2025-07-17 10:00', 'line_type': 'body', 'field_type': 'field', 'field_name': 'start'}),
+            (0, 0, {'name': '{{3}}', 'demo_value': 'Reason', 'line_type': 'body', 'field_type': 'field', 'field_name': 'cancellation_reason_id.name'})
+        ]"/>
+    </record>
+</odoo>

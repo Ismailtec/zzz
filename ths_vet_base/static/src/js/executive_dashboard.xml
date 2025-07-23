@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Executive Dashboard Template -->
+    <t t-name="ths_vet_base.ExecutiveDashboard">
+        <div class="vet_executive_dashboard">
+
+            <!-- Header -->
+            <div class="dashboard-header d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0">Executive Dashboard</h2>
+                    <small class="text-muted" t-if="state.lastUpdated">
+                        Last updated: <t t-esc="state.lastUpdated"/>
+                    </small>
+                </div>
+                <button class="btn btn-primary" t-on-click="refreshDashboard">
+                    <i class="fa fa-refresh"/> Refresh
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div t-if="state.loading" class="text-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="mt-3">Loading dashboard data...</p>
+            </div>
+
+            <!-- Error State -->
+            <div t-if="state.error" class="alert alert-danger text-center">
+                <h4>Failed to load dashboard</h4>
+                <p>Please try refreshing or contact support if the problem persists.</p>
+                <button class="btn btn-outline-danger" t-on-click="refreshDashboard">
+                    Try Again
+                </button>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div t-if="!state.loading and !state.error and state.data" class="dashboard-content">
+
+                <!-- KPI Cards Row -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">Today's Revenue</p>
+                                        <h3 class="mb-0"><t t-esc="state.data.revenue.today.toLocaleString()"/> <t t-esc="state.data.currency.symbol"/></h3>
+                                    </div>
+                                    <i class="fa fa-dollar-sign fa-2x opacity-50"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">This Month</p>
+                                        <h3 class="mb-0"><t t-esc="state.data.revenue.month.toLocaleString()"/> <t t-esc="state.data.currency.symbol"/></h3>
+                                    </div>
+                                    <i class="fa fa-chart-line fa-2x opacity-50"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">Active Patients</p>
+                                        <h3 class="mb-0"><t t-esc="state.data.patients.active"/></h3>
+                                    </div>
+                                    <i class="fa fa-paw fa-2x opacity-50"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0">Pending Revenue</p>
+                                        <h3 class="mb-0"><t t-esc="state.data.revenue.pending.toLocaleString()"/> <t t-esc="state.data.currency.symbol"/></h3>
+                                    </div>
+                                    <i class="fa fa-clock fa-2x opacity-50"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row mb-4">
+                    <!-- Revenue Trend Chart -->
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Revenue Trend (12 Months)</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="revenueChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Species Distribution -->
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Patient Species</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="speciesChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service Analysis Row -->
+                <div class="row mb-4">
+                    <!-- Service Revenue -->
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Top Services by Revenue</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="serviceRevenueChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Status -->
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Payment Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="paymentStatusChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="row" style="margin-bottom: 30px;">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <button class="btn btn-outline-primary me-2" t-on-click="openRevenueAnalysis">
+                                    <i class="fa fa-chart-bar"/> Detailed Revenue Analysis
+                                </button>
+                                <button class="btn btn-outline-success" t-on-click="openPatientAnalysis">
+                                    <i class="fa fa-paw"/> Patient Analytics
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <!-- Operational Dashboard Template -->
+    <t t-name="ths_vet_base.OperationalDashboard">
+        <div class="vet_operational_dashboard">
+
+            <!-- Header -->
+            <div class="dashboard-header d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0">Operational Dashboard</h2>
+                    <small class="text-muted" t-if="state.lastUpdated">
+                        Last updated: <t t-esc="state.lastUpdated"/>
+                    </small>
+                </div>
+                <button class="btn btn-primary" t-on-click="refreshDashboard">
+                    <i class="fa fa-refresh"/> Refresh
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div t-if="state.loading" class="text-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div t-if="!state.loading and state.data" class="dashboard-content">
+
+                <!-- Operational KPIs -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h4>Boarding Occupancy</h4>
+                                <h2><t t-esc="state.data.boarding.occupancy_rate.toFixed(1)"/>%</h2>
+                                <p><t t-esc="state.data.boarding.occupied"/> / <t t-esc="state.data.boarding.total_cages"/> cages</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card bg-warning text-white" style="cursor: pointer;" t-on-click="openEncounters">
+                            <div class="card-body">
+                                <h4>Pending Tasks</h4>
+                                <h2><t t-esc="state.data.pending_tasks.encounters"/></h2>
+                                <p>Open Encounters</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card bg-danger text-white" style="cursor: pointer;" t-on-click="openPendingPayments">
+                            <div class="card-body">
+                                <h4>Payment Issues</h4>
+                                <h2><t t-esc="state.data.pending_tasks.payments"/></h2>
+                                <p>Pending Payments</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Schedule -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Today's Schedule</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Time</th>
+                                                <th>Patient</th>
+                                                <th>Owner</th>
+                                                <th>Practitioner</th>
+                                                <th>Type</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr t-foreach="state.data.schedule" t-as="appointment" t-key="appointment_index">
+                                                <td><t t-esc="appointment.time"/></td>
+                                                <td><t t-esc="appointment.patient"/></td>
+                                                <td><t t-esc="appointment.owner"/></td>
+                                                <td><t t-esc="appointment.practitioner"/></td>
+                                                <td><t t-esc="appointment.type"/></td>
+                                                <td>
+                                                    <span class="badge" t-att-class="{
+                                                        'badge-success': appointment.status === 'completed',
+                                                        'badge-primary': appointment.status === 'booked',
+                                                        'badge-warning': appointment.status === 'attended',
+                                                        'badge-danger': appointment.status === 'cancelled'
+                                                    }">
+                                                        <t t-esc="appointment.status"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

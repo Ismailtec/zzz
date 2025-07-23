@@ -29,42 +29,27 @@ patch(AppointmentBookingGanttRenderer.prototype, {
             color = false; // Archived
         } else {
             switch (record.appointment_status) {
-                case 'draft':
+                case 'request':
                     color = 7; // light gray - draft state
                     break;
-                case 'confirmed':
+                case 'booked':
+                    color = record.start < now ? 2 : 8; // orange if past, blue if future
+                    break;
+                case 'attended':
                     color = now.diff(record.start, ['minutes']).minutes > 15 ? 2 : 4; // orange if late, light blue if not
-                    break;
-                case 'checked_in':
-                    color = 6; // yellow - patient is here
-                    break;
-                case 'in_progress':
-                    color = 9; // dark blue - consultation ongoing
                     break;
                 case 'completed':
                     color = 8; // light green - completed but not billed
                     break;
-                case 'billed':
+                case 'paid':
                     color = 10; // green - fully processed
                     break;
-                case 'cancelled_by_patient':
-                case 'cancelled_by_clinic':
+                case 'cancelled':
                     color = 1; // red - cancelled
                     break;
                 case 'no_show':
                     color = 1; // red - no show
                     break;
-                // Legacy support for old statuses (will be migrated)
-//                case 'booked':
-//                case 'scheduled':
-//                    color = now.diff(record.start, ['minutes']).minutes > 15 ? 2 : 4;
-//                    break;
-//                case 'attended':
-//                    color = 10; // green - legacy status
-//                    break;
-//                case 'request':
-//                    color = record.start < now ? 2 : 8; // orange if past, blue if future
-//                    break;
                 default:
                     color = 8; // default blue
             }
@@ -87,7 +72,6 @@ patch(AppointmentBookingGanttRenderer.prototype, {
         const {record} = pill;
 
         // Handle Many2many field for patients display
-        // For human medical: patients are the customers/billing entities
         let patientNames = '';
         if (record.patient_ids && Array.isArray(record.patient_ids)) {
             patientNames = record.patient_ids.map(patient =>
@@ -104,8 +88,6 @@ patch(AppointmentBookingGanttRenderer.prototype, {
             // Status information
             medical_appointment: !!record.appointment_type_id,
             appointment_status_display: this._getStatusDisplayText(record.appointment_status),
-            // Human medical context
-            is_human_medical: true,  // Flag to indicate human medical context in templates
             // Encounter information
             encounter_id: record.encounter_id ? record.encounter_id[0] : false,
             // Add encounter status display
@@ -118,26 +100,15 @@ patch(AppointmentBookingGanttRenderer.prototype, {
         return popoverProps;
     },
 
-    /**
-     * CLEANED UP: Get display text for our medical appointment statuses only
-     */
     _getStatusDisplayText(status) {
         const statusMap = {
-            // Our clean medical statuses
-            'draft': 'Draft',
-            'confirmed': 'Confirmed',
-            'checked_in': 'Checked In',
-            'in_progress': 'In Progress',
+            'request': 'Request',
+            'booked': 'Booked',
+            'attended': 'Checked-In',
             'completed': 'Completed',
-            'billed': 'Billed',
-            'cancelled_by_patient': 'Cancelled (Patient)',
-            'cancelled_by_clinic': 'Cancelled (Clinic)',
+            'paid': 'Paid',
             'no_show': 'No Show',
-            // Legacy statuses (for backward compatibility during migration)
-            //'request': 'Request (Legacy)',
-            //'booked': 'Booked (Legacy)',
-            //'scheduled': 'Scheduled (Legacy)',
-            //'attended': 'Checked-In (Legacy)'
+            'cancelled': 'Cancelled',
         };
         return statusMap[status] || status;
     },
@@ -169,7 +140,6 @@ patch(AppointmentBookingGanttRenderer.prototype, {
 
     /**
      * Helper method to format patient information for display
-     * For human medical: patients are both service recipients and billing customers
      */
     _formatPatientInfo(patientIds) {
         if (!patientIds || !Array.isArray(patientIds) || patientIds.length === 0) {

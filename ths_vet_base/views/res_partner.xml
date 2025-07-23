@@ -1,0 +1,741 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ths.partner.type -->
+    <record id="view_partner_type_list_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">ths.partner.type.list.inherit.ths.vet</field>
+        <field name="model">ths.partner.type</field>
+        <field name="inherit_id" ref="ths_base.view_partner_type_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='is_customer']" position="after">
+                <field name="is_patient" widget="boolean_toggle"/>
+                <field name="is_pet" widget="boolean_toggle"/>
+                <field name="is_pet_owner" widget="boolean_toggle"/>
+                <field name="pet_count" optional="show"/>
+                <field name="pet_owner_count" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_type_form_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">ths.partner.type.form.inherit.ths.vet</field>
+        <field name="model">ths.partner.type</field>
+        <field name="inherit_id" ref="ths_base.view_partner_type_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button class="oe_stat_button" type="object" name="action_view_pets" icon="fa-paw" invisible="pet_count == 0">
+                        <field name="pet_count" widget="statinfo" string="Pets"/>
+                    </button>
+                    <button class="oe_stat_button" type="object" name="action_view_pet_owners" icon="fa-users" invisible="pet_owner_count == 0">
+                        <field name="pet_owner_count" widget="statinfo" string="Pet Owners"/>
+                    </button>
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='is_customer']" position="after">
+                <field name="is_patient" widget="boolean_toggle"/>
+                <field name="is_pet" widget="boolean_toggle"/>
+                <field name="is_pet_owner" widget="boolean_toggle"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_type_search_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">ths.partner.type.search.inherit.ths.vet</field>
+        <field name="model">ths.partner.type</field>
+        <field name="inherit_id" ref="ths_base.view_partner_type_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_customers']" position="after">
+                <filter string="Pet Owner" name="filter_pet_owner" domain="[('is_pet_owner', '=', True)]"/>
+                <filter string="Pet" name="filter_pets" domain="[('is_pet', '=', True)]"/>
+                <filter string="Patient" name="filter_patient" domain="[('is_patient', '=', True)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='groupby_customers']" position="after">
+                <filter string="Is Pet Owner" name="groupby_pet_owner" context="{'group_by': 'is_pet_owner'}"/>
+                <filter string="Is Pet" name="groupby_pets" context="{'group_by': 'is_pet'}"/>
+                <filter string="Is Patient" name="groupby_patient" context="{'group_by': 'is_patient'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- res.partner -->
+    <record id="view_partner_form_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.ths.vet</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add computed flags for form logic -->
+            <xpath expr="//sheet" position="inside">
+                <field name="is_pet" invisible="1"/>
+                <field name="is_pet_owner" invisible="1"/>
+            </xpath>
+
+            <!-- Add Smart Buttons -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_partner_pets" icon="fa-paw" invisible="not is_pet_owner or pet_count == 0">
+                    <field name="pet_count" widget="statinfo" string="Pets"/>
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_view_appointments" icon="fa-calendar" invisible="not is_pet_owner or appointment_count == 0">
+                    <field name="appointment_count" widget="statinfo" string="Appointments"/>
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_view_encounters" icon="fa-file-medical" invisible="not is_pet_owner">
+                    <field name="encounter_count" widget="statinfo" string="Encounters"/>
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_view_partner_pet_owners" icon="fa-user" string="Pet Owner" invisible="not is_pet or not pet_owner_id">
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_view_medical_history" icon="fa-stethoscope" invisible="not is_pet">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Medical</span>
+                        <span class="o_stat_text">History</span>
+                    </div>
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_view_vaccinations" icon="fa-syringe" invisible="not is_pet or vaccination_count == 0">
+                    <field name="vaccination_count" widget="statinfo" string="Vaccinations"/>
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_view_documents" icon="fa-camera" invisible="not is_pet">
+                    <field name="documents_count" widget="statinfo" string="Photos"/>
+                </button>
+
+                <button name="action_view_pet_memberships" type="object" class="oe_stat_button" icon="fa-star" invisible="not is_pet">
+                    <field name="pet_membership_count" widget="statinfo" string="Memberships"/>
+                </button>
+
+                <button class="oe_stat_button" type="object" name="action_schedule_appointment" icon="fa-plus-circle" string="Schedule" invisible="not is_pet and not is_pet_owner"
+                        help="Schedule new appointment"/>
+
+            </xpath>
+
+            <xpath expr="//button[@name='open_customer_statement']" position="attributes">
+                <attribute name="invisible">not has_moves or is_pet</attribute>
+            </xpath>
+
+            <xpath expr="//button[@name='schedule_meeting']" position="attributes">
+                <attribute name="invisible">is_pet or is_pet_owner</attribute>
+            </xpath>
+
+            <xpath expr="//div[hasclass('d-inline-block')]" position="after">
+                <div invisible="not is_pet">
+                    <div>
+                        <label for="pet_owner_id" class="o_form_label fw-bold"/>
+                        <div class="rounded p-1 d-inline-block mb-0 fw-bolder fs-4">
+                            <field name="pet_owner_id" required="is_pet" options="{'no_open': False, 'no_create': True, 'no_quick_create': True}"
+                                   domain="[('is_pet_owner', '=', True)]" placeholder="Select the Pet Owner..." help="Pet Owner responsible for billing and medical decisions"/>
+                        </div>
+                    </div>
+<!--                    <div class="col-md-6" invisible="not species_id">-->
+<!--                        <div class="d-flex align-items-center">-->
+<!--                            <field name="pet_badge_data" widget="badge" readonly="1" class="badge-pet"/>-->
+<!--                        </div>-->
+<!--                    </div>-->
+                </div>
+
+                <div invisible="not is_pet" class="mb-2">
+                    <div class="alert alert-info d-flex align-items-center" role="alert" invisible="ths_deceased">
+                        <i class="fa fa-heartbeat me-2" title="Health Status"/>
+                        <span>
+                            <strong>Health Status:</strong>
+                            <span class="badge badge-success" invisible="last_visit_date">No visit history</span>
+                            <span class="badge badge-info" invisible="not last_visit_date">
+                                Last visit: <field name="last_visit_date" readonly="1"/>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="alert alert-dark d-flex align-items-center" role="alert" invisible="not ths_deceased">
+                        <i class="fa fa-heart me-2" title="Deceased"/>
+                        <span><strong>Deceased:</strong> <field name="ths_deceased_date" readonly="1"/></span>
+                    </div>
+                </div>
+            </xpath>
+
+
+            <xpath expr="//span[@name='address_name']//span" position="attributes">
+                <attribute name="invisible">is_pet</attribute>
+            </xpath>
+
+            <!-- Replace standard contact fields with pet/owner specific sections -->
+            <xpath expr="//sheet//group//group[2]" position="replace">
+
+                <!-- Pet Information Section -->
+                <group string="Pet Information" name="pet_info" invisible="not is_pet">
+                    <field name="species_id" required="is_pet" options="{'no_create': True, 'no_quick_create': True}" placeholder="e.g., Dog, Cat, Bird..."/>
+                    <field name="breed_id" options="{'no_create': True, 'no_quick_create': True}" placeholder="e.g., Golden Retriever, Persian..."
+                           domain="[('species_id', '=?', species_id)]"/>
+                    <field name="ths_dob" string="Date of Birth" widget="date"/>
+                    <field name="ths_age" placeholder="Age" readonly="1"/>
+                    <field name="gender" widget="radio" options="{'horizontal': true}"/>
+                    <field name="is_neutered_spayed" widget="boolean_toggle"/>
+                    <field name="ths_microchip" placeholder="e.g., 982000123456789"/>
+                    <field name="ths_deceased" widget="boolean_toggle"/>
+                    <field name="ths_deceased_date" invisible="not ths_deceased" widget="date"/>
+                    <!--                    <field name="category_id" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}"/>-->
+                </group>
+
+                <group string="Health &amp; Emergency" name="pet_health" invisible="not is_pet">
+                    <field name="ths_insurance_number" placeholder="Insurance policy number"/>
+                    <field name="ths_emergency_contact" placeholder="Emergency contact number"/>
+                    <field name="medical_alerts" placeholder="Important medical alerts..." widget="text" class="text-warning"/>
+                    <field name="dietary_restrictions" placeholder="Special dietary needs..."/>
+                </group>
+
+                <!-- NON-Pet Information Section -->
+                <group string="Contact Information" name="cont_info" invisible="is_pet">
+                    <field name="title" options="{'no_open': True, 'no_create': True}" invisible="is_company"/>
+                    <field name="mobile" widget="phone"/>
+                    <field name="phone" widget="phone"/>
+                    <field name="ths_gov_id" placeholder="National ID" required="0" invisible="is_company"/>
+                    <field name="gender" widget="radio" options="{'horizontal': true}" class="oe_inline" invisible="is_company"/>
+                    <field name="ths_nationality" options="{'no_create': True, 'no_quick_create': True}" invisible="is_company"/>
+                    <field name="ths_dob" placeholder="Date of Birth" options="{'datepicker': {'showTime': False}}" invisible="is_company"/>
+                    <field name="ths_age" placeholder="Age" readonly="1" invisible="is_company"/>
+                    <field name="user_id" string="Account Manager" domain="[('share', '=', False)]" invisible="not is_company"/>
+                    <field name="function" placeholder="e.g. Sales Manager" invisible="is_company"/>
+                    <field name="lang" invisible="not is_company and active_lang_count &lt;= 1"/>
+                    <field name="email" widget="email" context="{'gravatar_image': True}" required="user_ids"/>
+                    <field name="website" string="Website" widget="url" placeholder="e.g. https://www.odoo.com" invisible="not is_company"/>
+                    <!--                    <field name="category_id" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}"/>-->
+                </group>
+
+                <group string="Communication Preferences" name="communication_prefs" invisible="not is_pet_owner">
+                    <field name="preferred_communication"/>
+                    <field name="send_whatsapp_reminder" widget="boolean_toggle"/>
+                    <field name="ths_emergency_contact"/>
+                </group>
+
+            </xpath>
+
+            <xpath expr="//notebook//page[@name='contact_addresses']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+
+            <!-- Add Notebook Pages -->
+            <xpath expr="//notebook//page[@name='contact_addresses']" position="before">
+
+                <!-- Pets Management Tab for Pet Owners -->
+                <page string="Pets" name="owner_pets" invisible="not is_pet_owner" autofocus="autofocus">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="alert alert-info" role="status">
+                                <i class="fa fa-info-circle me-2" title="Information Icon"/>
+                                <strong>Pet Management:</strong>
+                                All pets listed here are available for appointments and billing under this owner's
+                                account.
+                                Use the "Add a line" button to register new pets.
+                            </div>
+                        </div>
+                    </div>
+
+                    <field name="pet_ids" context="{'default_pet_owner_id': id,'default_partner_type_id': %(ths_vet_base.partner_type_pet)d, 'default_is_pet': True, 'default_is_pet_owner': False,
+                                                    'default_parent_id': id, 'show_pet_owner': True}">
+                        <list editable="bottom" create="true" delete="true">
+                            <field name="name" string="Pet Name" required="1"/>
+                            <field name="species_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
+                            <field name="breed_id" options="{'no_create': True, 'no_quick_create': True}" domain="[('species_id', '=?', species_id)]"/>
+                            <field name="gender"/>
+                            <field name="ths_dob" widget="date"/>
+                            <field name="is_neutered_spayed" widget="boolean_toggle"/>
+                            <field name="ths_microchip"/>
+                            <field name="ths_deceased" widget="boolean_toggle"/>
+                            <field name="ths_deceased_date" column_invisible="1"/>
+                            <field name="partner_type_id" domain="[('name', '=', 'Pet')]" column_invisible="1"/>
+                            <field name="pet_owner_id" column_invisible="1"/>
+                            <field name="parent_id" column_invisible="1"/>
+                            <button name="action_view_medical_history" type="object" string="History" icon="fa-stethoscope" class="btn btn-sm btn-link"/>
+                        </list>
+                    </field>
+                </page>
+
+                <!-- Park Membership Tab for Pets -->
+                <page string="Park Membership" name="pet_membership" invisible="not is_pet" autofocus="autofocus">
+                    <field name="pet_membership_ids" context="{'default_partner_id': pet_owner_id, 'default_patient_ids': [id] if id else []}">
+                        <list string="Pet Memberships" decoration-success="state == 'active'" decoration-warning="state == 'draft'" decoration-danger="state == 'expired'">
+                            <field name="name" width="100px;"/>
+                            <field name="partner_id" string="Pet Owner"/>
+                            <field name="patient_ids" widget="many2many_tags"/>
+                            <field name="membership_service_id"/>
+                            <field name="valid_from"/>
+                            <field name="valid_to"/>
+                            <field name="state" widget="badge" decoration-success="state == 'active'" decoration-danger="state == 'expired'"/>
+                            <field name="is_paid" widget="boolean_toggle"/>
+                        </list>
+                    </field>
+
+                </page>
+
+                <!-- Medical Summary Tab for Pets -->
+                <page string="Medical Summary" name="pet_medical" invisible="not is_pet">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="alert alert-success" role="status">
+                                <i class="fa fa-heartbeat me-2" title="Vital Signs"/>
+                                <strong>Medical Overview:</strong>
+                                Complete medical history and health status for this pet.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Status -->
+                    <group string="Current Medical Status">
+                        <group>
+                            <field name="last_visit_date" readonly="1"/>
+                            <field name="next_vaccination_due" readonly="1"/>
+                            <field name="vaccination_count" readonly="1"/>
+                            <field name="appointment_count" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="ths_microchip" readonly="1"/>
+                            <field name="ths_insurance_number" readonly="1"/>
+                            <field name="is_neutered_spayed" readonly="1" widget="boolean_toggle"/>
+                            <field name="ths_deceased" readonly="1" widget="boolean_toggle"/>
+                            <field name="ths_deceased_date" readonly="1" invisible="not ths_deceased"/>
+                        </group>
+                    </group>
+
+                    <!-- Medical Summary HTML -->
+                    <group string="Full Medical Summary">
+                        <field name="full_medical_summary" readonly="1" widget="html"/>
+                    </group>
+
+                    <!-- Quick Actions -->
+                    <div class="mt-3">
+                        <h5>Quick Actions</h5>
+                        <div class="btn-group" role="group">
+                            <button name="action_schedule_appointment" type="object"
+                                    class="btn btn-primary">
+                                <i class="fa fa-calendar-plus"/> Schedule Appointment
+                            </button>
+                            <button name="action_view_vaccinations" type="object"
+                                    class="btn btn-info">
+                                <i class="fa fa-syringe"/> View Vaccinations
+                            </button>
+                            <button name="action_view_documents" type="object"
+                                    class="btn btn-secondary">
+                                <i class="fa fa-camera"/> View Photos
+                            </button>
+                        </div>
+                    </div>
+                </page>
+
+                <!-- Health Records Tab for Pets -->
+                <page string="Health Records" name="pet_health_records" invisible="not is_pet">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <group string="Medical Alerts &amp; Restrictions">
+                                <field name="medical_alerts" nolabel="1"
+                                       placeholder="Enter any medical alerts or conditions..."
+                                       class="text-warning"/>
+                                <field name="dietary_restrictions" nolabel="1"
+                                       placeholder="Enter dietary restrictions or special needs..."/>
+                            </group>
+                        </div>
+                        <div class="col-md-6">
+                            <group string="Emergency Information">
+                                <field name="ths_emergency_contact"
+                                       placeholder="Emergency contact number"/>
+                                <field name="ths_insurance_number"
+                                       placeholder="Pet insurance policy number"/>
+                            </group>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity Summary -->
+                    <div class="mt-4">
+                        <h5>Recent Activity Summary</h5>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Appointments</h6>
+                                        <p class="card-text display-6">
+                                            <field name="appointment_count" readonly="1"/>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Vaccinations</h6>
+                                        <p class="card-text display-6">
+                                            <field name="vaccination_count" readonly="1"/>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Encounters</h6>
+                                        <p class="card-text display-6">
+                                            <field name="encounter_count" readonly="1"/>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Photos</h6>
+                                        <p class="card-text display-6">
+                                            <field name="documents_count" readonly="1"/>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </page>
+
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Enhanced List View -->
+    <record id="view_partner_list_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">res.partner.list.inherit.ths.vet</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+
+            <!-- Add computed flags -->
+            <xpath expr="//list" position="inside">
+                <field name="is_pet" column_invisible="1"/>
+                <field name="is_pet_owner" column_invisible="1"/>
+            </xpath>
+
+            <!-- Add vet-specific columns -->
+            <xpath expr="//field[@name='partner_type_id']" position="after">
+                <field name="pet_owner_id" optional="hide" string="Pet Owner" column_invisible="not context.get('show_pet_fields', False)"/>
+                <field name="species_id" optional="show" string="Species" column_invisible="not context.get('show_pet_fields', False)"/>
+                <field name="breed_id" optional="hide" string="Breed" column_invisible="not context.get('show_pet_fields', False)"/>
+                <field name="ths_microchip" optional="hide" string="Microchip" column_invisible="not context.get('show_pet_fields', False)"/>
+                <field name="last_visit_date" optional="hide" string="Last Visit" column_invisible="not context.get('show_pet_fields', False)"/>
+                <field name="next_vaccination_due" optional="hide" string="Vaccine Expiry" widget="date" column_invisible="not context.get('show_pet_fields', False)"/>
+                <field name="vaccination_count" optional="hide" string="# Vaccines" column_invisible="not context.get('show_pet_fields', False)"/>
+                <field name="ths_deceased" optional="hide" widget="boolean_toggle" string="Deceased" column_invisible="not context.get('show_pet_fields', False)"/>
+                <field name="pet_count" optional="show" string="# Pets" column_invisible="not context.get('show_pet_owner_fields', False)"/>
+                <field name="appointment_count" optional="hide" string="# Appointments"
+                       column_invisible="not context.get('show_pet_fields', False) and not context.get('show_pet_owner_fields', False)"/>
+<!--                <field name="pet_owner_id" optional="hide" string="Pet Owner" column_invisible="not is_pet"/>-->
+<!--                <field name="species_id" optional="show" string="Species" column_invisible="not is_pet"/>-->
+<!--                <field name="breed_id" optional="hide" string="Breed" column_invisible="not is_pet"/>-->
+<!--                <field name="ths_microchip" optional="hide" string="Microchip" column_invisible="not is_pet"/>-->
+<!--                <field name="last_visit_date" optional="hide" string="Last Visit" column_invisible="not is_pet"/>-->
+<!--                <field name="next_vaccination_due" optional="hide" string="Vaccine Expiry" widget="date" column_invisible="not is_pet"/>-->
+<!--                <field name="vaccination_count" optional="hide" string="# Vaccines" column_invisible="not is_pet"/>-->
+<!--                <field name="pet_count" optional="show" string="# Pets" column_invisible="not is_pet_owner"/>-->
+<!--                <field name="ths_deceased" optional="hide" widget="boolean_toggle" string="Deceased" column_invisible="not is_pet"/>-->
+<!--                <field name="appointment_count" optional="hide" string="# Appointments" column_invisible="not is_pet_owner or not is_pet"/>-->
+            </xpath>
+
+            <!-- Add color coding -->
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-muted">ths_deceased == True</attribute>
+                <attribute name="decoration-primary">is_pet_owner == True</attribute>
+                <attribute name="decoration-info">is_pet == True and ths_deceased == False</attribute>
+                <attribute name="decoration-danger">is_pet == True and next_vaccination_due and next_vaccination_due &lt; context_today()</attribute>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Enhanced Search/Filter View -->
+    <record id="view_res_partner_filter_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">res.partner.filter.inherit.ths.vet</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+
+            <!-- Add vet-specific search fields -->
+            <xpath expr="//field[@name='partner_type_id']" position="after">
+                <field name="pet_owner_id" string="Pet Owner"/>
+                <field name="species_id" string="Species"/>
+                <field name="breed_id" string="Breed"/>
+                <field name="ths_microchip" string="Microchip"/>
+                <field name="ths_insurance_number" string="Insurance"/>
+                <field name="medical_alerts" string="Medical Alerts"/>
+            </xpath>
+
+            <!-- Add vet-specific filters -->
+            <xpath expr="//filter[@name='filter_partner_type']" position="before">
+
+                <!-- Quick Type Filters -->
+                <filter string="Active Pets" name="filter_active_pets" domain="[('is_pet', '=', True), ('ths_deceased', '=', False)]"/>
+                <filter string="Pet Owners" name="filter_pet_owners" domain="[('is_pet_owner', '=', True)]"/>
+                <filter string="Deceased Pets" name="filter_deceased_pets" domain="[('is_pet', '=', True), ('ths_deceased', '=', True)]"/>
+
+                <!-- Species Filters -->
+                <separator/>
+                <filter string="Dogs" name="filter_dogs" domain="[('species_id.name', 'ilike', 'dog')]"/>
+                <filter string="Cats" name="filter_cats" domain="[('species_id.name', 'ilike', 'cat')]"/>
+                <filter string="Birds" name="filter_birds" domain="[('species_id.name', 'ilike', 'bird')]"/>
+
+                <!-- Health Status Filters -->
+                <separator/>
+                <filter string="Spayed/Neutered" name="filter_neutered" domain="[('is_neutered_spayed', '=', True)]"/>
+                <filter string="With Microchip" name="filter_microchip" domain="[('ths_microchip', '!=', False)]"/>
+                <filter string="With Insurance" name="filter_insurance" domain="[('ths_insurance_number', '!=', False)]"/>
+                <filter string="Medical Alerts" name="filter_medical_alerts" domain="[('medical_alerts', '!=', False)]"/>
+                <separator/>
+                <filter string="Vaccinations Overdue" name="filter_vaccines_overdue" domain="[('next_vaccination_due', '&lt;', context_today()), ('is_pet', '=', True)]"/>
+                <filter string="Vaccines Due Soon" name="filter_vaccines_due_soon" domain="[('next_vaccination_due', '&lt;=', (context_today() + datetime.timedelta(days=30)).strftime('%Y-%m-%d')),
+                                ('next_vaccination_due', '&gt;=', context_today().strftime('%Y-%m-%d')),  ('is_pet', '=', True)]"/>
+                <separator/>
+                <filter string="Recent Patients" name="filter_recent_patients"
+                        domain="[('last_visit_date', '&gt;=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d')), ('is_pet', '=', True)]"/>
+                <filter string="Long-time Clients" name="filter_longtime_clients"
+                        domain="[('last_visit_date', '&lt;=', (context_today() - datetime.timedelta(days=365)).strftime('%Y-%m-%d')), ('is_pet', '=', True)]"/>
+
+                <separator/>
+            </xpath>
+
+            <!-- Add vet-specific group by options -->
+            <xpath expr="//group[@expand='0']" position="inside">
+                <filter string="Pet Owner" name="groupby_pet_owner" context="{'group_by': 'pet_owner_id'}"/>
+                <filter string="Species" name="groupby_species" context="{'group_by': 'species_id'}"/>
+                <filter string="Breed" name="groupby_breed" context="{'group_by': 'breed_id'}"/>
+                <filter string="Health Status" name="groupby_health" context="{'group_by': 'ths_deceased'}"/>
+                <filter string="Vaccination Status" name="groupby_vaccination_status" context="{'group_by': 'next_vaccination_due'}"/>
+                <filter string="Last Time Visited" name="groupby_last_visit_month" context="{'group_by': 'last_visit_date:month'}"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Enhanced Kanban View -->
+    <record id="view_partner_kanban_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">res.partner.kanban.inherit.ths.vet</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.res_partner_kanban_view"/>
+        <field name="arch" type="xml">
+
+            <!-- Add computed fields for kanban -->
+            <xpath expr="//field[@name='active']" position="after">
+                <field name="is_pet"/>
+                <field name="is_pet_owner"/>
+                <field name="ths_deceased"/>
+                <field name="species_id"/>
+                <field name="species_color"/>
+                <field name="species_image"/>
+                <field name="image_1920"/>
+                <field name="pet_owner_id"/>
+                <field name="pet_count"/>
+                <field name="appointment_count"/>
+                <field name="vaccination_count"/>
+                <field name="last_visit_date"/>
+                <field name="next_vaccination_due"/>
+                <field name="medical_alerts"/>
+            </xpath>
+
+            <!-- Customize avatar for pets -->
+            <xpath expr='//div[hasclass("o_kanban_image_fill")]' position="replace">
+                <div class="o_kanban_image_fill position-relative d-flex align-items-center justify-content-center" style="background-color: transparent; min-height: 80px;">
+
+                    <!-- Pet with colored background -->
+                    <t t-if="record.is_pet.raw_value">
+                        <!-- Pet with uploaded image (square) -->
+                        <t t-if="record.image_1920.raw_value">
+                            <field name="avatar_128" widget="image"
+                                   style="max-width: 100px; max-height: 100px;"
+                                   alt="Pet Avatar"/>
+                        </t>
+                        <!-- Pet with species image -->
+                        <t t-elif="record.species_image.raw_value">
+                            <div t-att-class="'o_tag o_tag_color_' + (record.species_color.raw_value || 0)"
+                                 t-att-style="'mask: url(/web/image/vet.species/' + record.species_id.raw_value + '/image) no-repeat center/contain; -webkit-mask: url(/web/image/vet.species/' + record.species_id.raw_value + '/image) no-repeat center/contain; width: 90px; height: 90px; '"
+                                 title="Pet">
+                            </div>
+                        </t>
+                        <!-- Pet fallback (fa-paw with species color) -->
+                        <t t-elif="record.species_id.raw_value">
+                            <div t-att-class="'o_tag o_tag_color_' + (record.species_color.raw_value || 10)"
+                                 t-att-style="'mask: url(/ths_vet_base/static/src/img/paw.svg) no-repeat center/contain; -webkit-mask: url(/ths_vet_base/static/src/img/paw.svg) no-repeat center/contain; width: 90px; height: 90px; filter: brightness(0.85) contrast(1.5) saturate(1.3);'"
+                                 title="Paw-Fallback">
+                            </div>
+                        </t>
+                        <!-- Pet fallback (fa-paw with static green) -->
+                        <t t-else="1">
+                            <i class="fa fa-paw fa-4x text-success"
+                               style="width: 100px; height: 100px; text-align: center; line-height: 100px; font-size: 70px; display: block;"
+                               title="Pet"></i>
+                        </t>
+                    </t>
+
+                    <!-- Pet Owner and Standard Partners (circular) -->
+                    <t t-else="1">
+                        <field name="avatar_128" widget="image"
+                               style="max-width: 100px; max-height: 100px; opacity: 0.85; filter: brightness(0.9);"
+                               alt="Avatar"/>
+                    </t>
+
+                </div>
+            </xpath>
+
+            <!-- Add pet-specific info to kanban card -->
+            <xpath expr="//templates//main//div[hasclass('mb-1')]" position="inside">
+                <!-- Pet Information -->
+                <div t-if="record.is_pet.raw_value" class="mt-2">
+                    <div t-if="record.species_id.raw_value" class="text-muted small"><i class="fa fa-paw me-1" title="Tag"/>
+                        <field name="species_id"/> <t t-if="record.breed_id.raw_value"> - <field name="breed_id"/></t>
+                    </div>
+
+                    <div t-if="record.last_visit_date.raw_value" class="text-muted small"><i class="fa fa-calendar me-1"/>
+                        Last visit: <field name="last_visit_date"/>
+                    </div>
+
+                    <div t-if="record.vaccination_count.raw_value > 0" class="text-muted small"><i class="fa fa-syringe me-1" title="Vaccination"/>
+                        <field name="vaccination_count"/> Vaccinations
+                    </div>
+                </div>
+
+                <!-- Pet Owner Information -->
+                <div t-if="record.is_pet_owner.raw_value" class="mt-2">
+                    <div t-if="record.pet_count.raw_value > 0" class="text-muted small">
+                        <i class="fa fa-paw me-1" title="Pet"/>
+                        <field name="pet_count"/> pets
+                    </div>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Pet-specific Actions -->
+    <record id="action_view_partner_pets" model="ir.actions.act_window">
+        <field name="name">Pets</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('is_pet', '=', True)]</field>
+        <field name="context">{'search_default_filter_active_pets': 1, 'default_partner_type_id': 'Pet', 'default_is_pet': True, 'is_pet': True, 'show_pet_owner': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No pets found!
+            </p>
+            <p>
+                Create the first pet record to start managing veterinary care.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_view_partner_pet_owners" model="ir.actions.act_window">
+        <field name="name">Pet Owners</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('is_pet_owner', '=', True)]</field>
+        <field name="context">{'default_partner_type_id': 'Pet Owner', 'default_is_pet_owner': True, 'default_customer_rank': 1, 'is_pet': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create the first Pet Owner
+            </p>
+            <p>
+                Manage contacts who are owners of pets and responsible for billing.
+            </p>
+        </field>
+    </record>
+
+    <!-- pet.medical.summary -->
+    <record id="view_pet_medical_summary_form" model="ir.ui.view">
+        <field name="name">pet.medical.summary.form</field>
+        <field name="model">res.partner</field>
+        <field name="priority">100</field>
+        <field name="arch" type="xml">
+            <form string="Medical Summary" create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                        <h2>
+                            <field name="species_id" readonly="1"/> -
+                            <field name="breed_id" readonly="1"/>
+                        </h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="pet_owner_id" readonly="1"/>
+                            <field name="ths_dob" readonly="1"/>
+                            <field name="ths_age" readonly="1"/>
+                            <field name="gender" readonly="1"/>
+                            <field name="ths_microchip" readonly="1"/>
+                        </group>
+                        <group string="Medical Status">
+                            <field name="is_neutered_spayed" readonly="1" widget="boolean_toggle"/>
+                            <field name="last_visit_date" readonly="1"/>
+                            <field name="next_vaccination_due" readonly="1"/>
+                            <field name="vaccination_count" readonly="1"/>
+                            <field name="ths_deceased" readonly="1"/>
+                            <field name="ths_deceased_date" readonly="1" invisible="not ths_deceased"/>
+                        </group>
+                    </group>
+                    <group string="Medical Summary">
+                        <field name="full_medical_summary" readonly="1" widget="html" nolabel="1"/>
+                    </group>
+
+                    <group string="Alerts &amp; Restrictions" invisible="not medical_alerts and not dietary_restrictions">
+                        <field name="medical_alerts" readonly="1" class="text-warning"/>
+                        <field name="dietary_restrictions" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_pet_medical_summary" model="ir.actions.act_window">
+        <field name="name">Medical Summary</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_pet_medical_summary_form"/>
+        <field name="target">new</field>
+        <field name="domain">[('is_pet', '=', True)]</field>
+    </record>
+
+    <record id="res_config_settings_view_form_vet" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.vet</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Veterinary" string="Veterinary" name="ths_vet_base" groups="base.group_system">
+                    <block title="Veterinary Management" name="vet_management">
+                        <setting string="Enable Veterinary Features" help="Manage veterinary operations, appointments, and pet records" id="enable_veterinary_setting">
+                            <field name="module_ths_vet_base"/>
+                            <div class="content-group" invisible="not module_ths_vet_base" id="msg_module_ths_vet_base">
+                                <div class="text-warning mt16"><strong>Save</strong> this page and come back here to configure veterinary settings.</div>
+                            </div>
+                        </setting>
+                    </block>
+
+                    <block title="Pet Owner Settings" name="pet_owner_settings" invisible="not module_ths_vet_base">
+                        <setting string="Default Male Owner Avatar" help="Default avatar for male pet owners when no avatar is uploaded" id="male_avatar_setting">
+                            <field name="male_owner_avatar" widget="image" options="{'size': [128, 128]}"/>
+                        </setting>
+
+                        <setting string="Default Female Owner Avatar" help="Default avatar for female pet owners when no avatar is uploaded" id="female_avatar_setting">
+                            <field name="female_owner_avatar" widget="image" options="{'size': [128, 128]}"/>
+                        </setting>
+                    </block>
+
+                    <block title="Appointment Settings" name="appointment_settings" invisible="not module_ths_vet_base">
+                        <setting string="Automatic Reminders" help="Send automatic reminders for upcoming appointments" id="appointment_reminders_setting">
+                            <field name="enable_automatic_reminders"/>
+                            <div class="content-group" invisible="not enable_automatic_reminders" id="reminder_settings">
+                                <div class="row mt16">
+                                    <label for="default_appointment_duration" string="Default Duration (minutes)" class="col-3 o_light_label"/>
+                                    <field name="default_appointment_duration" class="col-9"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

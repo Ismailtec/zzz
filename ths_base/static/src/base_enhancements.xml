@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-inherit="web.ControlPanel" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_control_panel_actions')]" position="before">
+            <button class="btn btn-primary ths_refresh_button"
+                    t-on-click="_onRefreshClick"
+                    title="Refresh View">
+                <i class="fa fa-refresh"></i>
+            </button>
+        </xpath>
+    </t>
+
+</templates>

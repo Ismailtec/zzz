@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Actions -->
+        <record id="action_vet_pet_owners" model="ir.actions.act_window">
+            <field name="name">Pet Owners</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_pet_owner', '=', True)]</field>
+            <field name="context"
+                   eval="{'default_partner_type_id': ref('ths_vet_base.partner_type_pet_owner'),'is_pet': False, 'default_is_company': False,'default_is_individual': True,
+                          'default_is_pet_owner': True, 'default_customer_rank': 1, 'search_default_filter_pet_owners': 1}"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new Pet Owner.
+                </p>
+                <p>
+                    Manage contacts who are owners of pets.
+                </p>
+            </field>
+        </record>
+
+        <record id="action_vet_pets" model="ir.actions.act_window">
+            <field name="name">Pets</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">kanban,list,form</field>
+            <field name="domain">[('is_pet', '=', True)]</field>
+            <field name="context"
+                   eval="{'default_partner_type_id': ref('ths_vet_base.partner_type_pet'),'is_pet': True, 'default_is_pet': True,
+                        'default_is_company': False,'default_is_individual': True, 'show_pet_owner': True, 'search_default_filter_active_pets': 1}"/>
+            <field name="help" type="html">
+                <div class="o_view_nocontent">
+                    <div class="o_nocontent_help">
+                        <p class="o_view_nocontent_smiling_face">
+                            Create a new Pet record.
+                        </p>
+                        <p>
+                            Manage animal patient records. Remember to link them to their Pet Owner.
+                        </p>
+                    </div>
+                </div>
+            </field>
+        </record>
+
+        <record id="action_new_appointment" model="ir.actions.act_window">
+            <field name="name">New Appointment</field>
+            <field name="res_model">calendar.event</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{'default_appointment_status': 'request', 'form_view_initial_mode': 'edit'}</field>
+        </record>
+
+        <record id="action_new_pet_owner" model="ir.actions.act_window">
+            <field name="name">New Pet Owner</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context"
+                   eval="{'default_partner_type_id': ref('ths_vet_base.partner_type_pet_owner'),'is_pet': False, 'default_is_company': False,'default_is_individual': True,
+                          'default_is_pet_owner': True, 'default_customer_rank': 1, 'search_default_filter_pet_owners': 1, 'form_view_initial_mode': 'edit'}"/>
+        </record>
+
+        <record id="action_new_pet" model="ir.actions.act_window">
+            <field name="name">New Pet</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context"
+                   eval="{'default_partner_type_id': ref('ths_vet_base.partner_type_pet'),'is_pet': True, 'default_is_pet': True, 'default_is_company': False,'default_is_individual': True, 'show_pet_owner': True, 'search_default_filter_active_pets': 1, 'form_view_initial_mode': 'edit'}"/>
+        </record>
+
+        <record id="action_new_encounter" model="ir.actions.act_window">
+            <field name="name">New Encounter</field>
+            <field name="res_model">vet.encounter.header</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{'default_encounter_date': context_today(), 'form_view_initial_mode': 'edit'}</field>
+        </record>
+
+        <!-- Dashboard Actions -->
+        <record id="action_encounter_dashboard" model="ir.actions.client">
+            <field name="name">Veterinary Dashboard</field>
+            <field name="tag">encounter_dashboard</field>
+        </record>
+
+
+        <!-- Today's Activities Actions -->
+        <record id="action_todays_appointments" model="ir.actions.act_window">
+            <field name="name">Today's Appointments</field>
+            <field name="res_model">calendar.event</field>
+            <field name="view_mode">list,calendar,form</field>
+            <field name="domain">[('start', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0, 0, 0))),
+                                  ('start', '&lt;', datetime.datetime.combine(context_today() + datetime.timedelta(days=1), datetime.time(0, 0, 0))),
+                                  ('appointment_type_id', '!=', False)]</field>
+            <field name="context">{'search_default_filter_today': 1, 'default_start': datetime.datetime.combine(context_today(), datetime.time(9, 0, 0)),
+                                   'default_appointment_status': 'request'}</field>
+        </record>
+
+        <record id="action_todays_encounters" model="ir.actions.act_window">
+            <field name="name">Today's Encounters</field>
+            <field name="res_model">vet.encounter.header</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('encounter_date', '=', context_today())]</field>
+            <field name="context">{'default_encounter_date': context_today()}</field>
+        </record>
+
+        <record id="action_overdue_vaccinations" model="ir.actions.act_window">
+            <field name="name">Overdue Vaccinations</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('is_pet', '=', True), ('next_vaccination_due', '&lt;', context_today()), ('next_vaccination_due', '!=', False)]</field>
+            <field name="context">{'search_default_filter_vaccines_overdue': 1}</field>
+        </record>
+
+
+        <!-- Emergency & Urgent Access -->
+        <record id="action_emergency_appointments" model="ir.actions.act_window">
+            <field name="name">Emergency Appointments</field>
+            <field name="res_model">calendar.event</field>
+            <field name="view_mode">list,form</field>
+            <field name="domain">[('is_emergency', '=', True), ('appointment_status', 'not in', ['completed', 'paid', 'cancelled'])]</field>
+            <field name="context">{'default_is_emergency': True, 'default_appointment_status': 'request'}</field>
+        </record>
+
+        <!-- Dashboards/reports Actions -->
+
+        <!-- Executive Dashboard Action -->
+        <record id="action_executive_dashboard" model="ir.actions.client">
+            <field name="name">Executive Dashboard</field>
+            <field name="tag">vet_executive_dashboard</field>
+            <field name="target">current</field>
+        </record>
+
+        <!-- Operational Dashboard Action -->
+        <record id="action_operational_dashboard" model="ir.actions.client">
+            <field name="name">Operational Dashboard</field>
+            <field name="tag">vet_operational_dashboard</field>
+            <field name="target">current</field>
+        </record>
+
+        <!-- Revenue Analysis Action -->
+        <record id="action_revenue_analysis" model="ir.actions.act_window">
+            <field name="name">Revenue Analysis</field>
+            <field name="res_model">vet.encounter.line</field>
+            <field name="view_mode">pivot,graph,list,form</field>
+            <field name="domain">[('payment_status', '=', 'paid')]</field>
+            <field name="context">{'pivot_measures': ['sub_total'], 'pivot_row_groupby': ['encounter_month'], 'pivot_column_groupby': ['product_id'], 'graph_measure': 'sub_total',
+                                   'graph_type': 'line', 'graph_groupbys': ['encounter_month']}</field>
+        </record>
+
+        <!-- Patient Analysis Action -->
+        <record id="action_patient_analysis" model="ir.actions.act_window">
+            <field name="name">Patient Analysis</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_mode">pivot,graph,list,form</field>
+            <field name="domain">[('is_pet', '=', True)]</field>
+            <field name="context">{'pivot_row_groupby': ['species_id'], 'pivot_column_groupby': ['pet_owner_id'], 'graph_type': 'pie', 'graph_groupbys': ['species_id']}</field>
+        </record>
+
+        <!-- Service Performance Action -->
+        <record id="action_service_performance" model="ir.actions.act_window">
+            <field name="name">Service Performance</field>
+            <field name="res_model">vet.encounter.line</field>
+            <field name="view_mode">pivot,graph,list</field>
+            <field name="context">{'pivot_row_groupby': ['product_id'], 'pivot_column_groupby': ['encounter_month'], 'pivot_measures': ['sub_total', 'qty'],
+                                   'graph_measure': 'qty', 'graph_type': 'bar', 'graph_groupbys': ['product_id']}</field>
+        </record>
+
+        <!-- Practitioner Performance Action -->
+        <record id="action_practitioner_performance" model="ir.actions.act_window">
+            <field name="name">Practitioner Performance</field>
+            <field name="res_model">vet.encounter.line</field>
+            <field name="view_mode">pivot,graph,list</field>
+            <field name="domain">[('practitioner_id', '!=', False)]</field>
+            <field name="context">{'pivot_row_groupby': ['practitioner_id'], 'pivot_column_groupby': ['encounter_month'], 'pivot_measures': ['sub_total'],
+                                   'graph_measure': 'sub_total', 'graph_type': 'bar', 'graph_groupbys': ['practitioner_id']}</field>
+        </record>
+
+        <!-- Payment Status Report -->
+        <record id="action_payment_status_report" model="ir.actions.act_window">
+            <field name="name">Payment Status Report</field>
+            <field name="res_model">vet.encounter.line</field>
+            <field name="view_mode">pivot,graph,list</field>
+            <field name="context">{'pivot_row_groupby': ['payment_status'], 'pivot_column_groupby': ['encounter_month'], 'pivot_measures': ['sub_total'],
+                                   'graph_measure': 'sub_total', 'graph_type': 'bar', 'graph_groupbys': ['payment_status']}</field>
+        </record>
+
+        <!-- Monthly Revenue Report -->
+        <record id="action_monthly_revenue_report" model="ir.actions.act_window">
+            <field name="name">Monthly Revenue Report</field>
+            <field name="res_model">vet.encounter.line</field>
+            <field name="view_mode">pivot,graph,list</field>
+            <field name="domain">[('payment_status', '=', 'paid')]</field>
+            <field name="context">{'pivot_row_groupby': ['encounter_month'], 'pivot_measures': ['sub_total'], 'graph_measure': 'sub_total',
+                                   'graph_type': 'line', 'graph_groupbys': ['encounter_month']}</field>
+        </record>
+
+        <!-- Import Species/breed wizard action -->
+        <record id="action_species_breed_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import Species/Breeds</field>
+            <field name="res_model">vet.species.breed.import.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <!-- Server action for closing empty encounters -->
+        <record id="action_close_empty_encounters" model="ir.actions.server">
+            <field name="name">Close Empty Encounters</field>
+            <field name="model_id" ref="model_vet_encounter_header"/>
+            <field name="state">code</field>
+            <field name="code">action = model.action_close_all_empty_encounters()</field>
+        </record>
+
+        <!-- Main Veterinary Menu Structure -->
+        <menuitem id="menu_ths_vet_root" name="Veterinary" sequence="50" web_icon="ths_vet_base,static/src/img/vet_menu.png"/>
+
+        <!-- Scheduling Submenu -->
+        <menuitem id="menu_ths_vet_scheduling" name="Appointments" parent="menu_ths_vet_root" sequence="5"/>
+        <menuitem id="menu_vet_schedule_gantt" name="Veterinary Appointments" parent="menu_ths_vet_scheduling" action="action_calendar_event_vet_gantt" sequence="30"
+                  groups="ths_vet_base.group_vet_user"/>
+
+        <!-- Patients & Owners Submenu -->
+        <menuitem id="menu_ths_vet_base_root" name="Patients &amp; Owners" parent="menu_ths_vet_root" sequence="10" groups="ths_hr.group_ths_hr_user"/>
+        <menuitem id="menu_vet_pet_owners" name="Pet Owners" parent="menu_ths_vet_base_root" action="action_vet_pet_owners" sequence="10"/>
+        <menuitem id="menu_vet_pets" name="Pets" parent="menu_ths_vet_base_root" action="action_vet_pets" sequence="20"/>
+        <menuitem id="menu_vet_medical_history_summary" name="Medical History Summary" parent="menu_ths_vet_base_root" action="action_vet_medical_history_summary" sequence="40"/>
+
+        <!-- Clinical Operations Submenu -->
+        <menuitem id="menu_ths_vet_clinical" name="Clinical" parent="menu_ths_vet_root" sequence="15"/>
+        <menuitem id="menu_vet_encounter" name="Encounters" parent="menu_ths_vet_clinical" action="action_medical_encounter_vet" sequence="10"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_vet_vaccination_records" name="Vaccinations" parent="menu_ths_vet_clinical" action="action_vet_vaccination" sequence="20"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_vet_treatment_plans" name="Treatment Plans" parent="menu_ths_vet_clinical" action="action_vet_treatment_plan" sequence="30"
+                  groups="ths_vet_base.group_vet_user"/>
+
+        <!-- Billing Submenu -->
+        <menuitem id="menu_ths_vet_billing" name="Billing" parent="menu_ths_vet_root" sequence="20"/>
+        <menuitem id="menu_ths_encounter_lines_billing" name="Encounter Line Items" parent="menu_ths_vet_billing" action="action_vet_encounter_line_item" sequence="10"
+                  groups="account.group_account_invoice,ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_vet_encounter_line_item_pos" name="POS Encounter Items" parent="point_of_sale.menu_point_config_product" action="action_vet_encounter_line_item"
+                  sequence="100"
+                  groups="point_of_sale.group_pos_user"/>
+
+        <!-- Services Submenu -->
+        <menuitem id="menu_ths_vet_services" name="Services" parent="menu_ths_vet_root" sequence="25"/>
+
+        <!-- Boarding Services -->
+        <menuitem id="menu_ths_vet_base_boarding" name="Boarding" parent="menu_ths_vet_services" sequence="10"/>
+        <menuitem id="menu_ths_vet_base_boarding_stays" name="Boarding Stays" parent="menu_ths_vet_base_boarding" action="action_vet_boarding_stay" sequence="10"
+                  groups="ths_vet_base.group_vet_user"/>
+
+        <!-- Park Services -->
+        <menuitem id="menu_vet_park_services" name="Park Services" parent="menu_ths_vet_services" sequence="20"/>
+        <menuitem id="menu_vet_park_checkins" name="Park Check-ins" parent="menu_vet_park_services" action="action_park_checkin" sequence="10"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_vet_pet_memberships" name="Pet Memberships" parent="menu_vet_park_services" action="action_vet_pet_membership" sequence="20"
+                  groups="ths_vet_base.group_vet_user"/>
+
+        <!-- Analytics Submenu -->
+        <menuitem id="menu_vet_analytics" name="Analytics" parent="menu_ths_vet_root" sequence="80"/>
+        <menuitem id="menu_encounter_analytics" name="Encounter Analytics" parent="menu_vet_analytics" action="action_encounter_analytics_wizard" sequence="10"
+                  groups="ths_vet_base.group_vet_manager"/>
+        <menuitem id="menu_encounter_dashboard" name="Encounter Dashboard" parent="menu_vet_analytics" action="action_encounter_dashboard" sequence="20"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_vet_park_reports" name="Park Reports" parent="menu_vet_analytics" action="action_vet_park_report_wizard" sequence="30"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_vet_near_expiry_memberships" name="Expiring Memberships" parent="menu_vet_analytics" action="action_view_expiring_memberships" sequence="40"
+                  groups="ths_vet_base.group_vet_user"/>
+
+        <!-- Configuration Submenu -->
+        <menuitem id="menu_ths_vet_config" name="Configuration" parent="menu_ths_vet_root" sequence="100"/>
+
+        <!-- Basic Configuration -->
+        <menuitem id="menu_species" name="Species" parent="menu_ths_vet_config" action="action_species" sequence="10" groups="ths_vet_base.group_vet_manager"/>
+        <menuitem id="menu_breed" name="Breeds" parent="menu_ths_vet_config" action="action_breed" sequence="20" groups="ths_vet_base.group_vet_manager"/>
+        <menuitem id="menu_vet_vaccine_types" name="Vaccine Types" parent="menu_ths_vet_config" action="action_vet_vaccine_type" sequence="30"
+                  groups="ths_vet_base.group_vet_manager"/>
+        <menuitem id="menu_vet_reason_visit" name="Visit Reasons" parent="menu_ths_vet_config" action="action_vet_reason_visit" sequence="35"
+                  groups="ths_vet_base.group_vet_manager"/>
+
+        <!-- Facility Configuration -->
+        <menuitem id="menu_vet_facility_config" name="Facility" parent="menu_ths_vet_config" sequence="40"/>
+        <menuitem id="menu_treatment_room_config" name="Treatment Rooms" parent="menu_vet_facility_config" action="action_treatment_room" sequence="10"
+                  groups="ths_vet_base.group_vet_manager"/>
+        <menuitem id="menu_ths_vet_base_boarding_cages" name="Boarding Cages" parent="menu_vet_facility_config" action="action_vet_boarding_cage" sequence="20"
+                  groups="ths_vet_base.group_vet_manager"/>
+
+        <!-- Advanced Configuration -->
+        <menuitem id="menu_vet_advanced_config" name="Advanced" parent="menu_ths_vet_config" sequence="50"/>
+        <menuitem id="menu_product_sub_type_config" name="Product Sub Types" parent="menu_vet_advanced_config" action="action_product_sub_type" sequence="10"
+                  groups="stock.group_stock_manager,purchase.group_purchase_manager,sales_team.group_sale_manager"/>
+        <menuitem id="menu_vet_boarding_logs" name="Boarding Logs" parent="menu_vet_advanced_config" action="action_vet_boarding_log" sequence="20"
+                  groups="ths_vet_base.group_vet_manager"/>
+        <menuitem id="menu_close_empty_encounters" name="Close Empty Encounters" parent="menu_vet_advanced_config" action="action_close_empty_encounters" sequence="100"/>
+
+        <menuitem id="menu_species_breed_import" name="Import Species/Breeds" parent="ths_vet_base.menu_vet_advanced_config" action="action_species_breed_import_wizard"
+                  sequence="50"/>
+
+        <!--        <menuitem id="menu_vet_boarding_schedules" name="Boarding Schedules" parent="menu_vet_advanced_config" action="action_vet_boarding_schedule" sequence="30"-->
+        <!--                  groups="ths_vet_base.group_vet_manager"/>-->
+
+        <!-- Staff Management (moved to HR main menu but with medical context) -->
+        <menuitem id="menu_medical_staff" name="Medical Staff" parent="hr.menu_hr_root" action="action_medical_staff" sequence="15" groups="hr.group_hr_user"/>
+
+        <!-- Quick Actions Submenu for easy access -->
+        <menuitem id="menu_vet_quick_actions" name="Quick Actions" parent="menu_ths_vet_root" sequence="20"/>
+
+        <menuitem id="menu_new_appointment" name="Schedule Appointment" parent="menu_vet_quick_actions" action="action_new_appointment" sequence="10"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_new_pet_owner" name="Add Pet Owner" parent="menu_vet_quick_actions" action="action_new_pet_owner" sequence="20" groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_new_pet" name="Add Pet" parent="menu_vet_quick_actions" action="action_new_pet" sequence="30" groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_new_encounter" name="Create Encounter" parent="menu_vet_quick_actions" action="action_new_encounter" sequence="40" groups="ths_vet_base.group_vet_user"/>
+
+        <menuitem id="menu_todays_activities" name="Today's Activities" parent="menu_ths_vet_root" sequence="3"/>
+        <menuitem id="menu_todays_appointments" name="Today's Appointments" parent="menu_todays_activities" action="action_todays_appointments" sequence="10"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_todays_encounters" name="Today's Encounters" parent="menu_todays_activities" action="action_todays_encounters" sequence="20"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_overdue_vaccinations" name="Overdue Vaccinations" parent="menu_todays_activities" action="action_overdue_vaccinations" sequence="30"
+                  groups="ths_vet_base.group_vet_user"/>
+
+        <menuitem id="menu_emergency_appointments" name="Emergency Appointments" parent="menu_ths_vet_scheduling" action="action_emergency_appointments" sequence="10"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_vet_encounter_line_item" name="Encounter Line Items" parent="point_of_sale.menu_point_config_product" action="action_vet_encounter_line_item"
+                  sequence="100" groups="account.group_account_invoice"/>
+
+        <!-- Dashboards Submenu -->
+
+        <menuitem id="menu_vet_dashboards" name="Dashboards" parent="menu_ths_vet_root" sequence="50"/>
+        <menuitem id="menu_executive_dashboard" name="Executive Dashboard" parent="menu_vet_dashboards" action="action_executive_dashboard" sequence="10"/>
+        <menuitem id="menu_operational_dashboard" name="Operational Dashboard" parent="menu_vet_dashboards" action="action_operational_dashboard" sequence="20"/>
+
+        <!-- New Reports Submenu -->
+        <menuitem id="menu_vet_reports" name="Reports &amp; Analysis" parent="menu_ths_vet_root" sequence="90"/>
+        <menuitem id="menu_revenue_analysis" name="Revenue Analysis" parent="menu_vet_reports" action="action_revenue_analysis" sequence="10"/>
+        <menuitem id="menu_patient_analysis" name="Patient Analysis" parent="menu_vet_reports" action="action_patient_analysis" sequence="20"/>
+
+        <!-- Service Performance Menu -->
+        <menuitem id="menu_service_performance" name="Service Performance" parent="menu_vet_reports" action="action_service_performance" sequence="30"/>
+
+        <!-- Practitioner Performance Menu -->
+        <menuitem id="menu_practitioner_performance" name="Practitioner Performance" parent="menu_vet_reports" action="action_practitioner_performance" sequence="40"/>
+
+        <!-- Financial Reports Submenu -->
+        <menuitem id="menu_financial_reports" name="Financial Reports" parent="menu_vet_reports" sequence="50"/>
+        <menuitem id="menu_payment_status_report" name="Payment Status" parent="menu_financial_reports" action="action_payment_status_report" sequence="10"/>
+        <menuitem id="menu_monthly_revenue_report" name="Monthly Revenue" parent="menu_financial_reports" action="action_monthly_revenue_report" sequence="20"/>
+
+
+        <!-- Daily Dashboard Data Refresh -->
+        <record id="cron_refresh_dashboard_data" model="ir.cron">
+            <field name="name">Refresh Dashboard Data</field>
+            <field name="model_id" ref="model_vet_dashboard_data"/>
+            <field name="state">code</field>
+            <field name="code">action = model.action_dashboard_data_refresh_all()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active">True</field>
+        </record>
+
+    </data>
+</odoo>

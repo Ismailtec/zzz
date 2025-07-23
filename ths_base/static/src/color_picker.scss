@@ -1,0 +1,60 @@
+/* Complete manual color generation - 36 colors with 3 shades per family */
+//$enhanced-colors: /* Reds (12-14) */
+//        #8B0000, #DC143C, #FFB6C1,
+//          /* Blues (15-17) */
+//        #191970, #4169E1, #87CEEB,
+//          /* Greens (18-20) */
+//        #006400, #228B22, #90EE90,
+//          /* Yellows (21-23) */
+//        #FF8C00, #FFD700, #FFFFE0,
+//          /* Purples (24-26) */
+//        #4B0082, #8A2BE2, #E6E6FA,
+//          /* Browns (27-29) */
+//        #654321, #A0522D, #D2B48C,
+//          /* Grays (30-32) */
+//        #2F4F4F, #808080, #D3D3D3,
+//          /* Extra (33-35) */
+//        #000000, #FFFFFF, #FFC0CB;
+$enhanced-colors: /* Reds (12-14) */
+        #8B0000, #DC143C, #FFB6C1,
+          /* Blues (15-17) */
+        #191970, #4169E1, #87CEEB,
+          /* Greens (18-20) */
+        #006400, #228B22, #90EE90,
+          /* Oranges (21-23) */
+        #FF4500, #FF7F50, #FFA500,
+          /* Better Browns (24-26) */
+        #8B4513, #A0522D, #CD853F,
+          /* Light variants (27-29) */
+        #F5F5F5, #F0F8FF, #FFFACD,
+          /* Grays (30-32) */
+        #2F4F4F, #808080, #000000,
+          /* Pink variants (33-35) */
+        #FF69B4, #FF1493, #FFC0CB;
+
+@for $i from 13 through 36 {
+  $color: nth($enhanced-colors, $i - 12);
+  $index: $i - 1;
+
+  // Tag colors
+  .o_tag_color_#{$index} {
+    background-color: $color;
+    color: if(lightness($color) > 60%, #000, #fff);
+
+    &::after {
+      background-color: $color;
+      color: if(lightness($color) > 60%, #000, #fff);
+    }
+  }
+
+  // ColorList colors
+  .o_colorlist_item_color_#{$index} {
+    background-color: $color;
+    color: if(lightness($color) > 60%, #000, #fff);
+  }
+
+  // Kanban colors
+  .o_kanban_color_#{$index} {
+    border-left: 4px solid $color;
+  }
+}

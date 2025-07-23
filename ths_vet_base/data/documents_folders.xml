@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="documents_pet_folder" model="documents.document">
+            <field name="name">Pet Documents</field>
+            <field name="type">folder</field>
+            <field name="folder_id" eval="False"/>
+            <field name="description">Main Folder for Pet Documents</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="documents_vaccine_folder" model="documents.document">
+            <field name="name">Vaccines Documents</field>
+            <field name="type">folder</field>
+            <field name="folder_id" ref="documents_pet_folder"/>
+            <field name="description">Folder for Vaccines photos/documents</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="documents_boarding_folder" model="documents.document">
+            <field name="name">Boarding Documents</field>
+            <field name="type">folder</field>
+            <field name="folder_id" ref="documents_pet_folder"/>
+            <field name="description">Folder for boarding photos/documents</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="documents_park_folder" model="documents.document">
+            <field name="name">Membership/Park Documents</field>
+            <field name="type">folder</field>
+            <field name="folder_id" ref="documents_pet_folder"/>
+            <field name="description">Folder for Membership/Park photos/documents</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="documents_pet_info" model="documents.document">
+            <field name="name">Pet General Documents</field>
+            <field name="type">folder</field>
+            <field name="folder_id" ref="documents_pet_folder"/>
+            <field name="description">Folder for Pet General photos/documents</field>
+            <field name="active">True</field>
+        </record>
+    </data>
+</odoo>

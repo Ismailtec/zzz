@@ -1,0 +1,1102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- vet.species -->
+    <record id="view_species_list" model="ir.ui.view">
+        <field name="name">vet.species.list</field>
+        <field name="model">vet.species</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="breed_ids"/>
+                <field name="color" widget="color_picker"/>
+                <field name="image" widget="image" options="{'size': [24, 24]}"/>
+
+            </list>
+        </field>
+    </record>
+
+    <record id="view_species_form" model="ir.ui.view">
+        <field name="name">vet.species.form</field>
+        <field name="model">vet.species</field>
+        <field name="arch" type="xml">
+            <form string="Species">
+                <sheet>
+                    <field name="image" widget="image" class="oe_avatar" options="{'size': [90, 90]}"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Species Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="sequence" string="Sequence"/>
+                        <field name="color" widget="color_picker"/>
+                        <field name="breed_ids" widget="many2many_tags"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_species" model="ir.actions.act_window">
+        <field name="name">Species</field>
+        <field name="res_model">vet.species</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a new species</p>
+        </field>
+    </record>
+
+    <!-- vet.breed -->
+    <record id="view_breed_list" model="ir.ui.view">
+        <field name="name">vet.breed.list</field>
+        <field name="model">vet.breed</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="species_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_breed_form" model="ir.ui.view">
+        <field name="name">vet.breed.form</field>
+        <field name="model">vet.breed</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="sequence" string="Sequence"/>
+                    <field name="name"/>
+                    <field name="species_id"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_breed" model="ir.actions.act_window">
+        <field name="name">Breeds</field>
+        <field name="res_model">vet.breed</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a new breed</p>
+        </field>
+    </record>
+
+    <!-- vet.boarding.cage -->
+    <record id="view_vet_boarding_cage_list" model="ir.ui.view">
+        <field name="name">vet.boarding.cage.list</field>
+        <field name="model">vet.boarding.cage</field>
+        <field name="arch" type="xml">
+            <list string="Boarding Cages">
+                <field name="name"/>
+                <field name="allowed_species_ids" widget="many2many_tags"/>
+                <field name="state" widget="badge" decoration-success="state == 'available'"
+                       decoration-warning="state == 'maintenance'" decoration-info="state == 'occupied'"/>
+                <field name="current_occupant_display" string="Current Occupant"/>
+                <field name="active" widget="boolean_toggle" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vet_boarding_cage_form" model="ir.ui.view">
+        <field name="name">vet.boarding.cage.form</field>
+        <field name="model">vet.boarding.cage</field>
+        <field name="arch" type="xml">
+            <form string="Boarding Cage">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="e.g., Cat Condo 1, Dog Run 5..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="allowed_species_ids" widget="many2many_tags"/>
+                            <field name="state"/>
+                        </group>
+                        <group>
+                            <field name="active" invisible="1"/>
+                            <field name="current_stay_id" readonly="1" options="{'no_open': True}"
+                                   invisible="state != 'occupied'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Add details about the cage..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vet_boarding_cage_search" model="ir.ui.view">
+        <field name="name">vet.boarding.cage.search</field>
+        <field name="model">vet.boarding.cage</field>
+        <field name="arch" type="xml">
+            <search string="Search Boarding Cages">
+                <field name="name"/>
+                <field name="allowed_species_ids" widget="selection"/>
+                <filter string="Available" name="filter_available" domain="[('state', '=', 'available')]"/>
+                <filter string="Occupied" name="filter_occupied" domain="[('state', '=', 'occupied')]"/>
+                <filter string="Maintenance" name="filter_maintenance" domain="[('state', '=', 'maintenance')]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="groupby_state" context="{'group_by': 'state'}"/>
+                    <filter string="Species" name="groupby_species" context="{'group_by': 'allowed_species_ids'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_vet_boarding_cage" model="ir.actions.act_window">
+        <field name="name">Boarding Cages</field>
+        <field name="res_model">vet.boarding.cage</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_vet_boarding_cage_search"/>
+        <field name="context">{'search_default_filter_available': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Define a new boarding cage or enclosure.
+            </p>
+        </field>
+    </record>
+
+    <!-- vet.boarding.log -->
+    <record id="view_vet_boarding_log_list" model="ir.ui.view">
+        <field name="name">vet.boarding.log.list</field>
+        <field name="model">vet.boarding.log</field>
+        <field name="arch" type="xml">
+            <list string="Boarding Logs">
+                <field name="date"/>
+                <field name="log_type"/>
+                <field name="description"/>
+                <field name="user_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vet_boarding_log_form" model="ir.ui.view">
+        <field name="name">vet.boarding.log.form</field>
+        <field name="model">vet.boarding.log</field>
+        <field name="arch" type="xml">
+            <form string="Boarding Log">
+                <sheet>
+                    <group>
+                        <field name="date"/>
+                        <field name="log_type"/>
+                        <field name="description"/>
+                        <field name="user_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_vet_boarding_log" model="ir.actions.act_window">
+        <field name="name">Boarding Logs</field>
+        <field name="res_model">vet.boarding.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a boarding log entry</p>
+        </field>
+    </record>
+
+
+    <!-- vet.boarding.schedule -->
+    <!--    <record id="view_vet_boarding_schedule_list" model="ir.ui.view">-->
+    <!--        <field name="name">vet.boarding.schedule.list</field>-->
+    <!--        <field name="model">vet.boarding.schedule</field>-->
+    <!--        <field name="arch" type="xml">-->
+    <!--            <list string="Boarding Schedules">-->
+    <!--                <field name="schedule_type"/>-->
+    <!--                <field name="scheduled_time"/>-->
+    <!--                <field name="next_time"/>-->
+    <!--                <field name="notes"/>-->
+    <!--                <field name="done"/>-->
+    <!--                <field name="user_id"/>-->
+    <!--            </list>-->
+    <!--        </field>-->
+    <!--    </record>-->
+
+    <!--    <record id="view_vet_boarding_schedule_form" model="ir.ui.view">-->
+    <!--        <field name="name">vet.boarding.schedule.form</field>-->
+    <!--        <field name="model">vet.boarding.schedule</field>-->
+    <!--        <field name="arch" type="xml">-->
+    <!--            <form string="Boarding Schedule">-->
+    <!--                <sheet>-->
+    <!--                    <group>-->
+    <!--                        <field name="schedule_type"/>-->
+    <!--                        <field name="scheduled_time"/>-->
+    <!--                        <field name="next_time"/>-->
+    <!--                        <field name="notes"/>-->
+    <!--                        <field name="done"/>-->
+    <!--                        <field name="user_id"/>-->
+    <!--                    </group>-->
+    <!--                </sheet>-->
+    <!--            </form>-->
+    <!--        </field>-->
+    <!--    </record>-->
+
+    <!--    <record id="action_vet_boarding_schedule" model="ir.actions.act_window">-->
+    <!--        <field name="name">Boarding Schedules</field>-->
+    <!--        <field name="res_model">vet.boarding.schedule</field>-->
+    <!--        <field name="view_mode">list,form</field>-->
+    <!--        <field name="help" type="html">-->
+    <!--            <p class="o_view_nocontent_smiling_face">Create a boarding schedule entry</p>-->
+    <!--        </field>-->
+    <!--    </record>-->
+
+
+    <!-- vet.boarding.stay -->
+    <record id="view_vet_boarding_stay_list" model="ir.ui.view">
+        <field name="name">vet.boarding.stay.list</field>
+        <field name="model">vet.boarding.stay</field>
+        <field name="arch" type="xml">
+            <list string="Boarding Stays" decoration-info="state=='scheduled'" decoration-primary="state=='checked_in'" decoration-success="state=='invoiced'"
+                  decoration-muted="state=='cancelled'">
+                <field name="name"/>
+                <field name="partner_id" optional="show"/>
+                <field name="pet_owner_id" optional="hide"/>
+                <field name="patient_ids" widget="many2many_tags"/>
+                <field name="cage_id"/>
+                <field name="check_in_datetime"/>
+                <field name="expected_check_out_datetime"/>
+                <field name="actual_check_out_datetime" optional="hide"/>
+                <field name="duration_days" optional="show"/>
+                <field name="state" widget="badge"/>
+                <field name="is_pet" column_invisible="1"/>
+                <field name="is_pet_owner" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vet_boarding_stay_form" model="ir.ui.view">
+        <field name="name">vet.boarding.stay.form</field>
+        <field name="model">vet.boarding.stay</field>
+        <field name="arch" type="xml">
+            <form string="Boarding Stay">
+                <header>
+                    <button name="action_check_in" string="Check In" type="object" class="oe_highlight" invisible="state not in ('draft', 'scheduled')"/>
+                    <button name="action_check_out" string="Check Out" type="object" class="oe_highlight" invisible="state != 'checked_in'"/>
+                    <button name="action_cancel" string="Cancel Stay" type="object" invisible="state in ('checked_out', 'invoiced', 'cancelled')"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,checked_in,checked_out,invoiced"/>
+                </header>
+                <sheet>
+                    <field name="is_pet" invisible="1"/>
+                    <field name="is_pet_owner" invisible="1"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_encounter" type="object" icon="fa-stethoscope" class="oe_stat_button" invisible="not encounter_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Daily</span>
+                                <span class="o_stat_text">Encounter</span>
+                            </div>
+                        </button>
+                        <button name="action_view_documents" type="object" icon="fa-book" class="oe_stat_button">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Documents</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id" required="1" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="patient_ids" widget="many2many_tags" required="1" options="{'no_open': True, 'no_create': True}"/>
+                            <field name="cage_id" required="1" options="{'no_open': True, 'no_create': True}" domain="cage_domain"/>
+                            <field name="encounter_id" readonly="1" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="check_in_datetime" required="1"/>
+                            <field name="expected_check_out_datetime" required="1"/>
+                            <field name="actual_check_out_datetime" readonly="1"/>
+                            <field name="duration_days" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Boarding Details" name="boarding_details">
+                            <group>
+                                <group string="Requirements">
+                                    <field name="vaccination_proof_received"/>
+                                    <field name="consent_form_signed"/>
+                                </group>
+                                <group string="Pet Information">
+                                    <field name="medical_conditions" placeholder="Allergies, anxiety, medications needed..."/>
+                                    <field name="routines_preferences_quirks" placeholder="Feeding times, exercise needs, fears..."/>
+                                    <field name="owner_brought_food"/>
+                                    <field name="food_instructions" invisible="not owner_brought_food" placeholder="Type, amount, frequency..."/>
+                                    <field name="owner_brought_medication"/>
+                                    <field name="medication_instructions" invisible="not owner_brought_medication" placeholder="Name, dosage, times..."/>
+                                </group>
+                                <group string="Boarding Logs" name="boarding_logs">
+                                    <field name="boarding_log_ids" context="{'default_boarding_stay_id': id}" nolabel="1">
+                                        <list editable="top">
+                                            <field name="date" widget="datetime"/>
+                                            <field name="log_type"/>
+                                            <field name="description"/>
+                                            <field name="user_id" readonly="1"/>
+                                        </list>
+                                    </field>
+                                </group>
+                                <!--                                <group string="Schedules" name="schedules">-->
+                                <!--                                    <field name="schedule_ids" context="{'default_boarding_stay_id': id}" nolabel="1">-->
+                                <!--                                        <list editable="top">-->
+                                <!--                                            <field name="schedule_type"/>-->
+                                <!--                                            <field name="scheduled_time" widget="datetime"/>-->
+                                <!--                                            <field name="next_time" widget="datetime"/>-->
+                                <!--                                            <field name="notes"/>-->
+                                <!--                                            <field name="done" widget="boolean_toggle"/>-->
+                                <!--                                            <field name="user_id"/>-->
+                                <!--                                        </list>-->
+                                <!--                                    </field>-->
+                                <!--                                </group>-->
+                            </group>
+                            <group string="Internal Notes" name="internal_notes">
+                                <field name="notes"/>
+                            </group>
+                        </page>
+                        <page string="Billing" name="billing" groups="account.group_account_manager,ths_vet_base.group_vet_user,ths_vet_base.group_vet_manager">
+                            <field name="encounter_line_ids"
+                                   context="{'default_partner_id': partner_id, 'default_patient_ids': patient_ids, 'default_encounter_id': encounter_id}"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vet_boarding_stay_search" model="ir.ui.view">
+        <field name="name">vet.boarding.stay.search</field>
+        <field name="model">vet.boarding.stay</field>
+        <field name="arch" type="xml">
+            <search string="Search Boarding Stays">
+                <field name="name" string="Reference"/>
+                <field name="partner_id"/>
+                <field name="patient_ids"/>
+                <field name="cage_id"/>
+                <field name="check_in_datetime"/>
+                <field name="expected_check_out_datetime"/>
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Scheduled" name="filter_scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="Checked In" name="filter_checked_in" domain="[('state', '=', 'checked_in')]"/>
+                <filter string="Checked Out" name="filter_checked_out" domain="[('state', '=', 'checked_out')]"/>
+                <filter string="Invoiced/Paid" name="filter_invoiced" domain="[('state', '=', 'invoiced')]"/>
+                <filter string="Cancelled" name="filter_cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter string="Check-in Date" name="filter_check_in_date" date="check_in_datetime"/>
+                <filter string="Expected Check-out Date" name="filter_expected_check_out_date" date="expected_check_out_datetime"/>
+                <separator/>
+                <filter string="Current Stays" name="filter_current" domain="[('state', '=', 'checked_in')]"/>
+                <filter string="Future Stays" name="filter_future"
+                        domain="[('state', '=', 'scheduled'), ('check_in_datetime', '&gt;=', context_today().strftime('%Y-%m-%d %H:%M:%S'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="groupby_state" context="{'group_by': 'state'}"/>
+                    <filter string="Cage" name="groupby_cage" context="{'group_by': 'cage_id'}"/>
+                    <filter string="Pet" name="groupby_pet" context="{'group_by': 'patient_ids'}"/>
+                    <filter string="Pet Owner" name="groupby_owner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Check-in Date" name="groupby_check_in" context="{'group_by': 'check_in_datetime:day'}"/>
+                    <filter string="Expected Check-out Date" name="groupby_expected_check_out" context="{'group_by': 'expected_check_out_datetime:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_vet_boarding_stay" model="ir.actions.act_window">
+        <field name="name">Boarding Stays</field>
+        <field name="res_model">vet.boarding.stay</field>
+        <field name="view_mode">form,list</field>
+        <field name="search_view_id" ref="view_vet_boarding_stay_search"/>
+        <field name="context">{'search_default_filter_current': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new boarding stay record.
+            </p>
+            <p>
+                Manage pet boarding check-ins, check-outs, and related information.
+            </p>
+        </field>
+    </record>
+
+    <!-- vet.pet.membership -->
+    <record id="view_vet_pet_membership_form" model="ir.ui.view">
+        <field name="name">vet.pet.membership.form</field>
+        <field name="model">vet.pet.membership</field>
+        <field name="arch" type="xml">
+            <form string="Pet Membership">
+                <header>
+                    <button name="action_start_membership" string="Start Membership" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_renew" string="Renew Membership" type="object" class="oe_highlight" invisible="state != 'expired'"/>
+                    <button name="action_cancel_membership" string="Cancel Membership" type="object" class="oe_highlight" invisible="state in ('cancelled', 'expired')"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state == 'draft'"/>
+                    <button name="action_notify_expiry" type="object" string="Notify Expiry" icon="fa-bell" invisible="not is_expiring_soon" help="Send expiry notification."/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,expired" statusbar_colors='{"active":"success","expired":"danger"}'/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" text="Expiring Soon!" invisible="not is_expiring_soon" bg_color="bg-warning"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="partner_id" string="Pet Owner" options="{'no_create': True, 'no_quick_create': True}"/>
+                            <field name="patient_ids" widget="many2many_tags" options="{'no_create': True, 'no_quick_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="membership_service_id" options="{'no_create': True, 'no_quick_create': True}"
+                                   domain="[('product_sub_type_id', '=', %(ths_vet_base.product_sub_type_member)d)]"/>
+                            <field name="is_paid" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group>
+                            <field name="valid_from"/>
+                            <field name="valid_to" readonly="1"/>
+                        </group>
+                        <group>
+                            <!-- Placeholder for future fields -->
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Add membership notes..."/>
+                        </page>
+                    </notebook>
+                    <field name="is_expiring_soon" invisible="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vet_pet_membership_list" model="ir.ui.view">
+        <field name="name">vet.pet.membership.list</field>
+        <field name="model">vet.pet.membership</field>
+        <field name="arch" type="xml">
+            <list string="Pet Memberships" decoration-success="state=='active'" decoration-danger="state=='expired'" decoration-warning="is_expiring_soon">
+                <field name="is_pet" column_invisible="1"/>
+                <field name="is_pet_owner" column_invisible="1"/>
+                <field name="name"/>
+                <field name="partner_id" string="Pet Owner"/>
+                <field name="patient_ids" widget="many2many_tags"/>
+                <field name="membership_service_id"/>
+                <field name="valid_from"/>
+                <field name="valid_to"/>
+                <field name="state" widget="badge" decoration-success="state == 'active'" decoration-info="state == 'draft'" decoration-warning="state == 'expired'"
+                       decoration-danger="state == 'cancelled'"/>
+                <field name="is_paid" widget="boolean_toggle"/>
+                <field name="is_expiring_soon" widget="boolean_toggle" readonly="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_vet_pet_membership" model="ir.actions.act_window">
+        <field name="name">Pet Memberships</field>
+        <field name="res_model">vet.pet.membership</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new pet membership
+            </p>
+        </field>
+    </record>
+
+    <record id="action_view_expiring_memberships" model="ir.actions.server">
+        <field name="name">Expiring Memberships</field>
+        <field name="model_id" ref="model_vet_pet_membership"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_view_expiring_memberships()</field>
+        <field name="binding_model_id" ref="model_vet_pet_membership"/>
+        <field name="binding_type">action</field>
+    </record>
+
+    <!-- vet.park.checkin -->
+    <record id="view_vet_park_checkin_list" model="ir.ui.view">
+        <field name="name">vet.park.checkin.list</field>
+        <field name="model">vet.park.checkin</field>
+        <field name="arch" type="xml">
+            <list string="Park Check-ins" decoration-info="state=='checked_in'" decoration-success="state=='checked_out'" decoration-danger="state=='overdue'"
+                  default_order="checkin_time desc">
+                <field name="is_pet" column_invisible="1"/>
+                <field name="is_pet_owner" column_invisible="1"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="patient_ids" widget="many2many_tags"/>
+                <field name="expected_visit_hours" widget="float_time"/>
+                <field name="checkin_time" widget="datetime"/>
+                <field name="checkout_time" widget="datetime"/>
+                <field name="duration_hours" widget="float_time"/>
+                <field name="state" widget="badge"/>
+                <field name="notes"/>
+                <button name="action_checkin" string="Checkin" type="object" icon="fa-sign-in" invisible="state != 'draft'"/>
+                <button name="action_checkout" string="Checkout" type="object" icon="fa-sign-out" invisible="state in ('checked_out', 'draft')"/>
+                <button name="action_extend_visit" string="Extend Visit" type="object" icon="fa-clock-o" invisible="state in ('draft', 'checked_in')" help="Extend visit"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vet_park_checkin_form" model="ir.ui.view">
+        <field name="name">vet.park.checkin.form</field>
+        <field name="model">vet.park.checkin</field>
+        <field name="arch" type="xml">
+            <form string="Park Check-in">
+                <header>
+                    <button name="action_checkin" string="Check In" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_checkout" string="Check Out" type="object" class="oe_highlight" invisible="state != 'checked_in'"/>
+                    <button name="action_extend_visit" string="Extend Visit" type="object" invisible="state != 'checked_out'"/>
+                    <button name="action_reset_to_draft" type="object" string="Reset to Draft" invisible="state =='draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,checked_in,checked_out"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-success" role="alert" invisible="not has_valid_membership" style="margin-bottom: 10px;">
+                        <strong>✓ All pets have valid memberships</strong>
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="has_valid_membership" style="margin-bottom: 10px;">
+                        <strong>⚠ Warning: Some pets may not have valid memberships</strong>
+                    </div>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_pet_memberships" type="object" class="oe_stat_button" icon="fa-credit-card">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value"><field name="patient_ids" widget="many2many_tags" readonly="1"/></span>
+                                <span class="o_stat_text">Pets &amp; Memberships</span>
+                            </div>
+                        </button>
+                        <button name="action_view_encounter" type="object" icon="fa-stethoscope" class="oe_stat_button" invisible="not encounter_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Encounter</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="partner_id" options="{'no_create': True, 'no_quick_create': True}"/>
+                            <field name="patient_ids" widget="many2many_tags" options="{'no_create': True, 'no_quick_create': True}"
+                                   context="{'show_valid_park_members_only': True, 'default_is_pet': True}"/>
+
+                            <!--                            <field name="has_valid_membership" invisible="1"/>-->
+                            <label for="checkin_time"/>
+                            <div>
+                                <field name="checkin_time" class="oe_inline"/>
+                            </div>
+                            <field name="checkout_time" readonly="state == 'checked_in'"/>
+                        </group>
+                        <group>
+                            <field name="expected_visit_hours" widget="float_time" help="Expected duration of visit (minimum 1 hour)"/>
+                            <label for="checkout_time"/>
+                            <div>
+                                <field name="checkout_time" class="oe_inline"/>
+                            </div>
+                            <field name="duration_hours" readonly="1" widget="float_time"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Visit Notes" name="notes">
+                            <field name="notes" placeholder="Add notes about the park visit..."/>
+                        </page>
+                    </notebook>
+                    <field name="has_valid_membership" invisible="1"/>
+                    <field name="encounter_id" readonly="1" invisible="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vet_park_checkin_search" model="ir.ui.view">
+        <field name="name">vet.park.checkin.search</field>
+        <field name="model">vet.park.checkin</field>
+        <field name="arch" type="xml">
+            <search string="Search Park Check-ins">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="patient_ids"/>
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Checked In" name="filter_checked_in" domain="[('state', '=', 'checked_in')]"/>
+                <filter string="Checked Out" name="filter_checked_out" domain="[('state', '=', 'checked_out')]"/>
+                <filter string="Overdue" name="filter_overdue" domain="[('state', '=', 'overdue')]"/>
+                <separator/>
+                <filter string="Today" name="filter_today" context="{'search_checkin_time_range': 'today'}"/>
+                <filter string="This Week" name="filter_this_week" context="{'search_checkin_time_range': 'this_week'}"/>
+                <filter string="Last Week" name="filter_last_week" context="{'search_checkin_time_range': 'last_week'}"/>
+                <separator/>
+                <filter string="Currently Checked In" name="filter_checked_in" domain="[('checkout_time', '=', False)]"/>
+                <filter string="Checked Out" name="filter_checked_out" domain="[('checkout_time', '!=', False)]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Pet Owner" name="groupby_owner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Status" name="groupby_state" context="{'group_by': 'state'}"/>
+                    <filter string="Check-in Date" name="groupby_checkin_date" context="{'group_by': 'checkin_time:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_park_checkin" model="ir.actions.act_window">
+        <field name="name">Park Check-ins</field>
+        <field name="res_model">vet.park.checkin</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_vet_park_checkin_list"/>
+        <field name="search_view_id" ref="view_vet_park_checkin_search"/>
+        <field name="context">{'search_default_filter_today': 1}</field>
+        <field name="domain">[('has_valid_membership', '=', True)]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Record a new park check-in
+            </p>
+            <p>
+                Track pet owner visits to the park with membership validation
+            </p>
+        </field>
+    </record>
+
+    <!-- TODO: Add service-specific encounter templates -->
+    <!-- TODO: Implement cross-service encounter navigation -->
+    <!-- TODO: Add service timeline integration in encounter view -->
+    <!-- TODO: Implement service dependency warnings -->
+
+    <!-- vet.park.report.wizard -->
+    <record id="view_vet_park_report_wizard_form" model="ir.ui.view">
+        <field name="name">vet.park.report.wizard.form</field>
+        <field name="model">vet.park.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Park Usage Report">
+                <group>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                    <field name="pet_owner_id"/>
+                    <field name="patient_ids" widget="many2many_tags"/>
+                </group>
+                <footer>
+                    <button name="generate_report" string="Generate" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vet_park_report_wizard" model="ir.actions.act_window">
+        <field name="name">Park Usage Report</field>
+        <field name="res_model">vet.park.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_report_park_usage" model="ir.actions.report">
+        <field name="name">Park Usage Report</field>
+        <field name="model">vet.park.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ths_vet_base.report_park_usage_template</field>
+        <field name="report_file">ths_vet_base.report_park_usage_template</field>
+    </record>
+
+    <template id="report_park_usage_template">
+        <t t-call="web.external_layout">
+            <t t-foreach="docs" t-as="wizard">
+                <div class="page">
+                    <!-- Report header with dates from wizard fields -->
+                    <h2>Park Usage Report:
+                        <span t-field="wizard.date_from"/>
+                        to
+                        <span t-field="wizard.date_to"/>
+                    </h2>
+                    <!-- Compute domain based on wizard fields -->
+                    <t t-set="domain"
+                       t-value="[('checkin_time', '&gt;=', wizard.date_from), ('checkin_time', '&lt;=', wizard.date_to + datetime.timedelta(days=1)), ('state', '=', 'checked_out')]"/>
+                    <t t-if="wizard.patient_ids" t-set="domain" t-value="domain + [('patient_ids', 'in', wizard.patient_ids.ids)]"/>
+                    <t t-if="wizard.pet_owner_id" t-set="domain" t-value="domain + [('partner_id', '=', wizard.pet_owner_id.id)]"/>
+                    <!-- Search for checkins using the domain -->
+                    <t t-set="checkins" t-value="env['vet.park.checkin'].search(domain)"/>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Check-in Ref</th>
+                                <th>Pet Owner</th>
+                                <th>Pets</th>
+                                <th>Check-in Time</th>
+                                <th>Check-out Time</th>
+                                <th>Duration (Hours)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="checkins" t-as="checkin">
+                                <tr>
+                                    <td>
+                                        <span t-field="checkin.name"/>
+                                    </td>
+                                    <td>
+                                        <span t-field="checkin.partner_id.name"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="', '.join(checkin.patient_ids.mapped('name'))"/>
+                                    </td>
+                                    <td>
+                                        <span t-field="checkin.checkin_time"/>
+                                    </td>
+                                    <td>
+                                        <span t-field="checkin.checkout_time"/>
+                                    </td>
+                                    <td>
+                                        <span t-field="checkin.duration_hours"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    <p>Total Visits:
+                        <span t-esc="len(checkins)"/>
+                    </p>
+                    <p>Total Duration:
+                        <t t-set="total_duration" t-value="0.0"/>
+                        <t t-foreach="checkins" t-as="checkin">
+                            <t t-set="total_duration" t-value="total_duration + checkin.duration_hours"/>
+                        </t>
+                        <span t-esc="total_duration"/>
+                        hours
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- vet.vaccination -->
+    <record id="view_vet_vaccine_type_list" model="ir.ui.view">
+        <field name="name">vet.vaccine.type.list</field>
+        <field name="model">vet.vaccine.type</field>
+        <field name="arch" type="xml">
+            <list string="Vaccine Types" editable="bottom">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="validity_months"/>
+                <field name="description" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_vet_vaccine_type_form" model="ir.ui.view">
+        <field name="name">vet.vaccine.type.form</field>
+        <field name="model">vet.vaccine.type</field>
+        <field name="arch" type="xml">
+            <form string="Vaccine Type">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active"/>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="validity_months"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Description">
+                        <field name="description" nolabel="1"/>
+                    </group>
+                </sheet>
+                <div class="o_attachment_preview"/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vaccination Record Views -->
+    <record id="view_vet_vaccination_list" model="ir.ui.view">
+        <field name="name">vet.vaccination.list</field>
+        <field name="model">vet.vaccination</field>
+        <field name="arch" type="xml">
+            <list string="Vaccinations" decoration-danger="is_expired" decoration-warning="0 &lt;= days_until_expiry &lt; 30">
+                <field name="is_pet" column_invisible="1"/>
+                <field name="is_pet_owner" column_invisible="1"/>
+                <field name="partner_id" optional="show"/>
+                <field name="pet_owner_id" optional="hide"/>
+                <field name="patient_ids" widget="many2many_tags"/>
+                <field name="vaccine_type_id"/>
+                <field name="date"/>
+                <field name="expiry_date"/>
+                <field name="days_until_expiry" widget="integer" optional="show"/>
+                <field name="batch_number" optional="hide"/>
+                <field name="practitioner_id"/>
+                <field name="is_expired" widget="boolean_toggle" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vet_vaccination_form" model="ir.ui.view">
+        <field name="name">vet.vaccination.form</field>
+        <field name="model">vet.vaccination</field>
+        <field name="arch" type="xml">
+            <form string="Vaccination Record">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_schedule_reminder" type="object" class="oe_stat_button" icon="fa-bell"
+                                invisible="is_expired or days_until_expiry &lt;= 30">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Schedule<br/>Reminder</span>
+                            </div>
+                        </button>
+                        <button name="action_view_encounter" type="object" icon="fa-stethoscope" class="oe_stat_button"
+                                invisible="not encounter_id">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Daily</span>
+                                <span class="o_stat_text">Encounter</span>
+                            </div>
+                        </button>
+                        <button name="action_view_documents" type="object" icon="fa-book" class="oe_stat_button">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Documents</span>
+                            </div>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Expired" bg_color="bg-danger" invisible="not is_expired"/>
+                    <widget name="web_ribbon" title="Expires Soon" bg_color="bg-warning"
+                            invisible="is_expired or days_until_expiry &gt; 30 or days_until_expiry &lt; 0"/>
+                    <h1>
+                        <field name="vaccine_type_id" options="{'no_create': True}"/>
+                    </h1>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="pet_owner_id" invisible="1"/>
+                            <field name="patient_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="date"/>
+                            <field name="expiry_date"/>
+                        </group>
+                        <group>
+                            <field name="practitioner_id" options="{'no_create': True}"/>
+                            <field name="batch_number"/>
+                            <field name="clinic_name"/>
+                            <field name="encounter_id" readonly="1" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Status" invisible="not expiry_date">
+                        <field name="is_expired" invisible="1"/>
+                        <field name="days_until_expiry" invisible="is_expired"/>
+                        <div class="alert alert-danger" role="alert" invisible="not is_expired">
+                            <strong>This vaccination has expired!</strong> Please schedule a renewal appointment.
+                        </div>
+                        <div class="alert alert-warning" role="alert"
+                             invisible="is_expired or days_until_expiry &gt; 30 or days_until_expiry &lt; 0">
+                            <strong>This vaccination expires in <field name="days_until_expiry" readonly="1"/>
+                                days!</strong>
+                        </div>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1" placeholder="Additional notes..."/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vet_vaccination_search" model="ir.ui.view">
+        <field name="name">vet.vaccination.search</field>
+        <field name="model">vet.vaccination</field>
+        <field name="arch" type="xml">
+            <search string="Search Vaccinations">
+                <field name="partner_id"/>
+                <field name="patient_ids"/>
+                <field name="vaccine_type_id"/>
+                <field name="practitioner_id"/>
+                <field name="batch_number"/>
+                <filter string="Expired" name="filter_expired" domain="[('is_expired', '=', True)]"/>
+                <filter string="Expires Soon" name="filter_expires_soon"
+                        domain="[('days_until_expiry', '&lt;', 30), ('days_until_expiry', '&gt;=', 0)]"/>
+                <filter string="Valid" name="filter_valid"
+                        domain="[('is_expired', '=', False), ('days_until_expiry', '&gt;=', 30)]"/>
+                <separator/>
+                <filter string="This Month" name="filter_this_month"
+                        domain="[('date', '&gt;=', (context_today()).strftime('%Y-%m-01')),
+                            ('date', '&lt;', (context_today() + relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
+                <filter string="Last Month" name="filter_last_month"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(months=1)).strftime('%Y-%m-01')),
+                            ('date', '&lt;', (context_today()).strftime('%Y-%m-01'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Pet" name="groupby_pet" context="{'group_by': 'patient_ids'}"/>
+                    <filter string="Pet Owner" name="groupby_owner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="Vaccine Type" name="groupby_vaccine" context="{'group_by': 'vaccine_type_id'}"/>
+                    <filter string="Practitioner" name="groupby_vet" context="{'group_by': 'practitioner_id'}"/>
+                    <filter string="Date" name="groupby_date" context="{'group_by': 'date:month'}"/>
+                    <filter string="Expiry Date" name="groupby_expiry" context="{'group_by': 'expiry_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- vet.vaccine.type -->
+    <record id="action_vet_vaccine_type" model="ir.actions.act_window">
+        <field name="name">Vaccine Types</field>
+        <field name="res_model">vet.vaccine.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Define vaccine types used in your clinic
+            </p>
+        </field>
+    </record>
+
+    <record id="action_vet_vaccination" model="ir.actions.act_window">
+        <field name="name">Vaccination Records</field>
+        <field name="res_model">vet.vaccination</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_filter_valid': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Record a new vaccination
+            </p>
+            <p>
+                Track pet vaccinations, expiry dates, and schedule reminders
+            </p>
+        </field>
+    </record>
+
+    <!-- vet.treatment.plan -->
+    <record id="view_vet_treatment_plan_list" model="ir.ui.view">
+        <field name="name">vet.treatment.plan.list</field>
+        <field name="model">vet.treatment.plan</field>
+        <field name="arch" type="xml">
+            <list string="Treatment Plans" decoration-info="state=='draft'" decoration-primary="state=='active'" decoration-success="state=='completed'"
+                  decoration-muted="state=='cancelled'">
+                <field name="is_pet" column_invisible="1"/>
+                <field name="is_pet_owner" column_invisible="1"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="patient_ids" widget="many2many_tags"/>
+                <field name="treatment_date"/>
+                <field name="priority" widget="badge"/>
+                <field name="state" widget="badge"/>
+                <field name="completion_percentage" widget="progressbar"/>
+                <field name="days_active"/>
+                <field name="overdue_tasks" decoration-danger="overdue_tasks > 0"/>
+                <field name="estimated_cost" widget="monetary" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vet_treatment_plan_form" model="ir.ui.view">
+        <field name="name">vet.treatment.plan.form</field>
+        <field name="model">vet.treatment.plan</field>
+        <field name="arch" type="xml">
+            <form string="Treatment Plan">
+                <header>
+                    <button name="action_start_treatment" string="Start Treatment" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_complete_treatment" string="Complete" type="object" class="oe_highlight" invisible="state != 'active'"/>
+                    <button name="action_put_on_hold" string="Put on Hold" type="object" invisible="state != 'active'"/>
+                    <button name="action_resume_treatment" string="Resume" type="object" invisible="state != 'on_hold'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="encounter_id"/>
+                            <field name="partner_id"/>
+                            <field name="patient_ids" widget="many2many_tags"/>
+                            <field name="treatment_date"/>
+                            <field name="estimated_duration"/>
+                            <field name="actual_end_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="priority"/>
+                            <field name="completion_percentage" widget="progressbar"/>
+                            <field name="days_active" readonly="1"/>
+                            <field name="overdue_tasks" readonly="1"/>
+                            <field name="estimated_cost"/>
+                            <field name="actual_cost"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Clinical Information">
+                            <group>
+                                <field name="diagnosis" placeholder="Primary diagnosis..."/>
+                                <field name="secondary_diagnosis" placeholder="Secondary diagnosis..."/>
+                                <field name="treatment_goals" placeholder="Treatment objectives..."/>
+                                <field name="contraindications" placeholder="Contraindications..."/>
+                                <field name="special_instructions" placeholder="Special care instructions..."/>
+                            </group>
+                        </page>
+
+                        <page string="Treatment Details">
+                            <group>
+                                <field name="medication_plan" placeholder="Medications prescribed..."/>
+                                <field name="dosage_instructions" placeholder="Dosage and timing..."/>
+                                <field name="dietary_restrictions" placeholder="Dietary requirements..."/>
+                                <field name="exercise_restrictions" placeholder="Activity limitations..."/>
+                            </group>
+                        </page>
+
+                        <page string="Monitoring &amp; Follow-up">
+                            <group>
+                                <field name="monitoring_schedule" placeholder="Monitoring requirements..."/>
+                                <field name="follow_up_schedule" placeholder="Follow-up appointments..."/>
+                                <field name="warning_signs" placeholder="Signs to watch for..."/>
+                                <field name="emergency_instructions" placeholder="Emergency procedures..."/>
+                            </group>
+                        </page>
+
+                        <page string="Tasks">
+                            <field name="treatment_line_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="task_type"/>
+                                    <field name="due_date"/>
+                                    <field name="assigned_to"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="completed_date" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Insurance">
+                            <group>
+                                <field name="insurance_approved" widget="boolean_toggle"/>
+                                <field name="insurance_notes"/>
+                            </group>
+                        </page>
+
+                        <page string="Progress Notes">
+                            <field name="progress_notes" placeholder="Treatment progress notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vet_treatment_plan" model="ir.actions.act_window">
+        <field name="name">Treatment Plans</field>
+        <field name="res_model">vet.treatment.plan</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a new treatment plan</p>
+            <p>Manage comprehensive treatment plans for your patients</p>
+        </field>
+    </record>
+
+
+</odoo>
