@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_pos_order_line_medical_fields,pos.order.line.medical.fields,point_of_sale.model_pos_order_line,point_of_sale.group_pos_user,1,1,1,1
+access_ths_pending_pos_item_pos_read,ths.pending.pos.item.pos.read,ths_medical_base.model_ths_pending_pos_item,point_of_sale.group_pos_user,1,0,0,0
+access_ths_pending_pos_item_pos_write,ths.pending.pos.item.pos.write,ths_medical_base.model_ths_pending_pos_item,point_of_sale.group_pos_user,1,1,0,0
+access_medical_encounter_pos_read,ths.medical.base.encounter.pos.read,ths_medical_base.model_ths_medical_base_encounter,point_of_sale.group_pos_user,1,0,0,0
+access_medical_encounter_pos_write,ths.medical.base.encounter.pos.write,ths_medical_base.model_ths_medical_base_encounter,point_of_sale.group_pos_user,1,1,0,0
+access_res_partner_pos_read_medical,res.partner.pos.read.medical,base.model_res_partner,point_of_sale.group_pos_user,1,0,0,0

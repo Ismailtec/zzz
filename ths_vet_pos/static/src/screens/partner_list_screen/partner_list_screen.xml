@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+  <!-- Base: Add Partner Type column to the list -->
+    <t t-name="point_of_sale.PartnerList" t-inherit="point_of_sale.PartnerList" t-inherit-mode="extension">
+    <xpath expr="//table/thead/tr/th[1]" position="after">
+      <th class="px-2 py-1">Partner Type</th>
+    </xpath>
+  </t>
+
+    <t t-name="point_of_sale.PartnerLine" t-inherit="point_of_sale.PartnerLine" t-inherit-mode="extension">
+    <xpath expr="//tr[@class='partner-line partner-info']/td[1]" position="after">
+      <td>
+        <!-- Updated to handle [id, name] format from preloaded data -->
+          <t t-if="props.partner.partner_type_id">
+          <t t-if="Array.isArray(props.partner.partner_type_id)">
+            <span class="text-primary fw-bold"><t t-esc="props.partner.partner_type_id[1]"/></span>
+          </t>
+              <t t-else="">
+            <span class="text-primary fw-bold"><t t-esc="props.partner.partner_type_id.name || props.partner.partner_type_id"/></span>
+          </t>
+        </t>
+          <t t-else="">
+          <span class="text-muted">-</span>
+        </t>
+      </td>
+    </xpath>
+  </t>
+
+</templates>

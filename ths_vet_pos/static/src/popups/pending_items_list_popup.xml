@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="ths_medical_pos.PendingItemsListPopup">
+        <Dialog title="props.title">
+            <div class="modal-body pos-medical-popup">
+                <!-- Updated table structure for new data format -->
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Product/Service</th>
+                            <th>Qty</th>
+                            <th>Unit Price</th>
+                            <th>Provider</th>
+                            <th>Encounter</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Handle empty state -->
+                        <t t-if="itemsToShow.length === 0">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No pending items.</td>
+                            </tr>
+                        </t>
+                        <!-- Render all pending items with new data format -->
+                        <t t-foreach="itemsToShow" t-as="item" t-key="item.id">
+                            <tr>
+                                <!-- Patient information - handle [id, name] format -->
+                                <td>
+                                    <t t-if="item.patient_ids and item.patient_ids.length > 0">
+                                        <t t-esc="item.patient_ids[0].name || item.patient_ids[0][1] || 'N/A'"/>
+                                    </t>
+                                    <t t-else="">N/A</t>
+                                </td>
+                                <!-- Product/Service information - handle [id, name] format -->
+                                <td>
+                                    <t t-if="item.product_id">
+                                        <t t-esc="Array.isArray(item.product_id) ? item.product_id[1] : item.product_id.name || 'N/A'"/>
+                                    </t>
+                                    <t t-else="">N/A</t>
+                                </td>
+                                <!-- Quantity with proper alignment -->
+                                <td class="text-end"><t t-esc="item.qty"/></td>
+                                <!-- Unit price with currency formatting -->
+                                <td class="text-end"><t t-esc="formatCurrency(item.price_unit)"/></td>
+                                <!-- Medical provider/practitioner - handle [id, name] format -->
+                                <td>
+                                    <t t-if="item.practitioner_id">
+                                        <t t-esc="Array.isArray(item.practitioner_id) ? item.practitioner_id[1] : item.practitioner_id.name || 'N/A'"/>
+                                    </t>
+                                    <t t-else="">N/A</t>
+                                </td>
+                                <!-- Source encounter for traceability - handle [id, name] format -->
+                                <td>
+                                    <t t-if="item.encounter_id">
+                                        <t t-esc="Array.isArray(item.encounter_id) ? item.encounter_id[1] : item.encounter_id.name || 'N/A'"/>
+                                    </t>
+                                    <t t-else="">N/A</t>
+                                </td>
+                                <!-- Action button to add item to current order -->
+                                <td>
+                                    <button class="btn btn-sm btn-primary"
+                                            t-on-click="() => this.addItemToOrder(item)">
+                                        <i class="fa fa-plus me-1"/> Add
+                                    </button>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <!-- Add note about new traceability behavior -->
+                <div class="alert alert-info mt-3" t-if="itemsToShow.length > 0">
+                    <small>
+                        <i class="fa fa-info-circle me-1"/>
+                        <strong>Note:</strong> Items will be marked as "processed" only when the order is completed and
+                        paid. You can add items to multiple draft orders until payment is finalized.
+                    </small>
+                </div>
+            </div>
+
+            <!-- Proper footer slot usage for Odoo 18 Dialog component -->
+            <t t-set-slot="footer">
+                <button class="btn btn-secondary btn-lg" t-on-click="close">Close</button>
+            </t>
+        </Dialog>
+    </t>
+
+</templates>

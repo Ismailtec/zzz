@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-name="ths_medical_pos.EncounterSelectionPopup">
+    <Dialog title="props.title">
+      <div class="container-fluid">
+        <div class="row g-3" style="max-height: 500px; overflow-y: auto;">
+          <t t-if="props.encounters">
+            <t t-foreach="props.encounters" t-as="encounter" t-key="encounter.id">
+              <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                <div class="card h-100 encounter-card"
+                     t-attf-class="state-{{ encounter.state }}"
+                     style="cursor: pointer; border: 1px solid #dee2e6; border-radius: 8px;"
+                     t-on-click="() => this.confirmSelection(encounter)">
+                  <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <h6 class="card-title text-primary fw-bold mb-0" style="font-size: 0.95rem;">
+                        <t t-esc="encounter.name"/>
+                      </h6>
+                        <small class="text-muted" style="font-size: 0.8rem;">
+                        <t t-esc="encounter.encounter_date"/>
+                      </small>
+                    </div>
+
+                      <!-- Partner Information -->
+                      <div class="mb-2">
+                      <div class="d-flex align-items-center">
+                        <i class="fa fa-user me-2 text-secondary"/>
+                          <strong style="font-size: 0.9rem;">
+                          <t t-esc="encounter.partner_name"/>
+                        </strong>
+                      </div>
+                    </div>
+
+                      <!-- Patient Information (Base Medical) -->
+                      <t t-if="encounter.patient_ids?.length">
+                      <div class="mb-2">
+                        <div class="d-flex align-items-start">
+                          <i class="fa fa-users me-2 text-secondary mt-1"/>
+                            <div>
+                            <small class="text-muted">Patients: </small>
+                                <span class="fw-bold">
+                              <t t-esc="encounter.patient_ids.join(', ')"/>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </t>
+
+                      <!-- Practitioner Information -->
+                      <t t-if="encounter.practitioner_name">
+                      <div class="mb-2">
+                        <div class="d-flex align-items-center">
+                          <i class="fa fa-user-md me-2 text-secondary"/>
+                            <small>
+                            <span class="text-muted">Dr. </span>
+                                <span class="fw-bold" t-esc="encounter.practitioner_name"/>
+                          </small>
+                        </div>
+                      </div>
+                    </t>
+
+                      <!-- Room Information -->
+                      <t t-if="encounter.room_name">
+                      <div class="mb-2">
+                        <div class="d-flex align-items-center">
+                          <i class="fa fa-home me-2 text-secondary"/>
+                            <small>
+                            <span class="text-muted">Room: </span>
+                                <span class="fw-bold" t-esc="encounter.room_name"/>
+                          </small>
+                        </div>
+                      </div>
+                    </t>
+
+                      <!-- Status Badge -->
+                      <div class="d-flex justify-content-end mt-2">
+                      <span t-attf-class="badge {{ encounter.state === 'done' ? 'bg-success' : encounter.state === 'in_progress' ? 'bg-warning text-dark' : 'bg-secondary' }}"
+                            style="font-size: 0.7rem; font-weight: bold;">
+                        <t t-esc="encounter.state_display"/>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </t>
+          </t>
+        </div>
+      </div>
+    </Dialog>
+  </t>
+</templates>

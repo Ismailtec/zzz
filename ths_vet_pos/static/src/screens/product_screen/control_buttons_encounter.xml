@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!-- Add Encounter Search button to control buttons area -->
+    <t t-inherit="point_of_sale.ControlButtons" t-inherit-mode="extension">
+        <!-- Add button next to SelectPartnerButton using your exact styling -->
+        <xpath expr="//SelectPartnerButton" position="after">
+            <button class="btn btn-light btn-lg lh-lg text-truncate w-auto"
+                    type="button"
+                    t-on-click="openEncounterSelectionPopup"
+                    title="Search partners by medical encounter">
+                <t t-if="!ui.isSmall">Encounters</t>
+                <t t-else="">Encounters</t>
+            </button>
+        </xpath>
+    </t>
+
+</templates>
