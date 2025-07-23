@@ -43,12 +43,44 @@
             </field>
         </record>
 
+        <record id="action_vet_boarding_stay" model="ir.actions.act_window">
+            <field name="name">Boarding Stays</field>
+            <field name="res_model">vet.boarding.stay</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_vet_boarding_stay_search"/>
+            <field name="context">{'search_default_filter_current': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new boarding stay record.
+                </p>
+                <p>
+                    Manage pet boarding check-ins, check-outs, and related information.
+                </p>
+            </field>
+        </record>
+
         <record id="action_new_appointment" model="ir.actions.act_window">
             <field name="name">New Appointment</field>
             <field name="res_model">calendar.event</field>
             <field name="view_mode">form</field>
             <field name="target">new</field>
             <field name="context">{'default_appointment_status': 'request', 'form_view_initial_mode': 'edit'}</field>
+        </record>
+
+        <record id="action_new_vet_boarding_stay" model="ir.actions.act_window">
+            <field name="name">Boarding Stays</field>
+            <field name="res_model">vet.boarding.stay</field>
+            <field name="view_mode">form,list</field>
+            <field name="search_view_id" ref="view_vet_boarding_stay_search"/>
+            <field name="context">{'search_default_filter_current': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new boarding stay record.
+                </p>
+                <p>
+                    Manage pet boarding check-ins, check-outs, and related information.
+                </p>
+            </field>
         </record>
 
         <record id="action_new_pet_owner" model="ir.actions.act_window">
@@ -123,7 +155,24 @@
             <field name="context">{'default_is_emergency': True, 'default_appointment_status': 'request'}</field>
         </record>
 
-        <!-- Dashboards/reports Actions -->
+        <!-- Batch close encounters Actions -->
+        <record id="action_batch_close_encounters_server" model="ir.actions.server">
+            <field name="name">Close Selected Encounters</field>
+            <field name="model_id" ref="model_vet_encounter_header"/>
+            <field name="binding_model_id" ref="model_vet_encounter_header"/>
+            <field name="binding_type">action</field>
+            <field name="state">code</field>
+            <field name="code">action = model.batch_close_encounters(env.context.get('active_ids', []))</field>
+        </record>
+
+        <record id="action_batch_generate_invoices_server" model="ir.actions.server">
+            <field name="name">Generate Consolidated Invoices</field>
+            <field name="model_id" ref="model_vet_encounter_header"/>
+            <field name="binding_model_id" ref="model_vet_encounter_header"/>
+            <field name="binding_type">action</field>
+            <field name="state">code</field>
+            <field name="code">action = model.batch_generate_invoices(env.context.get('active_ids', []))</field>
+        </record>
 
         <!-- Executive Dashboard Action -->
         <record id="action_executive_dashboard" model="ir.actions.client">
@@ -251,6 +300,7 @@
         <menuitem id="menu_ths_vet_base_boarding_stays" name="Boarding Stays" parent="menu_ths_vet_base_boarding" action="action_vet_boarding_stay" sequence="10"
                   groups="ths_vet_base.group_vet_user"/>
 
+
         <!-- Park Services -->
         <menuitem id="menu_vet_park_services" name="Park Services" parent="menu_ths_vet_services" sequence="20"/>
         <menuitem id="menu_vet_park_checkins" name="Park Check-ins" parent="menu_vet_park_services" action="action_park_checkin" sequence="10"
@@ -307,11 +357,13 @@
         <!-- Quick Actions Submenu for easy access -->
         <menuitem id="menu_vet_quick_actions" name="Quick Actions" parent="menu_ths_vet_root" sequence="20"/>
 
-        <menuitem id="menu_new_appointment" name="Schedule Appointment" parent="menu_vet_quick_actions" action="action_new_appointment" sequence="10"
+        <menuitem id="menu_new_pet_owner" name="Add Pet Owner" parent="menu_vet_quick_actions" action="action_new_pet_owner" sequence="10" groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_new_pet" name="Add Pet" parent="menu_vet_quick_actions" action="action_new_pet" sequence="20" groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_new_encounter" name="Create Encounter" parent="menu_vet_quick_actions" action="action_new_encounter" sequence="30" groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_new_appointment" name="Create Appointment" parent="menu_vet_quick_actions" action="action_new_appointment" sequence="40"
                   groups="ths_vet_base.group_vet_user"/>
-        <menuitem id="menu_new_pet_owner" name="Add Pet Owner" parent="menu_vet_quick_actions" action="action_new_pet_owner" sequence="20" groups="ths_vet_base.group_vet_user"/>
-        <menuitem id="menu_new_pet" name="Add Pet" parent="menu_vet_quick_actions" action="action_new_pet" sequence="30" groups="ths_vet_base.group_vet_user"/>
-        <menuitem id="menu_new_encounter" name="Create Encounter" parent="menu_vet_quick_actions" action="action_new_encounter" sequence="40" groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_new_boarding_stay" name="Create Boarding Stay" parent="menu_vet_quick_actions" action="action_new_vet_boarding_stay" sequence="50"
+                  groups="ths_vet_base.group_vet_user"/>
 
         <menuitem id="menu_todays_activities" name="Today's Activities" parent="menu_ths_vet_root" sequence="3"/>
         <menuitem id="menu_todays_appointments" name="Today's Appointments" parent="menu_todays_activities" action="action_todays_appointments" sequence="10"

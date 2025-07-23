@@ -250,9 +250,11 @@ class VetEncounterHeader(models.Model):
 	pos_order_ids = fields.One2many('pos.order', 'encounter_id', string='POS Orders', readonly=True, copy=False,
 									context={'default_partner_id': 'partner_id', 'default_pet_owner_id': 'pet_owner_id', 'default_practitioner_id': 'practitioner_id',
 											 'default_room_id': 'room_id', })
-	direct_invoice_ids = fields.One2many('account.move', 'encounter_id', string='Direct Invoices', readonly=True, copy=False,
+	direct_invoice_ids = fields.One2many('account.move', 'encounter_id', string='Direct Invoices', readonly=True, copy=False, domain="[('move_type', '=', 'out_invoice')]",
 										 context={'default_partner_id': 'partner_id', 'default_pet_owner_id': 'pet_owner_id', 'default_practitioner_id': 'practitioner_id',
 												  'default_room_id': 'room_id', })
+	credit_note_ids = fields.One2many('account.move', 'encounter_id', string='Credit Notes', domain="[('move_type', '=', 'out_refund')]", readonly=True)
+	credit_note_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
 	invoice_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
 	sale_order_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
 	pos_order_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
@@ -262,6 +264,8 @@ class VetEncounterHeader(models.Model):
 	history_illness = fields.Text(string="History of Present Illness")
 	vitals_log_ids = fields.One2many('vet.vitals.log', 'encounter_id', string='Vitals Logs',
 									 context={'default_patient_id': 'patient_ids[0].id if len(patient_ids) == 1 else False'})
+	treatment_plan_ids = fields.One2many('vet.treatment.plan', 'encounter_id', string='Treatment Plan', copy=False)
+	treatment_plan_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
 
 	# -------- SOAP Fields --------
 	soap_subjective = fields.Text(string="Subjective", help="Patient's reported symptoms and history.")
@@ -422,78 +426,22 @@ class VetEncounterHeader(models.Model):
 			header.invoice_count = len(header.encounter_line_ids.mapped('invoice_ids'))
 			header.sale_order_count = len(header.encounter_line_ids.mapped('sale_order_ids'))
 			header.pos_order_count = len(header.encounter_line_ids.mapped('pos_order_ids'))
-
-	# Generate encounter lines from service centers
-	def generate_encounter_lines(self):
-		"""Generate encounter lines from linked service centers."""
-		for header in self:
-			# For appointments
-			for appointment in header.appointment_ids:
-				if hasattr(appointment, 'product_id') and appointment.product_id:
-					header.encounter_line_ids |= self.env['vet.encounter.line'].create({
-						'encounter_id': header.id,
-						'partner_id': appointment.pet_owner_id.id,
-						'patient_ids': [Command.set(appointment.patient_ids.ids)] if appointment.patient_ids else False,
-						'practitioner_id': appointment.practitioner_id.id if appointment.practitioner_id else False,
-						'room_id': appointment.room_id.id if appointment.room_id else False,
-						'product_id': appointment.product_id.id,
-						'qty': 1.0,
-						'source_model': 'calendar.event',
-					})
-
-			# For boarding stays
-			for boarding in header.boarding_stay_ids:
-				if hasattr(boarding, 'product_id') and boarding.product_id:
-					header.encounter_line_ids |= self.env['vet.encounter.line'].create({
-						'encounter_id': header.id,
-						'partner_id': boarding.partner_id.id,
-						'patient_ids': [Command.set(boarding.patient_ids.ids)] if boarding.patient_ids else False,
-						'practitioner_id': boarding.practitioner_id.id if hasattr(boarding, 'practitioner_id') and boarding.practitioner_id else False,
-						'product_id': boarding.product_id.id,
-						'qty': boarding.product_id.qty,
-						'source_model': 'vet.boarding.stay',
-					})
-
-			# For vaccinations
-			for vaccination in header.vaccination_ids:
-				if hasattr(vaccination, 'product_id') and vaccination.product_id:
-					header.encounter_line_ids |= self.env['vet.encounter.line'].create({
-						'encounter_id': header.id,
-						'partner_id': vaccination.partner_id.id,
-						'patient_ids': [Command.set(vaccination.patient_ids.ids)] if vaccination.patient_ids else False,
-						'practitioner_id': vaccination.practitioner_id.id if vaccination.practitioner_id else False,
-						'product_id': vaccination.product_id.id,
-						'qty': 1.0,
-						'source_model': 'vet.vaccination',
-					})
-
-			# For park check-ins
-			for park_visit in header.park_checkin_ids:
-				if hasattr(park_visit, 'product_id') and park_visit.product_id:
-					header.encounter_line_ids |= self.env['vet.encounter.line'].create({
-						'encounter_id': header.id,
-						'partner_id': park_visit.partner_id.id,
-						'patient_ids': [Command.set(park_visit.patient_ids.ids)] if park_visit.patient_ids else False,
-						'product_id': park_visit.product_id.id,
-						'qty': 1.0,
-						'source_model': 'vet.park.checkin',
-					})
-
-			# For pet memberships
-			for membership in header.pet_membership_ids:
-				if hasattr(membership, 'product_id') and membership.product_id:
-					header.encounter_line_ids |= self.env['vet.encounter.line'].create({
-						'encounter_id': header.id,
-						'partner_id': membership.partner_id.id,
-						'patient_ids': [Command.set(membership.patient_ids.ids)] if membership.patient_ids else False,
-						'product_id': membership.product_id.id,
-						'qty': 1.0,
-						'source_model': 'vet.pet.membership',
-					})
+			header.credit_note_count = len(header.credit_note_ids)
+			header.treatment_plan_count = len(header.treatment_plan_ids)
 
 	@api.model
 	def _find_or_create_daily_encounter(self, partner_id, patient_ids=None, encounter_date=None, practitioner_id=None, room_id=None):
 		"""Find existing encounter for partner+date or create new one"""
+		# Normalize encounter_date to ensure consistent date handling
+		if encounter_date:
+			if isinstance(encounter_date, str):
+				encounter_date = fields.Date.from_string(encounter_date)
+			elif hasattr(encounter_date, 'date'):  # datetime object
+				encounter_date = encounter_date.date()
+		# if already date object, keep as is
+		else:
+			encounter_date = fields.Date.today()
+
 		domain = [
 			('partner_id', '=', partner_id),
 			('encounter_date', '=', encounter_date),
@@ -505,14 +453,14 @@ class VetEncounterHeader(models.Model):
 				'partner_id': partner_id,
 				'pet_owner_id': partner_id,
 				'encounter_date': encounter_date,
-				'patient_ids': [Command.set(patient_ids or [])],  # Handle None/empty
+				'patient_ids': [Command.set(patient_ids or [])],
 				'practitioner_id': getattr(practitioner_id, 'id', practitioner_id) if practitioner_id else False,
 				'room_id': getattr(room_id, 'id', room_id) if room_id else False,
 			}
-			with self.env.cr.savepoint():  # Ensure atomicity
+			with self.env.cr.savepoint():
 				encounter = self.search(domain, limit=1) or self.create(vals)
 		else:
-			if patient_ids:  # Only update patient_ids if provided
+			if patient_ids:
 				current_encounter_patient_ids = encounter.patient_ids.ids
 				all_unique_patient_ids = list(set(current_encounter_patient_ids + patient_ids))
 				if set(all_unique_patient_ids) != set(current_encounter_patient_ids):
@@ -566,7 +514,7 @@ class VetEncounterHeader(models.Model):
 		self.ensure_one()
 
 		available_lines = self.encounter_line_ids.filtered(
-			lambda l: l.payment_status in ['pending', 'partial', 'refunded'] and l.remaining_amount > 0
+			lambda l: l.payment_status in ['pending', 'partial'] and l.remaining_amount > 0
 		)
 
 		if not available_lines:
@@ -882,26 +830,101 @@ class VetEncounterHeader(models.Model):
 
 	@api.model
 	def batch_generate_invoices(self, encounter_ids):
-		"""Batch generate invoices for multiple encounters"""
+		"""Generate consolidated invoices for multiple encounters per partner"""
 		encounters = self.browse(encounter_ids)
-		pending_encounters = encounters.filtered(lambda e: e.pending_amount > 0)
+		encounters = encounters.filtered(lambda e: e.pending_amount > 0)
 
-		if not pending_encounters:
+		if not encounters:
 			return {'warning': {'title': _('Warning'), 'message': _('No encounters with pending amounts.')}}
 
-		invoices_created = []
-		for encounter in pending_encounters:
-			# Create invoice logic here
-			# This would need to be implemented based on your invoicing requirements
-			pass
+		# Group encounters by partner
+		partner_encounters = {}
+		for encounter in encounters:
+			partner_id = encounter.partner_id.id
+			if partner_id not in partner_encounters:
+				partner_encounters[partner_id] = self.env['vet.encounter.header']
+			partner_encounters[partner_id] |= encounter
 
-		return {
-			'name': _('Generated Invoices'),
-			'type': 'ir.actions.act_window',
-			'res_model': 'account.move',
-			'view_mode': 'list,form',
-			'domain': [('id', 'in', invoices_created)],
-		}
+		invoices_created = []
+		pet_owner_type = self.env.ref('ths_vet_base.partner_type_pet_owner', raise_if_not_found=False)
+
+		for partner_id, partner_encounters_group in partner_encounters.items():
+			# Get all pending lines from all encounters for this partner
+			all_pending_lines = partner_encounters_group.mapped('encounter_line_ids').filtered(
+				lambda l: l.payment_status in ['pending', 'partial'] and l.remaining_amount > 0
+			)
+
+			if not all_pending_lines:
+				continue
+
+			all_patient_ids = all_pending_lines.mapped('patient_ids').ids
+			primary_practitioner = all_pending_lines.mapped('practitioner_id')[:1]
+			primary_room = all_pending_lines.mapped('room_id')[:1]
+
+			encounter_names = partner_encounters_group.mapped('name')
+			invoice_origin = f"Consolidated: {', '.join(encounter_names)}"
+
+			invoice_vals = {
+				'partner_id': partner_id,
+				'patient_ids': [(6, 0, all_patient_ids)],
+				'partner_type_id': pet_owner_type.id if pet_owner_type else False,
+				'practitioner_id': primary_practitioner.id if primary_practitioner else False,
+				'room_id': primary_room.id if primary_room else False,
+				'move_type': 'out_invoice',
+				'invoice_origin': invoice_origin,
+				'invoice_date': fields.Date.today(),
+				'invoice_line_ids': []
+			}
+
+			# Create invoice lines grouped by encounter
+			for encounter in partner_encounters_group:
+				encounter_lines = encounter.encounter_line_ids.filtered(
+					lambda l: l.payment_status in ['pending', 'partial'] and l.remaining_amount > 0
+				)
+
+				for line in encounter_lines:
+					remaining = line.remaining_amount
+					if line.payment_status == 'pending':
+						quantity = line.qty
+						discount = line.discount
+					else:
+						quantity = remaining / line.unit_price if line.unit_price > 0 else 1.0
+						discount = 0.0
+
+					invoice_line_vals = {
+						'product_id': line.product_id.id,
+						'name': f"[{encounter.name}] {line.product_id.name}",
+						'quantity': quantity,
+						'price_unit': line.unit_price,
+						'encounter_line_id': line.id,
+						'discount': discount * 100,
+						'partner_id': line.partner_id.id,
+						'patient_ids': [(6, 0, line.patient_ids.ids)],
+						'practitioner_id': line.practitioner_id.id,
+						'room_id': line.room_id.id,
+					}
+					invoice_vals['invoice_line_ids'].append((0, 0, invoice_line_vals))
+
+			if invoice_vals['invoice_line_ids']:
+				invoice = self.env['account.move'].create(invoice_vals)
+				invoices_created.append(invoice.id)
+
+				# Link invoice to all encounter lines
+				for line in all_pending_lines:
+					line.invoice_ids = [(4, invoice.id)]
+					line.invoice_id = invoice.id
+					line._update_payment_history('invoice', invoice.id, invoice.name, 'posted')
+
+		if invoices_created:
+			return {
+				'name': _('Consolidated Invoices Created'),
+				'type': 'ir.actions.act_window',
+				'res_model': 'account.move',
+				'view_mode': 'list,form',
+				'domain': [('id', 'in', invoices_created)],
+			}
+		else:
+			return {'warning': {'title': _('Warning'), 'message': _('No invoices were created.')}}
 
 	# ------- ACTIONS -------
 	def action_view_pet_medical_histories(self):
@@ -963,6 +986,16 @@ class VetEncounterHeader(models.Model):
 			'view_mode': 'list,form',
 			'domain': [('id', 'in', invoice_ids)],
 			'context': {'create': False}
+		}
+
+	def action_view_credit_notes(self):
+		return {
+			'type': 'ir.actions.act_window',
+			'name': _('Credit Notes'),
+			'res_model': 'account.move',
+			'view_mode': 'list,form',
+			'domain': [('id', 'in', self.credit_note_ids.ids)],
+			'context': {'default_partner_id': self.partner_id.id}
 		}
 
 	def action_view_sale_orders(self):
@@ -1531,7 +1564,7 @@ class VetEncounterLine(models.Model):
 		for line in self:
 			line.paid_amount = float(line._calculate_paid_amount())
 			line.posted_amount = float(line._calculate_posted_amount())
-			line.remaining_amount = max(0.0, float(line.sub_total or 0.0) - float(line.paid_amount or 0.0) - float(line.posted_amount or 0.0))
+			line.remaining_amount = max(0.0, float(line.sub_total or 0.0) - float(line.paid_amount or 0.0))
 
 	@api.depends('paid_amount', 'posted_amount', 'remaining_amount', 'refunded_amount', 'sub_total', 'is_refunded', 'invoice_ids.payment_state', 'invoice_ids.state')
 	def _compute_payment_status(self):
@@ -1880,11 +1913,12 @@ class VetEncounterLine(models.Model):
 
 	@api.model
 	def merge_pending_duplicates(self):
-		"""Merge duplicate pending lines in same encounter"""
+		"""Merge duplicate pending lines in same encounter with same source_model"""
 		for line in self.filtered(lambda l: l.payment_status == 'pending'):
 			duplicates = self.search([
 				('encounter_id', '=', line.encounter_id.id),
 				('product_id', '=', line.product_id.id),
+				('source_model', '=', line.source_model),
 				('payment_status', '=', 'pending'),
 				('id', '!=', line.id)
 			])
@@ -1892,7 +1926,7 @@ class VetEncounterLine(models.Model):
 				total_qty = line.qty + sum(duplicates.mapped('qty'))
 				line.write({'qty': total_qty})
 				duplicates.unlink()
-				line.message_post(body=_("Merged %d duplicate pending lines.") % len(duplicates))
+				line.message_post(body=_("Merged %d duplicate pending lines from %s.") % (len(duplicates), line.source_model))
 
 	@api.constrains('source_model')
 	def _check_source_model(self):
@@ -1903,42 +1937,6 @@ class VetEncounterLine(models.Model):
 				selection_dict = dict(record._fields['source_model'].selection)
 				source_display = selection_dict.get(record.source_model, record.source_model)
 				raise ValidationError(_("Invalid source model: %s") % source_display)
-
-	# Process POS payment
-	def process_pos_payment(self, pos_order_id):
-		"""Mark encounter line as paid via POS."""
-		for line in self:
-			line.write({
-				'payment_status': 'paid',
-				'processed_date': fields.Datetime.now(),
-				'processed_by': pos_order_id.user_id,
-				'source_payment': 'POS',
-				'pos_order_id': pos_order_id.id,
-			})
-
-	# Process sale order payment
-	def process_sale_order_payment(self, sale_order_id):
-		"""Mark encounter line as paid via Sale Order."""
-		for line in self:
-			line.write({
-				'payment_status': 'paid',
-				'processed_date': fields.Datetime.now(),
-				'processed_by': sale_order_id.user_id,
-				'source_payment': 'SO',
-				'sale_order_id': sale_order_id.id,
-			})
-
-	# Process invoice payment
-	def process_invoice_payment(self, invoice_id):
-		"""Mark encounter line as paid via Invoice."""
-		for line in self:
-			line.write({
-				'payment_status': 'paid',
-				'processed_date': fields.Datetime.now(),
-				'processed_by': invoice_id.user_id,
-				'source_payment': 'Invoice',
-				'invoice_id': invoice_id.id,
-			})
 
 	@api.model
 	def default_get(self, fields_list):
@@ -2408,10 +2406,13 @@ class AccountMove(models.Model):
 
 					# Update payment history
 					for line in encounter_lines:
-						if move.payment_state == 'paid':
+						if move.payment_state in ('paid', 'in_payment'):
 							line._update_payment_history('invoice', move.id, move.name, 'paid')
-						elif move.payment_state == 'in_payment':
-							line._update_payment_history('invoice', move.id, move.name, 'in_payment')
+							line.write({
+								'processed_date': fields.Datetime.now(),
+								'processed_by': self.env.user.id,
+								'source_payment': 'Invoice'
+							})
 
 		# Handle credit note posting
 		if 'state' in vals and vals['state'] == 'posted':
@@ -2419,13 +2420,20 @@ class AccountMove(models.Model):
 				if move.reversed_entry_id:
 					original_lines = move.reversed_entry_id.invoice_line_ids.mapped('encounter_line_id')
 					for line in original_lines.filtered(lambda x: x):
+						refund_lines = move.invoice_line_ids.filtered(lambda l: l.encounter_line_id == line)
+						refund_amount = sum(refund_lines.mapped('price_total'))
+
 						line.write({
-							'payment_status': 'refunded',
-							'refunded_amount': line.sub_total,
+							'refunded_amount': line.refunded_amount + refund_amount,
 							'is_refunded': True,
+							'payment_status': 'refunded',
 						})
-						line._update_refund_history('credit_note', move.id, move.name, line.sub_total)
+						line._update_refund_history('credit_note', move.id, move.name, refund_amount)
 						line._compute_payment_amounts()
+
+						# Link credit note to encounter
+						if line.encounter_id:
+							move.encounter_id = line.encounter_id.id
 
 		return result
 
@@ -2499,21 +2507,6 @@ class AccountMoveLine(models.Model):
 								   domain="[('is_pet', '=', True),('pet_owner_id', '=?', partner_id)]", help="Pets this invoice belongs to")
 	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")
 	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]")
-
-
-# @api.model
-# def default_get(self, fields_list):
-# 	"""Only inherit partner_id from invoice header"""
-# 	defaults = super().default_get(fields_list)
-#
-# 	# Get move_id from context (when creating new line)
-# 	move_id = self.env.context.get('default_move_id') or defaults.get('move_id')
-# 	if move_id and 'partner_id' in fields_list and not defaults.get('partner_id'):
-# 		move = self.env['account.move'].browse(move_id)
-# 		if move.partner_id:
-# 			defaults['partner_id'] = move.partner_id.id
-#
-# 	return defaults
 
 
 class SaleOrder(models.Model):

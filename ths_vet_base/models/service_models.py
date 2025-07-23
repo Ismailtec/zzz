@@ -189,6 +189,13 @@ class VetBoardingStay(models.Model):
 			else:
 				stay.duration_days = 0
 
+	@api.onchange('check_in_datetime')
+	def _compute_expected_check_out_datetime_ui_validation(self):
+		""" UI sync for expected_check_out_datetime to be atleast = check_in_datetime + 1. """
+		if self.check_in_datetime:
+			self.expected_check_out_datetime = self.check_in_datetime + timedelta(hours=2)
+
+
 	@api.depends('patient_ids')
 	def _compute_documents_count(self):
 		for record in self:

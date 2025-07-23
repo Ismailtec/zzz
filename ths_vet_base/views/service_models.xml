@@ -269,6 +269,10 @@
                 <field name="state" widget="badge"/>
                 <field name="is_pet" column_invisible="1"/>
                 <field name="is_pet_owner" column_invisible="1"/>
+                <button name="action_check_in" string="Check In" type="object" class="oe_highlight" invisible="state not in ('draft', 'scheduled')"/>
+                <button name="action_check_out" string="Check Out" type="object" class="oe_highlight" invisible="state != 'checked_in'"/>
+                <button name="action_cancel" string="Cancel Stay" type="object" invisible="state in ('checked_out', 'invoiced', 'cancelled')"/>
+                <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state != 'cancelled'"/>
             </list>
         </field>
     </record>
@@ -314,8 +318,8 @@
                             <field name="encounter_id" readonly="1" invisible="1"/>
                         </group>
                         <group>
-                            <field name="check_in_datetime" required="1"/>
-                            <field name="expected_check_out_datetime" required="1"/>
+                            <field name="check_in_datetime" widget="datetime" options="{'show_seconds': False}" required="1"/>
+                            <field name="expected_check_out_datetime" widget="datetime" options="{'show_seconds': False}" required="0"/>
                             <field name="actual_check_out_datetime" readonly="1"/>
                             <field name="duration_days" readonly="1"/>
                         </group>
@@ -335,7 +339,7 @@
                                     <field name="owner_brought_medication"/>
                                     <field name="medication_instructions" invisible="not owner_brought_medication" placeholder="Name, dosage, times..."/>
                                 </group>
-                                <group string="Boarding Logs" name="boarding_logs">
+                                <group string="Boarding Logs" name="boarding_logs" colspan="2">
                                     <field name="boarding_log_ids" context="{'default_boarding_stay_id': id}" nolabel="1">
                                         <list editable="top">
                                             <field name="date" widget="datetime"/>
@@ -363,8 +367,7 @@
                             </group>
                         </page>
                         <page string="Billing" name="billing" groups="account.group_account_manager,ths_vet_base.group_vet_user,ths_vet_base.group_vet_manager">
-                            <field name="encounter_line_ids"
-                                   context="{'default_partner_id': partner_id, 'default_patient_ids': patient_ids, 'default_encounter_id': encounter_id}"/>
+                            <field name="encounter_line_ids" can_create="1" can_write="1" context="{'default_partner_id': partner_id, 'default_encounter_id': encounter_id}"/>
                         </page>
                     </notebook>
                 </sheet>
@@ -396,7 +399,7 @@
                 <separator/>
                 <filter string="Current Stays" name="filter_current" domain="[('state', '=', 'checked_in')]"/>
                 <filter string="Future Stays" name="filter_future"
-                        domain="[('state', '=', 'scheduled'), ('check_in_datetime', '&gt;=', context_today().strftime('%Y-%m-%d %H:%M:%S'))]"/>
+                        domain="[('state', '=', 'scheduled'), ('check_in_datetime', '&gt;=', context_today().strftime('%Y-%m-%d %H:%M'))]"/>
                 <group expand="0" string="Group By">
                     <filter string="Status" name="groupby_state" context="{'group_by': 'state'}"/>
                     <filter string="Cage" name="groupby_cage" context="{'group_by': 'cage_id'}"/>
@@ -409,21 +412,6 @@
         </field>
     </record>
 
-    <record id="action_vet_boarding_stay" model="ir.actions.act_window">
-        <field name="name">Boarding Stays</field>
-        <field name="res_model">vet.boarding.stay</field>
-        <field name="view_mode">form,list</field>
-        <field name="search_view_id" ref="view_vet_boarding_stay_search"/>
-        <field name="context">{'search_default_filter_current': 1}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Create a new boarding stay record.
-            </p>
-            <p>
-                Manage pet boarding check-ins, check-outs, and related information.
-            </p>
-        </field>
-    </record>
 
     <!-- vet.pet.membership -->
     <record id="view_vet_pet_membership_form" model="ir.ui.view">

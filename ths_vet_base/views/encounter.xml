@@ -37,7 +37,6 @@
             <form string="Encounter">
                 <header>
                     <field name="state" widget="statusbar" options="{'clickable': '1'}" statusbar_visible="in_progress,done" readonly="0"/>
-                    <button name="generate_encounter_lines" string="Generate Lines" type="object" class="oe_highlight"/>
                     <button name="action_create_invoice_from_pending_lines" type="object" string="Create Invoice" class="btn-primary" invisible="pending_amount == 0"/>
                     <button name="action_create_sale_order_from_pending_lines" type="object" string="Create Sale Order" class="btn-secondary" invisible="pending_amount == 0"/>
                     <button name="action_refresh_all_payment_status" type="object" string="Refresh Payment Status" class="btn-secondary"/>
@@ -78,15 +77,10 @@
                         <button name="action_view_vaccinations" type="object" icon="fa-medkit" class="oe_stat_button" invisible="not vaccination_ids">
                             <field name="vaccination_ids" widget="statinfo" string="Vaccinations"/>
                         </button>
-                        <!--                        <button name="action_view_pet_medical_histories" string="Pet Medical History" type="object"-->
-                        <!--                                icon="fa-history"/>-->
-                        <!--                        <button name="action_view_boarding_stays" string="Boarding Stays" type="object" icon="fa-bed"/>-->
-                        <!--                        <button name="action_view_vaccinations" string="Vaccinations" type="object" icon="fa-syringe"/>-->
-                        <!--                        <button name="action_view_appointments" string="Appointments" type="object" icon="fa-calendar"/>-->
-
-                        <button name="action_schedule_follow_up_for_pets" type="object" icon="fa-calendar-plus" class="oe_stat_button" string="Schedule Follow-up"/>
-                        <button name="action_create_treatment_plan" type="object" icon="fa-clipboard-list" class="oe_stat_button" string="Treatment Plan"/>
-                        <button name="get_encounter_dashboard_data" type="object" icon="fa-dashboard" class="oe_stat_button" string="Dashboard"/>
+                        <button name="action_schedule_follow_up_for_pets" type="object" icon="fa-calendar" class="oe_stat_button" string="Schedule Follow-up"/>
+                        <button name="action_create_treatment_plan" type="object" icon="oi-smile-add" class="oe_stat_button">
+                            <field name="treatment_plan_count" widget="statinfo" string="Treatment Plan"/>
+                        </button>
                         <button name="action_view_invoices" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="invoice_count == 0">
                             <field name="invoice_count" widget="statinfo" string="Invoices"/>
                         </button>
@@ -95,6 +89,9 @@
                         </button>
                         <button name="action_view_pos_orders" type="object" class="oe_stat_button" icon="fa-credit-card" invisible="pos_order_count == 0">
                             <field name="pos_order_count" widget="statinfo" string="POS Orders"/>
+                        </button>
+                        <button name="action_view_credit_notes" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="credit_note_count == 0">
+                            <field name="credit_note_count" widget="statinfo" string="Refunds"/>
                         </button>
                     </div>
 
@@ -137,11 +134,14 @@
                             <group string="POS Order">
                                 <field name="pos_order_ids" context="{'default_encounter_id': id}" nolabel="1"/>
                             </group>
+                            <group string="Direct Invoice">
+                                <field name="direct_invoice_ids" context="{'default_move_type': 'out_invoice'}" nolabel="1"/>
+                            </group>
+                            <group string="Credit Notes/Refunds">
+                                <field name="credit_note_ids" context="{'default_encounter_id': id}" nolabel="1" readonly="1" decoration-danger="total_amount"/>
+                            </group>
                             <group string="Sales Order">
                                 <field name="sale_order_ids" context="{'default_encounter_id': id}" nolabel="1" can_write="1" can_create="true"/>
-                            </group>
-                            <group string="Direct Invoice">
-                                <field name="direct_invoice_ids" context="{'default_encounter_id': id}" nolabel="1"/>
                             </group>
                         </page>
                         <page string="Services/Products" name="vet_encounter_line">
@@ -198,20 +198,25 @@
                             </field>
                         </page>
                         <page string="Boarding Stays" name="boarding_stays">
-                            <field name="boarding_stay_ids" nolabel="1" readonly="0" mode="list,form"
-                                   options="{'no_quick_create': True,'no_create_edit': False, 'no_open': False}">
-                                <list string="Boarding Stays"> <!-- create="true" edit="true" editable="top" -->
-                                    <field name="name"/>
-                                    <field name="partner_id" optional="hide"/>
-                                    <field name="pet_owner_id" optional="hide"/>
-                                    <field name="patient_ids" widget="many2many_tags"/>
-                                    <field name="cage_id" domain="cage_domain"/>
-                                    <field name="check_in_datetime" widget="datetime"/>
-                                    <field name="expected_check_out_datetime" widget="datetime"/>
-                                    <field name="duration_days"/>
-                                    <field name="state" widget="selection_badge"/>
-                                </list>
-                            </field>
+                            <field name="boarding_stay_ids" nolabel="1" readonly="0" context="{'default_encounter_id': id}" mode="list,form" widget="one2many"/>
+                            <!--                            <field name="boarding_stay_ids" nolabel="1" readonly="0" mode="list,form"-->
+                            <!--                                   options="{'no_quick_create': True,'no_create_edit': False, 'no_open': False}">-->
+                            <!--                                <list string="Boarding Stays"> &lt;!&ndash; create="true" edit="true" editable="top" &ndash;&gt;-->
+                            <!--                                    <field name="name"/>-->
+                            <!--                                    <field name="partner_id" optional="hide"/>-->
+                            <!--                                    <field name="pet_owner_id" optional="hide"/>-->
+                            <!--                                    <field name="patient_ids" widget="many2many_tags"/>-->
+                            <!--                                    <field name="cage_id" domain="cage_domain"/>-->
+                            <!--                                    <field name="check_in_datetime" widget="datetime"/>-->
+                            <!--                                    <field name="expected_check_out_datetime" widget="datetime"/>-->
+                            <!--                                    <field name="duration_days"/>-->
+                            <!--                                    <field name="state" widget="selection_badge"/>-->
+                            <!--                                    <button name="action_check_in" string="Check In" type="object" class="oe_highlight" invisible="state not in ('draft', 'scheduled')"/>-->
+                            <!--                                    <button name="action_check_out" string="Check Out" type="object" class="oe_highlight" invisible="state != 'checked_in'"/>-->
+                            <!--                                    <button name="action_cancel" string="Cancel Stay" type="object" invisible="state in ('checked_out', 'invoiced', 'cancelled')"/>-->
+                            <!--                                    <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state != 'cancelled'"/>-->
+                            <!--                                </list>-->
+                            <!--                            </field>-->
                         </page>
                         <page string="Park Visits" name="park_visits">
                             <field name="park_checkin_ids" nolabel="1" readonly="0" context="{'default_encounter_id': id}" mode="list,form" widget="one2many"/>
@@ -500,7 +505,8 @@
                 <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-info="payment_status in ('pending', 'posted')"
                        decoration-warning="payment_status in ('partial', 'cancelled', 'refunded')"/>
                 <field name="pos_order_id" optional="hide"/>
-                <field name="is_refunded" column_invisible="1"/>
+                <field name="refunded_amount" sum="Refunded" widget="monetary" options="{'currency_field': 'company_currency'}" optional="show"/>
+                <field name="is_refunded" widget="boolean_toggle" optional="show"/>
                 <field name="company_currency" column_invisible="1"/>
                 <button name="action_cancel" string="Cancel" type="object" icon="fa-times-circle" invisible="payment_status != 'pending'"
                         groups="account.group_account_invoice,ths_vet_base.group_vet_user,ths_vet_base.group_vet_manager"/>
@@ -522,7 +528,7 @@
                             groups="account.group_account_manager,ths_vet_base.group_vet_user,ths_vet_base.group_vet_manager"/>
                     <button name="action_reset_to_pending" string="Reset to Pending" type="object" invisible="payment_status != 'cancelled'"
                             groups="account.group_account_manager,ths_vet_base.group_vet_user,ths_vet_base.group_vet_manager"/>
-                    <button name="action_refunded_from_pos" string="Refund" type="object" icon="fa-undo" invisible="payment_status != 'paid'"
+                    <button name="action_refunded_from_pos" string="Refund from POS" type="object" icon="fa-undo" invisible="payment_status != 'paid'"
                             groups="account.group_account_manager,ths_vet_base.group_vet_user,ths_vet_base.group_vet_manager"/>
                     <button name="action_create_follow_up_service" string="Create Follow-up" type="object" class="oe_highlight" invisible="payment_status != 'paid'"/>
                     <field name="payment_status" widget="statusbar" statusbar_visible="pending,paid,cancelled,refunded"/>
