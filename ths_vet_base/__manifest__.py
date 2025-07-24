@@ -212,6 +212,8 @@ and efficient business operations.""",
 
 			# Custom styles
 			'ths_vet_base/static/src/style.scss',
+			'ths_vet_base/static/src/icons.css',
+			'ths_vet_base/static/src/img/syringe.svg',
 
 			# Custom JavaScript components
 			'ths_vet_base/static/src/js/encounter_dashboard.xml',

@@ -364,6 +364,10 @@
                 <field name="is_emergency" widget="boolean_toggle" optional="show" readonly="1"/>
                 <field name="reason_for_visit" widget="many2many_tags" optional="show"/>
                 <field name="actual_duration" optional="hide" widget="float_time"/>
+                <button name="action_check_in" string="Attend" type="object" class="o_embedded_actions" invisible="appointment_status not in ('request', 'booked')"/>
+                <button name="action_complete_and_bill" string="Complete" type="object" class="o_embedded_actions" invisible="appointment_status != 'attended'"/>
+                <button name="action_cancel_appointment" string="Cancel" type="object" class="o_embedded_actions" invisible="appointment_status not in ('request', 'booked')"/>
+                <button name="action_mark_no_show" string="No Show" type="object" class="o_embedded_actions" invisible="appointment_status not in ('request', 'booked')"/>
             </xpath>
         </field>
     </record>

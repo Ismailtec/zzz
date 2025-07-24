@@ -71,55 +71,60 @@
                 <field name="is_pet_owner" invisible="1"/>
             </xpath>
 
+            <xpath expr="//sheet" position="before">
+                <!-- Quick Actions -->
+                <div invisible="not is_pet">
+                    <div class="btn-group" role="group">
+                        <button name="action_schedule_appointment" type="object" class="btn btn-primary">
+                            <i class="fa fa-calendar-plus"/> Schedule Appointment
+                        </button>
+                        <button name="action_view_vaccinations" type="object" class="btn btn-info">
+                            <i class="fa fa-syringe"/> View Vaccinations
+                        </button>
+                        <button name="action_view_documents" type="object" class="btn btn-secondary">
+                            <i class="fa fa-camera"/> View Photos
+                        </button>
+                    </div>
+                </div>
+            </xpath>
+
             <!-- Add Smart Buttons -->
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button class="oe_stat_button" type="object" name="action_view_partner_pets" icon="fa-paw" invisible="not is_pet_owner or pet_count == 0">
                     <field name="pet_count" widget="statinfo" string="Pets"/>
                 </button>
-
                 <button class="oe_stat_button" type="object" name="action_view_appointments" icon="fa-calendar" invisible="not is_pet_owner or appointment_count == 0">
                     <field name="appointment_count" widget="statinfo" string="Appointments"/>
                 </button>
-
                 <button class="oe_stat_button" type="object" name="action_view_encounters" icon="fa-file-medical" invisible="not is_pet_owner">
                     <field name="encounter_count" widget="statinfo" string="Encounters"/>
                 </button>
-
                 <button class="oe_stat_button" type="object" name="action_view_partner_pet_owners" icon="fa-user" string="Pet Owner" invisible="not is_pet or not pet_owner_id">
                 </button>
-
                 <button class="oe_stat_button" type="object" name="action_view_medical_history" icon="fa-stethoscope" invisible="not is_pet">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_text">Medical</span>
                         <span class="o_stat_text">History</span>
                     </div>
                 </button>
-
-                <button class="oe_stat_button" type="object" name="action_view_vaccinations" icon="fa-syringe" invisible="not is_pet or vaccination_count == 0">
+                <button class="oe_stat_button" type="object" name="action_view_vaccinations" icon="ths-syringe" invisible="not is_pet or vaccination_count == 0">
                     <field name="vaccination_count" widget="statinfo" string="Vaccinations"/>
                 </button>
-
                 <button class="oe_stat_button" type="object" name="action_view_documents" icon="fa-camera" invisible="not is_pet">
                     <field name="documents_count" widget="statinfo" string="Photos"/>
                 </button>
-
                 <button name="action_view_pet_memberships" type="object" class="oe_stat_button" icon="fa-star" invisible="not is_pet">
                     <field name="pet_membership_count" widget="statinfo" string="Memberships"/>
                 </button>
-
                 <button class="oe_stat_button" type="object" name="action_schedule_appointment" icon="fa-plus-circle" string="Schedule" invisible="not is_pet and not is_pet_owner"
                         help="Schedule new appointment"/>
-
             </xpath>
-
             <xpath expr="//button[@name='open_customer_statement']" position="attributes">
                 <attribute name="invisible">not has_moves or is_pet</attribute>
             </xpath>
-
             <xpath expr="//button[@name='schedule_meeting']" position="attributes">
                 <attribute name="invisible">is_pet or is_pet_owner</attribute>
             </xpath>
-
             <xpath expr="//div[hasclass('d-inline-block')]" position="after">
                 <div invisible="not is_pet">
                     <div>
@@ -129,34 +134,13 @@
                                    domain="[('is_pet_owner', '=', True)]" placeholder="Select the Pet Owner..." help="Pet Owner responsible for billing and medical decisions"/>
                         </div>
                     </div>
-<!--                    <div class="col-md-6" invisible="not species_id">-->
-<!--                        <div class="d-flex align-items-center">-->
-<!--                            <field name="pet_badge_data" widget="badge" readonly="1" class="badge-pet"/>-->
-<!--                        </div>-->
-<!--                    </div>-->
-                </div>
-
-                <div invisible="not is_pet" class="mb-2">
-                    <div class="alert alert-info d-flex align-items-center" role="alert" invisible="ths_deceased">
-                        <i class="fa fa-heartbeat me-2" title="Health Status"/>
-                        <span>
-                            <strong>Health Status:</strong>
-                            <span class="badge badge-success" invisible="last_visit_date">No visit history</span>
-                            <span class="badge badge-info" invisible="not last_visit_date">
-                                Last visit: <field name="last_visit_date" readonly="1"/>
-                            </span>
-                        </span>
-                    </div>
-                    <div class="alert alert-dark d-flex align-items-center" role="alert" invisible="not ths_deceased">
-                        <i class="fa fa-heart me-2" title="Deceased"/>
-                        <span><strong>Deceased:</strong> <field name="ths_deceased_date" readonly="1"/></span>
-                    </div>
                 </div>
             </xpath>
-
-
             <xpath expr="//span[@name='address_name']//span" position="attributes">
                 <attribute name="invisible">is_pet</attribute>
+            </xpath>
+            <xpath expr="//span[@name='address_name']//span" position="after">
+                <span invisible="not is_pet">Owner's Address</span>
             </xpath>
 
             <!-- Replace standard contact fields with pet/owner specific sections -->
@@ -178,6 +162,22 @@
                 </group>
 
                 <group string="Health &amp; Emergency" name="pet_health" invisible="not is_pet">
+                    <div invisible="not is_pet" class="mb-2">
+                        <div class="alert alert-info d-flex align-items-center" role="alert" invisible="ths_deceased">
+                            <i class="fa fa-heartbeat me-2" title="Health Status"/>
+                            <span>
+                                <strong>Health Status:</strong>
+                                <span class="badge badge-success" invisible="last_visit_date">No visit history</span>
+                                <span class="badge badge-info" invisible="not last_visit_date">
+                                    Last visit: <field name="last_visit_date" readonly="1"/>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="alert alert-dark d-flex align-items-center" role="alert" invisible="not ths_deceased">
+                            <i class="fa fa-heart me-2" title="Deceased"/>
+                            <span><strong>Deceased:</strong> <field name="ths_deceased_date" readonly="1"/></span>
+                        </div>
+                    </div>
                     <field name="ths_insurance_number" placeholder="Insurance policy number"/>
                     <field name="ths_emergency_contact" placeholder="Emergency contact number"/>
                     <field name="medical_alerts" placeholder="Important medical alerts..." widget="text" class="text-warning"/>
@@ -214,8 +214,6 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
 
-
-            <!-- Add Notebook Pages -->
             <xpath expr="//notebook//page[@name='contact_addresses']" position="before">
 
                 <!-- Pets Management Tab for Pet Owners -->
@@ -302,25 +300,6 @@
                     <group string="Full Medical Summary">
                         <field name="full_medical_summary" readonly="1" widget="html"/>
                     </group>
-
-                    <!-- Quick Actions -->
-                    <div class="mt-3">
-                        <h5>Quick Actions</h5>
-                        <div class="btn-group" role="group">
-                            <button name="action_schedule_appointment" type="object"
-                                    class="btn btn-primary">
-                                <i class="fa fa-calendar-plus"/> Schedule Appointment
-                            </button>
-                            <button name="action_view_vaccinations" type="object"
-                                    class="btn btn-info">
-                                <i class="fa fa-syringe"/> View Vaccinations
-                            </button>
-                            <button name="action_view_documents" type="object"
-                                    class="btn btn-secondary">
-                                <i class="fa fa-camera"/> View Photos
-                            </button>
-                        </div>
-                    </div>
                 </page>
 
                 <!-- Health Records Tab for Pets -->
@@ -424,16 +403,16 @@
                 <field name="pet_count" optional="show" string="# Pets" column_invisible="not context.get('show_pet_owner_fields', False)"/>
                 <field name="appointment_count" optional="hide" string="# Appointments"
                        column_invisible="not context.get('show_pet_fields', False) and not context.get('show_pet_owner_fields', False)"/>
-<!--                <field name="pet_owner_id" optional="hide" string="Pet Owner" column_invisible="not is_pet"/>-->
-<!--                <field name="species_id" optional="show" string="Species" column_invisible="not is_pet"/>-->
-<!--                <field name="breed_id" optional="hide" string="Breed" column_invisible="not is_pet"/>-->
-<!--                <field name="ths_microchip" optional="hide" string="Microchip" column_invisible="not is_pet"/>-->
-<!--                <field name="last_visit_date" optional="hide" string="Last Visit" column_invisible="not is_pet"/>-->
-<!--                <field name="next_vaccination_due" optional="hide" string="Vaccine Expiry" widget="date" column_invisible="not is_pet"/>-->
-<!--                <field name="vaccination_count" optional="hide" string="# Vaccines" column_invisible="not is_pet"/>-->
-<!--                <field name="pet_count" optional="show" string="# Pets" column_invisible="not is_pet_owner"/>-->
-<!--                <field name="ths_deceased" optional="hide" widget="boolean_toggle" string="Deceased" column_invisible="not is_pet"/>-->
-<!--                <field name="appointment_count" optional="hide" string="# Appointments" column_invisible="not is_pet_owner or not is_pet"/>-->
+                <!--                <field name="pet_owner_id" optional="hide" string="Pet Owner" column_invisible="not is_pet"/>-->
+                <!--                <field name="species_id" optional="show" string="Species" column_invisible="not is_pet"/>-->
+                <!--                <field name="breed_id" optional="hide" string="Breed" column_invisible="not is_pet"/>-->
+                <!--                <field name="ths_microchip" optional="hide" string="Microchip" column_invisible="not is_pet"/>-->
+                <!--                <field name="last_visit_date" optional="hide" string="Last Visit" column_invisible="not is_pet"/>-->
+                <!--                <field name="next_vaccination_due" optional="hide" string="Vaccine Expiry" widget="date" column_invisible="not is_pet"/>-->
+                <!--                <field name="vaccination_count" optional="hide" string="# Vaccines" column_invisible="not is_pet"/>-->
+                <!--                <field name="pet_count" optional="show" string="# Pets" column_invisible="not is_pet_owner"/>-->
+                <!--                <field name="ths_deceased" optional="hide" widget="boolean_toggle" string="Deceased" column_invisible="not is_pet"/>-->
+                <!--                <field name="appointment_count" optional="hide" string="# Appointments" column_invisible="not is_pet_owner or not is_pet"/>-->
             </xpath>
 
             <!-- Add color coding -->
