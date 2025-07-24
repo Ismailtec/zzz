@@ -77,7 +77,12 @@
                         <button name="action_view_vaccinations" type="object" icon="fa-medkit" class="oe_stat_button" invisible="not vaccination_ids">
                             <field name="vaccination_ids" widget="statinfo" string="Vaccinations"/>
                         </button>
-                        <button name="action_schedule_follow_up_for_pets" type="object" icon="fa-calendar" class="oe_stat_button" string="Schedule Follow-up"/>
+                        <button name="action_schedule_follow_up_for_pets" type="object" icon="fa-calendar" class="oe_stat_button">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Schedule</span>
+                                <span class="o_stat_text">Follow-up</span>
+                            </div>
+                        </button>
                         <button name="action_create_treatment_plan" type="object" icon="oi-smile-add" class="oe_stat_button">
                             <field name="treatment_plan_count" widget="statinfo" string="Treatment Plan"/>
                         </button>
@@ -134,11 +139,29 @@
                             <group string="POS Order">
                                 <field name="pos_order_ids" context="{'default_encounter_id': id}" nolabel="1"/>
                             </group>
-                            <group string="Direct Invoice">
-                                <field name="direct_invoice_ids" context="{'default_move_type': 'out_invoice'}" nolabel="1"/>
+                            <group string="Direct Invoices">
+                                <field name="direct_invoice_ids" nolabel="1" readonly="1" context="{'default_encounter_id': id}" view_mode="list,form">
+                                </field>
                             </group>
                             <group string="Credit Notes/Refunds">
-                                <field name="credit_note_ids" context="{'default_encounter_id': id}" nolabel="1" readonly="1" decoration-danger="total_amount"/>
+                                <field name="credit_note_ids" nolabel="1" readonly="1" context="{'default_move_type': 'out_refund', 'default_encounter_id': id}"
+                                       decoration-danger="name">
+                                    <!--                                    <list create="false" edit="false">-->
+                                    <!--                                        <field name="name"/>-->
+                                    <!--                                        <field name="invoice_date" string="Date"/>-->
+                                    <!--                                        <field name="encounter_id" optional="hide"/>-->
+                                    <!--                                        <field name="partner_id" string="Pet Owner"/>-->
+                                    <!--                                        <field name="patient_ids" widget="many2many_tags" optional="hide"/>-->
+                                    <!--                                        <field name="practitioner_id" optional="hide"/>-->
+                                    <!--                                        <field name="room_id" optional="hide"/>-->
+                                    <!--                                        <field name="amount_total" decoration-danger="amount_total &lt; 0" widget="monetary" options="{'currency_field': 'company_currency'}"/>-->
+                                    <!--                                        <field name="state"/>-->
+                                    <!--                                        <field name="payment_state"/>-->
+                                    <!--                                        <field name="payment_journal_name" optional="show"/>-->
+                                    <!--                                        <field name="payment_method_name" optional="hide"/>-->
+                                    <!--                                        <field name="reversed_entry_id" string="Original Invoice"/>-->
+                                    <!--                                    </list>-->
+                                </field>
                             </group>
                             <group string="Sales Order">
                                 <field name="sale_order_ids" context="{'default_encounter_id': id}" nolabel="1" can_write="1" can_create="true"/>
@@ -871,51 +894,180 @@
 
     <template id="vet_encounter_summary_template">
         <t t-call="web.external_layout">
-            <div class="page">
-                <h2>Veterinary Encounter Summary</h2>
-                <p>Encounter: <span t-field="doc.name"/></p>
-                <p>Date: <span t-field="doc.encounter_date"/></p>
-                <p>Pet Owner: <span t-field="doc.partner_id.name"/></p>
-                <p>Pets: <span t-field="doc.pets_summary"/></p>
-                <p>Practitioner: <span t-field="doc.practitioner_id.name"/></p>
-                <p>Room: <span t-field="doc.room_id.name"/></p>
-                <p>Chief Complaint: <span t-field="doc.chief_complaint"/></p>
-                <p>SOAP Subjective: <span t-field="doc.soap_subjective"/></p>
-                <p>SOAP Objective: <span t-field="doc.soap_objective"/></p>
-                <p>SOAP Assessment: <span t-field="doc.soap_assessment"/></p>
-                <p>SOAP Plan: <span t-field="doc.soap_plan"/></p>
-                <p>Vitals: <t t-foreach="doc.vitals_log_ids" t-as="vital"><span t-field="vital.temperature"/>°C,
-                    HR: <span t-field="vital.heart_rate"/>, RR: <span t-field="vital.respiratory_rate"/></t></p>
-                <h3>Services</h3>
-                <table class="table table-condensed">
-                    <thead>
-                        <tr>
-                            <th>Service Type</th>
-                            <th>Details</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <t t-foreach="doc.appointment_ids" t-as="appt">
-                            <tr>
-                                <td>Appointment</td>
-                                <td><span t-field="appt.name"/> - <span t-field="appt.start"/></td>
-                            </tr>
+            <t t-foreach="docs" t-as="doc">
+                <div class="page">
+                    <main>
+                        <div class="oe_structure"/>
+                        <h2>Encounter Summary</h2>
+                        <p>Encounter: <span t-field="doc.name"/></p>
+                        <p>Date: <span t-field="doc.encounter_date"/></p>
+                        <p>Pet Owner: <span t-field="doc.partner_id.name"/></p>
+                        <p>Pets: <span t-field="doc.pets_summary"/></p>
+                        <p>Practitioner: <span t-field="doc.practitioner_id.name"/></p>
+                        <p>Room: <span t-field="doc.room_id.name"/></p>
+                        <p>Chief Complaint: <span t-field="doc.chief_complaint"/></p>
+                        <p>Subjective: <span t-field="doc.soap_subjective"/></p>
+                        <p>Objective: <span t-field="doc.soap_objective"/></p>
+                        <p>Assessment: <span t-field="doc.soap_assessment"/></p>
+                        <p>Plan: <span t-field="doc.soap_plan"/></p>
+                        <p>Vitals:
+                            <t t-foreach="doc.vitals_log_ids" t-as="vital">
+                                Weight: <span t-field="vital.weight"/>kg,
+                                Temperature: <span t-field="vital.temperature"/>°C,
+                                HR: <span t-field="vital.heart_rate"/>,
+                                RR: <span t-field="vital.respiratory_rate"/>
+                                Notes: <span t-field="vital.notes"/>
+                            </t>
+                        </p>
+                        <h3>Services &amp; Activities</h3>
+
+                        <!-- Appointments Section -->
+                        <t t-if="doc.appointment_ids">
+                            <h4>Appointments</h4>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Appointment</th>
+                                        <th>Practitioner</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.appointment_ids" t-as="appointment">
+                                        <tr>
+                                            <td><span t-field="appointment.start" t-options="{'widget': 'datetime', 'show_seconds': False}"/></td>
+                                            <td><span t-field="appointment.appointment_type_id.name"/></td>
+                                            <td><span t-field="appointment.practitioner_id.name"/></td>
+                                            <td><span t-field="appointment.appointment_status"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
                         </t>
-                        <t t-foreach="doc.boarding_stay_ids" t-as="boarding">
-                            <tr>
-                                <td><t t-esc="boarding.pet_id.name"/></td>
-                                <td><t t-esc="boarding.cage_id.name"/></td>
-                                <td><t t-esc="boarding.check_in_datetime" t-options="{'widget': 'datetime'}"/></td>
-                                <td><t t-esc="boarding.actual_check_out_datetime"
-                                       t-options="{'widget': 'datetime'}"/></td>
-                                <td><t t-esc="boarding.duration_days"/> days</td>
-                                <td><t t-esc="boarding.state"/></td>
-                            </tr>
+
+                        <t t-if="doc.boarding_stay_ids">
+                            <h4>Boarding Stays</h4>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Pet</th>
+                                        <th>Cage</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Duration</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.boarding_stay_ids" t-as="boarding">
+                                        <tr>
+                                            <td><span t-esc="', '.join(boarding.patient_ids.mapped('name'))"/></td>
+                                            <td><span t-field="boarding.cage_id.name"/></td>
+                                            <td><span t-field="boarding.check_in_datetime" t-options="{'widget': 'datetime'}"/></td>
+                                            <td><span t-field="boarding.actual_check_out_datetime" t-options="{'widget': 'datetime'}"/></td>
+                                            <td><span t-field="boarding.duration_days"/> days</td>
+                                            <td><span t-field="boarding.state"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
                         </t>
-                        <!-- Add similar for boarding, park, vaccinations, memberships -->
-                    </tbody>
-                </table>
-            </div>
+
+                        <!-- Vaccinations Section -->
+                        <t t-if="doc.vaccination_ids">
+                            <h4>Vaccinations Administered</h4>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Pet</th>
+                                        <th>Vaccine</th>
+                                        <th>Date</th>
+                                        <th>Expiry</th>
+                                        <th>Batch</th>
+                                        <th>Practitioner</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.vaccination_ids" t-as="vaccination">
+                                        <tr>
+                                            <td><span t-esc="', '.join(vaccination.patient_ids.mapped('name'))"/></td>
+                                            <td><span t-field="vaccination.vaccine_type_id.name"/></td>
+                                            <td><span t-field="vaccination.date"/></td>
+                                            <td><span t-field="vaccination.expiry_date"/></td>
+                                            <td><span t-field="vaccination.batch_number"/></td>
+                                            <td><span t-field="vaccination.practitioner_id.name"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <!-- Park Check-ins Section -->
+                        <t t-if="doc.park_checkin_ids">
+                            <h4>Park Visits</h4>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Pets</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Duration</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.park_checkin_ids" t-as="park_visit">
+                                        <tr>
+                                            <td><span t-esc="', '.join(park_visit.patient_ids.mapped('name'))"/></td>
+                                            <td><span t-field="park_visit.checkin_time" t-options="{'widget': 'datetime'}"/></td>
+                                            <td><span t-field="park_visit.checkout_time" t-options="{'widget': 'datetime'}"/></td>
+                                            <td><span t-field="park_visit.duration_hours" t-options="{'widget': 'float_time'}"/></td>
+                                            <td><span t-field="park_visit.state"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                        <!-- Encounter Lines (Services/Products) Section -->
+                        <t t-if="doc.encounter_line_ids">
+                            <h4>Services &amp; Products Provided</h4>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Service/Product</th>
+                                        <th>Pet(s)</th>
+                                        <th>Qty</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                        <th>Payment Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="doc.encounter_line_ids" t-as="line">
+                                        <tr>
+                                            <td><span t-field="line.product_id.name"/></td>
+                                            <td><span t-esc="', '.join(line.patient_ids.mapped('name'))"/></td>
+                                            <td><span t-field="line.qty"/></td>
+                                            <td><span t-field="line.unit_price"/> <span t-field="doc.company_currency.symbol"/></td>
+                                            <td><span t-field="line.sub_total"/> <span t-field="doc.company_currency.symbol"/></td>
+                                            <td><span t-field="line.payment_status"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-info">
+                                        <td colspan="4"><strong>Total Amount</strong></td>
+                                        <td><strong><span t-field="doc.total_amount"/> <span t-field="doc.company_currency.symbol"/></strong></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </t>
+                        <div class="oe_structure"/>
+                    </main>
+                </div>
+            </t>
         </t>
     </template>
 
@@ -936,7 +1088,6 @@
             <t t-foreach="docs" t-as="encounter">
                 <div class="page">
                     <div class="oe_structure"/>
-
                     <!-- Header -->
                     <div class="row">
                         <div class="col-12">
@@ -957,107 +1108,36 @@
                             <t t-foreach="encounter.patient_ids" t-as="patient">
                                 <t t-esc="patient.name"/><t t-if="not patient_last">, </t>
                             </t><br/>
-                            <strong>Total Pending:</strong> <t t-esc="encounter.total_pending_amount"/> <t
-                                t-esc="encounter.company_id.company_currency.symbol"/><br/>
-                            <strong>Total Paid:</strong> <t t-esc="encounter.total_paid_amount"/> <t
-                                t-esc="encounter.company_id.company_currency.symbol"/>
+                            <!-- Fixed field names -->
+                            <strong>Total Pending:</strong>
+                            <t t-esc="encounter.pending_amount"/> <t t-esc="encounter.company_currency.symbol"/><br/>
+                            <strong>Total Paid:</strong> <t t-esc="encounter.paid_amount"/> <t t-esc="encounter.company_currency.symbol"/>
                         </div>
                     </div>
 
-                    <!-- Appointments Section -->
-                    <t t-if="encounter.appointment_ids">
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <h4>Appointments</h4>
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Time</th>
-                                            <th>Practitioner</th>
-                                            <th>Room</th>
-                                            <th>Status</th>
-                                            <th>Reason</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <t t-foreach="encounter.appointment_ids" t-as="appointment">
-                                            <tr>
-                                                <td><t t-esc="appointment.start"
-                                                       t-options="{'widget': 'datetime'}"/></td>
-                                                <td><t t-esc="appointment.practitioner_id.name"/></td>
-                                                <td><t t-esc="appointment.room_id.name"/></td>
-                                                <td><t t-esc="appointment.appointment_status"/></td>
-                                                <td><t t-esc="appointment.ths_reason_for_visit"/></td>
-                                            </tr>
-                                        </t>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </t>
-
-                    <!-- POS Orders Section -->
-                    <t t-if="encounter.pos_order_ids">
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <h4>POS Orders</h4>
-                                <t t-foreach="encounter.pos_order_ids" t-as="order">
-                                    <div class="mb-3">
-                                        <strong><t t-esc="order.name"/> - <t t-esc="order.date_order"
-                                                                             t-options="{'widget': 'datetime'}"/> - <t
-                                                t-esc="order.state"/></strong>
-                                        <table class="table table-sm mt-2">
-                                            <thead>
-                                                <tr>
-                                                    <th>Product</th>
-                                                    <th>Qty</th>
-                                                    <th>Price</th>
-                                                    <th>Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <t t-foreach="order.lines" t-as="line">
-                                                    <tr>
-                                                        <td><t t-esc="line.product_id.name"/></td>
-                                                        <td><t t-esc="line.qty"/></td>
-                                                        <td><t t-esc="line.price_unit"/> <t
-                                                                t-esc="order.company_currency.symbol"/></td>
-                                                        <td><t t-esc="line.price_subtotal"/> <t
-                                                                t-esc="order.company_currency.symbol"/></td>
-                                                    </tr>
-                                                </t>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </t>
-                            </div>
-                        </div>
-                    </t>
-
-                    <!-- Clinical Notes -->
-                    <t t-if="encounter.chief_complaint or encounter.ths_subjective or encounter.ths_objective or encounter.ths_assessment or encounter.ths_plan">
+                    <!-- Clinical Notes - Fixed field names -->
+                    <t t-if="encounter.chief_complaint or encounter.soap_subjective or encounter.soap_objective or encounter.soap_assessment or encounter.soap_plan">
                         <div class="row mt-4">
                             <div class="col-12">
                                 <h4>Clinical Documentation</h4>
                                 <t t-if="encounter.chief_complaint">
                                     <p><strong>Chief Complaint:</strong> <t t-esc="encounter.chief_complaint"/></p>
                                 </t>
-                                <t t-if="encounter.ths_subjective">
-                                    <p><strong>Subjective:</strong> <t t-esc="encounter.ths_subjective"/></p>
+                                <t t-if="encounter.soap_subjective">
+                                    <p><strong>Subjective:</strong> <t t-esc="encounter.soap_subjective"/></p>
                                 </t>
-                                <t t-if="encounter.ths_objective">
-                                    <p><strong>Objective:</strong> <t t-esc="encounter.ths_objective"/></p>
+                                <t t-if="encounter.soap_objective">
+                                    <p><strong>Objective:</strong> <t t-esc="encounter.soap_objective"/></p>
                                 </t>
-                                <t t-if="encounter.ths_assessment">
-                                    <p><strong>Assessment:</strong> <t t-esc="encounter.ths_assessment"/></p>
+                                <t t-if="encounter.soap_assessment">
+                                    <p><strong>Assessment:</strong> <t t-esc="encounter.soap_assessment"/></p>
                                 </t>
-                                <t t-if="encounter.ths_plan">
-                                    <p><strong>Plan:</strong> <t t-esc="encounter.ths_plan"/></p>
+                                <t t-if="encounter.soap_plan">
+                                    <p><strong>Plan:</strong> <t t-esc="encounter.soap_plan"/></p>
                                 </t>
                             </div>
                         </div>
                     </t>
-
                     <div class="oe_structure"/>
                 </div>
             </t>
@@ -1135,15 +1215,15 @@
             <t t-foreach="docs" t-as="encounter">
                 <div class="page">
                     <div class="oe_structure"/>
-
                     <!-- Header with Logo and Clinic Info -->
                     <div class="row">
                         <div class="col-8">
-                            <h2>Comprehensive Veterinary Encounter Report</h2>
+                            <h2>Comprehensive Encounter Report</h2>
                             <h3><t t-esc="encounter.name"/></h3>
                         </div>
                         <div class="col-4 text-right">
-                            <p><strong>Date Generated:</strong> <t t-esc="context_today().strftime('%Y-%m-%d %H:%M')"/></p>
+                            <t t-set="current_date" t-value="datetime.datetime.now()"/>
+                            <p><strong>Date Generated:</strong> <t t-esc="current_date.strftime('%Y-%m-%d %H:%M')"/></p>
                             <p><strong>Generated By:</strong> <t t-esc="user.name"/></p>
                         </div>
                     </div>
@@ -1184,10 +1264,6 @@
                                         <th>Pet Name</th>
                                         <th>Species</th>
                                         <th>Breed</th>
-                                        <th>Age</th>
-                                        <th>Gender</th>
-                                        <th>Weight</th>
-                                        <th>Microchip</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1196,10 +1272,6 @@
                                             <td><strong><t t-esc="pet.name"/></strong></td>
                                             <td><t t-esc="pet.species_id.name if pet.species_id else 'Unknown'"/></td>
                                             <td><t t-esc="pet.breed_id.name if pet.breed_id else 'Unknown'"/></td>
-                                            <td><t t-esc="pet.age_display if hasattr(pet, 'age_display') else 'Unknown'"/></td>
-                                            <td><t t-esc="pet.gender if hasattr(pet, 'gender') else 'Unknown'"/></td>
-                                            <td><t t-esc="pet.weight if hasattr(pet, 'weight') else 'Unknown'"/> kg</td>
-                                            <td><t t-esc="pet.microchip_number if hasattr(pet, 'microchip_number') else 'None'"/></td>
                                         </tr>
                                     </t>
                                 </tbody>
@@ -1219,7 +1291,7 @@
                                             <th>Date/Time</th>
                                             <th>Weight (kg)</th>
                                             <th>Height (cm)</th>
-                                            <th>Temperature (°C)</th>
+                                            <th>Temperature (C)</th>
                                             <th>Heart Rate (bpm)</th>
                                             <th>Respiratory Rate</th>
                                             <th>Notes</th>
@@ -1404,7 +1476,8 @@
                                                 <td><t t-esc="appointment.practitioner_id.name"/></td>
                                                 <td><t t-esc="appointment.room_id.name"/></td>
                                                 <td><t t-esc="appointment.appointment_status"/></td>
-                                                <td><t t-esc="appointment.reason_for_visit or 'N/A'"/></td>
+                                                <td><t t-esc="appointment.reason_for_visit.name or 'N/A'"/></td>
+
                                             </tr>
                                         </t>
                                     </tbody>
@@ -1766,6 +1839,7 @@
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_encounter" type="object" class="oe_stat_button" icon="fa-hospital" string="Encounter" invisible="encounter_id == 0"/>
                 <button name="action_view_encounter_lines" type="object" class="oe_stat_button" icon="fa-heartbeat" invisible="encounter_line_count == 0">
                     <field name="encounter_line_count" widget="statinfo" string="Encounter Lines"/>
                 </button>
@@ -1792,13 +1866,14 @@
 
             <xpath expr="//div[field[@name='partner_id']]" position="replace">
                 <group colspan="2">
-                    <field name="partner_type_id" options="{'no_open': True, 'no_create': True}" placeholder="Select Partner Type first to see partners..."/>
+                    <field name="partner_type_id" options="{'no_open': True, 'no_create': True}" readonly="state == 'posted'"
+                           placeholder="Select Partner Type first to see partners..."/>
                     <field name="partner_id" string="Pet Owner" domain="[('partner_type_id', '=?', partner_type_id)]" context="{'show_address': False, 'show_email': False}"
-                           options="{'no_open': True, 'no_create': True}" placeholder="Select Pet Owner..."/>
-                    <field name="patient_ids" widget="many2many_tags" invisible="move_type not in ('out_invoice', 'out_refund')"/>
-                    <field name="practitioner_id"/>
-                    <field name="room_id"/>
-                    <field name="encounter_id"/>
+                           readonly="state == 'posted'" options="{'no_open': True, 'no_create': True}" placeholder="Select Pet Owner..."/>
+                    <field name="patient_ids" widget="many2many_tags" readonly="state == 'posted'" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                    <field name="practitioner_id" readonly="state == 'posted'"/>
+                    <field name="room_id" readonly="state == 'posted'"/>
+                    <field name="encounter_id" readonly="state == 'posted'"/>
                     <!--                    <field name="quick_edit_total_amount" string="Total Amount" class="w-50" invisible="move_type == 'entry' or not quick_edit_mode" readonly="state != 'draft'"/>-->
                 </group>
                 <field name="encounter_line_count" invisible="1"/>
@@ -1844,7 +1919,25 @@
         </field>
     </record>
 
-    <!-- account.move list view -->
+    <record id="view_account_move_invoice_list_inherit_ths" model="ir.ui.view">
+        <field name="name">view.account.move.invoice.list.inherit.ths</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_out_invoice_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='amount_total_in_currency_signed']" position="after">
+                <field name="payment_journal_name" optional="show"/>
+                <field name="payment_method_name" optional="hide"/>
+                <field name="amount_paid" optional="show" widget="monetary" sum="Total Paid"/>
+                <field name="practitioner_id" optional="show"/>
+                <field name="room_id" optional="hide"/>
+            </xpath>
+            <xpath expr="//field[@name='invoice_partner_display_name']" position="after">
+                <field name="patient_ids" widget="many2many_tags" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- account.move list view (MAIN JE LIST VIEW) -->
     <record id="view_account_move_list_inherit_ths" model="ir.ui.view">
         <field name="name">view.account.move.list.inherit.ths</field>
         <field name="model">account.move</field>

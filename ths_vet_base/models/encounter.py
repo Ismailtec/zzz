@@ -250,10 +250,8 @@ class VetEncounterHeader(models.Model):
 	pos_order_ids = fields.One2many('pos.order', 'encounter_id', string='POS Orders', readonly=True, copy=False,
 									context={'default_partner_id': 'partner_id', 'default_pet_owner_id': 'pet_owner_id', 'default_practitioner_id': 'practitioner_id',
 											 'default_room_id': 'room_id', })
-	direct_invoice_ids = fields.One2many('account.move', 'encounter_id', string='Direct Invoices', readonly=True, copy=False, domain="[('move_type', '=', 'out_invoice')]",
-										 context={'default_partner_id': 'partner_id', 'default_pet_owner_id': 'pet_owner_id', 'default_practitioner_id': 'practitioner_id',
-												  'default_room_id': 'room_id', })
-	credit_note_ids = fields.One2many('account.move', 'encounter_id', string='Credit Notes', domain="[('move_type', '=', 'out_refund')]", readonly=True)
+	direct_invoice_ids = fields.One2many('account.move', 'encounter_id', string='Direct Invoices', copy=False, domain="[('move_type', '=', 'out_invoice')]")
+	credit_note_ids = fields.One2many('account.move', 'encounter_id', string='Credit Notes', domain="[('move_type', '=', 'out_refund')]", copy=False)
 	credit_note_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
 	invoice_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
 	sale_order_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
@@ -420,10 +418,15 @@ class VetEncounterHeader(models.Model):
 		for encounter in self:
 			encounter.total_amount = sum(encounter.encounter_line_ids.mapped('sub_total'))
 
-	@api.depends('encounter_line_ids.invoice_ids', 'encounter_line_ids.sale_order_ids', 'encounter_line_ids.pos_order_ids')
+	@api.depends('direct_invoice_ids', 'credit_note_ids', 'encounter_line_ids.invoice_ids', 'encounter_line_ids.sale_order_ids', 'encounter_line_ids.pos_order_ids',
+				 'treatment_plan_count')
 	def _compute_payment_document_counts(self):
 		for header in self:
-			header.invoice_count = len(header.encounter_line_ids.mapped('invoice_ids'))
+			# Count invoices from multiple sources
+			invoice_ids = set()
+			invoice_ids.update(header.direct_invoice_ids.ids)
+			invoice_ids.update(header.encounter_line_ids.mapped('invoice_ids').ids)
+			header.invoice_count = len(invoice_ids)
 			header.sale_order_count = len(header.encounter_line_ids.mapped('sale_order_ids'))
 			header.pos_order_count = len(header.encounter_line_ids.mapped('pos_order_ids'))
 			header.credit_note_count = len(header.credit_note_ids)
@@ -620,7 +623,6 @@ class VetEncounterHeader(models.Model):
 				'name': line.product_description or line.product_id.name,
 				'product_uom_qty': quantity,
 				'price_unit': line.unit_price,
-				'pet_owner_id': line.partner_id,
 				'patient_ids': line.patient_ids,
 				'practitioner_id': line.practitioner_id.id,
 				'room_id': line.room_id.id,
@@ -978,7 +980,10 @@ class VetEncounterHeader(models.Model):
 		}
 
 	def action_view_invoices(self):
-		invoice_ids = self.encounter_line_ids.mapped('invoice_ids').ids
+		"""View all invoices related to this encounter"""
+		self.ensure_one()
+		invoice_ids = list(set(self.direct_invoice_ids.ids + self.encounter_line_ids.mapped('invoice_ids').ids))
+
 		return {
 			'type': 'ir.actions.act_window',
 			'name': _('Related Invoices'),
@@ -989,6 +994,8 @@ class VetEncounterHeader(models.Model):
 		}
 
 	def action_view_credit_notes(self):
+		"""View all credit notes related to this encounter"""
+		self.ensure_one()
 		return {
 			'type': 'ir.actions.act_window',
 			'name': _('Credit Notes'),
@@ -2259,7 +2266,7 @@ class EncounterAnalyticsWizard(models.TransientModel):
 class AccountMove(models.Model):
 	_inherit = 'account.move'
 
-	encounter_id = fields.Many2one('vet.encounter.header', string='Encounter', copy=False, index=True, ondelete='set null', readonly=True, help="Encounter this Invoice belongs to")
+	encounter_id = fields.Many2one('vet.encounter.header', string='Encounter', copy=False, index=True, ondelete='set null', help="Encounter this Invoice belongs to")
 	encounter_line_ids = fields.One2many('vet.encounter.line', 'invoice_id', string='Encounter Lines', copy=False, readonly=True)
 	partner_type_id = fields.Many2one('ths.partner.type', string='Partner Type', readonly=False, copy=True, index=True, ondelete='cascade',
 									  help="Choose proper Partner Type to show related Partners")
@@ -2339,30 +2346,6 @@ class AccountMove(models.Model):
 				if vendor_type:
 					self.partner_type_id = vendor_type.id
 
-	def action_view_encounter_lines(self):
-		return {
-			'type': 'ir.actions.act_window',
-			'name': _('Related Encounter Lines'),
-			'res_model': 'vet.encounter.line',
-			'view_mode': 'list,form',
-			'domain': [('invoice_ids', 'in', [self.id])],
-			'context': {'create': False}
-		}
-
-	def action_select_encounter_lines(self):
-		return {
-			'type': 'ir.actions.act_window',
-			'name': _('Select Encounter Lines'),
-			'res_model': 'encounter.payment.wizard',
-			'view_mode': 'form',
-			'target': 'new',
-			'context': {
-				'default_payment_type': 'invoice',
-				'default_partner_id': self.partner_id.id,
-				'active_invoice_id': self.id
-			}
-		}
-
 	def action_post(self):
 		result = super().action_post()
 
@@ -2396,9 +2379,6 @@ class AccountMove(models.Model):
 			for move in self.filtered(lambda m: m.move_type == 'out_invoice'):
 				encounter_lines = move.invoice_line_ids.mapped('encounter_line_id').filtered(lambda x: x)
 				if encounter_lines:
-					# Log the payment state change for debugging
-					_logger.info(f"Invoice {move.name} payment_state changed to {move.payment_state}")
-
 					# Force recomputation of payment amounts and status
 					encounter_lines._compute_payment_amounts()
 					encounter_lines._compute_payment_status()
@@ -2418,6 +2398,10 @@ class AccountMove(models.Model):
 		if 'state' in vals and vals['state'] == 'posted':
 			for move in self.filtered(lambda m: m.move_type == 'out_refund'):
 				if move.reversed_entry_id:
+					# Set encounter_id from original invoice if not set
+					if not move.encounter_id and move.reversed_entry_id.encounter_id:
+						move.encounter_id = move.reversed_entry_id.encounter_id.id
+
 					original_lines = move.reversed_entry_id.invoice_line_ids.mapped('encounter_line_id')
 					for line in original_lines.filtered(lambda x: x):
 						refund_lines = move.invoice_line_ids.filtered(lambda l: l.encounter_line_id == line)
@@ -2431,9 +2415,9 @@ class AccountMove(models.Model):
 						line._update_refund_history('credit_note', move.id, move.name, refund_amount)
 						line._compute_payment_amounts()
 
-						# Link credit note to encounter
-						if line.encounter_id:
-							move.encounter_id = line.encounter_id.id
+			# Link credit note to encounter
+			# if line.encounter_id:
+			# 	move.encounter_id = line.encounter_id.id
 
 		return result
 
@@ -2449,6 +2433,21 @@ class AccountMove(models.Model):
 				line.process_refund(refund_amount, 'invoice', f"Invoice {move.name} refunded", move.id)
 
 		return result
+
+	def action_view_encounter(self):
+		"""View the related encounter"""
+		self.ensure_one()
+		if not self.encounter_id:
+			return {}
+
+		return {
+			'name': _('Related Encounter'),
+			'type': 'ir.actions.act_window',
+			'res_model': 'vet.encounter.header',
+			'view_mode': 'form',
+			'res_id': self.encounter_id.id,
+			'target': 'current'
+		}
 
 	def action_view_credit_notes(self):
 		"""View all credit notes for this invoice"""
@@ -2470,6 +2469,30 @@ class AccountMove(models.Model):
 			'res_id': self.reversed_entry_id.id,
 			'view_mode': 'form',
 			'target': 'current'
+		}
+
+	def action_view_encounter_lines(self):
+		return {
+			'type': 'ir.actions.act_window',
+			'name': _('Related Encounter Lines'),
+			'res_model': 'vet.encounter.line',
+			'view_mode': 'list,form',
+			'domain': [('invoice_ids', 'in', [self.id])],
+			'context': {'create': False}
+		}
+
+	def action_select_encounter_lines(self):
+		return {
+			'type': 'ir.actions.act_window',
+			'name': _('Select Encounter Lines'),
+			'res_model': 'encounter.payment.wizard',
+			'view_mode': 'form',
+			'target': 'new',
+			'context': {
+				'default_payment_type': 'invoice',
+				'default_partner_id': self.partner_id.id,
+				'active_invoice_id': self.id
+			}
 		}
 
 
@@ -2512,8 +2535,7 @@ class AccountMoveLine(models.Model):
 class SaleOrder(models.Model):
 	_inherit = 'sale.order'
 
-	encounter_id = fields.Many2one('vet.encounter.header', string='Encounter', readonly=True, copy=False, index=True, ondelete='set null',
-								   help="Encounter this sales order belongs to")
+	encounter_id = fields.Many2one('vet.encounter.header', string='Encounter', copy=False, index=True, ondelete='set null', help="Encounter this sales order belongs to")
 	encounter_line_ids = fields.One2many('vet.encounter.line', 'sale_order_id', string='Encounter Lines', copy=False, readonly=True)
 	patient_ids = fields.Many2many('res.partner', 'sale_order_patient_rel', 'order_id', 'patient_id', string='Pets', store=True, copy=False, index=True, ondelete='cascade',
 								   domain="[('is_pet', '=', True),('pet_owner_id', '=?', partner_id)]", help="Pets this Sale Order belongs to")
@@ -2576,7 +2598,7 @@ class SaleOrderLine(models.Model):
 class PosOrder(models.Model):
 	_inherit = 'pos.order'
 
-	encounter_id = fields.Many2one('vet.encounter.header', string='Encounter', index=True, ondelete='set null', copy=False, readonly=True)
+	encounter_id = fields.Many2one('vet.encounter.header', string='Encounter', index=True, ondelete='set null', copy=False)
 	encounter_line_ids = fields.One2many('vet.encounter.line', 'pos_order_id', string='Encounter Lines', copy=False, readonly=True)
 	encounter_line_count = fields.Integer(compute='_compute_encounter_counts', store=False)
 
@@ -2679,7 +2701,6 @@ class EncounterPaymentWizard(models.TransientModel):
 
 		invoice_vals = {
 			'partner_id': self.partner_id.id,
-			'pet_owner_id': self.partner_id.id,
 			'patient_ids': [(6, 0, all_patient_ids)],
 			'partner_type_id': pet_owner_type.id if pet_owner_type else False,
 			'practitioner_id': primary_practitioner.id if primary_practitioner else False,
