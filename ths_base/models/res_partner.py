@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from dateutil.relativedelta import relativedelta
 
 from odoo import models, fields, api, _
 from odoo.osv import expression
@@ -21,23 +22,13 @@ _logger = logging.getLogger(__name__)
 class ResPartner(models.Model):
 	_inherit = 'res.partner'
 
-	partner_type_id = fields.Many2one(
-		'ths.partner.type', string='Partner Type', required=True, index=True, tracking=True,
-		default=lambda self: self.env.ref('ths_base.partner_type_contact', raise_if_not_found=False)
-	)
+	partner_type_id = fields.Many2one('ths.partner.type', string='Partner Type', required=True, index=True, tracking=True,
+									  default=lambda self: self.env.ref('ths_base.partner_type_contact', raise_if_not_found=False))
 	# Added Arabic Name field
 	name_ar = fields.Char("Name (Arabic)", store=True, copy=True)
-
-	gender = fields.Selection([
-		('male', 'Male'),
-		('female', 'Female'),
-	], string='Gender')
-
-	ths_gov_id = fields.Char(string='ID Number', help="National Identifier (ID)", readonly=False, copy=False,
-							 store=True)
-
+	gender = fields.Selection([('male', 'Male'), ('female', 'Female')], string='Gender')
+	ths_gov_id = fields.Char(string='ID Number', help="National Identifier (ID)", readonly=False, copy=False, store=True)
 	ths_nationality = fields.Many2one('res.country', 'Nationality', copy=False, store=True)
-
 	ths_dob = fields.Date(string='Date of Birth')
 	ths_age = fields.Char(string='Age', compute='_compute_ths_age', store=False)
 
@@ -45,18 +36,28 @@ class ResPartner(models.Model):
 	@api.onchange('name')
 	def onchange_name_translate(self):
 		"""Translates the English name to Arabic on change."""
-		# Translator is guaranteed to be imported due to raise ImportError above
-		if self.name:
-			try:
-				translator = Translator(to_lang="ar")
-				self.name_ar = translator.translate(self.name)
-			except Exception as e:
-				# Log error but don't crash UI
-				_logger.error(f"Failed to translate name '{self.name}' to Arabic: {e}")
-		# Optionally display a user warning via return value if needed in v18+ onchanges
-		# return {'warning': {'title': _("Translation Error"), 'message': _("Could not translate name to Arabic.")}}
-		else:
+		if not self.name or not self.name.strip():
 			self.name_ar = False
+			return
+
+		try:
+			translator = Translator(to_lang="ar")
+			result = translator.translate(self.name)
+
+			self.name_ar = result if result else f"[Pending: {self.name}]"
+
+		except (ConnectionError, TimeoutError) as e:
+			_logger.error(f"Network error during translation for '{self.name}': {e}")
+			self.name_ar = f"[Network error: {self.name}]"
+		except ImportError as e:
+			_logger.error(f"Translator library not available: {e}")
+			self.name_ar = f"[Library error: {self.name}]"
+		except AttributeError as e:
+			_logger.error(f"Translator attribute error for '{self.name}': {e}")
+			self.name_ar = f"[Translation error: {self.name}]"
+		except Exception as e:
+			_logger.error(f"Unexpected translation error for '{self.name}': {type(e).__name__}: {e}")
+			self.name_ar = f"[Error: {self.name}]"
 
 	@api.onchange('partner_type_id')
 	def _onchange_partner_type_id(self):
@@ -75,23 +76,25 @@ class ResPartner(models.Model):
 	# === Compute Methods ===
 	@api.depends('ths_dob')
 	def _compute_ths_age(self):
+		"""Compute accurate age from date of birth"""
 		for partner in self:
-			age_str = ""
-			if partner.ths_dob:
-				today = fields.Date.context_today(partner)
-				delta = today - partner.ths_dob
-				years = delta.days // 365
-				months = (delta.days % 365) // 30  # Approximate
-				days = (delta.days % 365) % 30  # Approximate
+			partner.ensure_one()
 
-				if years > 0:
-					age_str += f"{years}y "
-				if months > 0:
-					age_str += f"{months}m "
-				if years == 0 and months == 0 and days >= 0:  # Show days only if less than a month old
-					age_str += f"{days}d"
-				age_str = age_str.strip()
-			partner.ths_age = age_str or "N/A"
+			# Early returns for optimization
+			if partner.is_company or not partner.ths_dob:
+				partner.ths_age = "N/A"
+				continue
+
+			today = fields.Date.context_today(partner)
+			delta = relativedelta(today, partner.ths_dob)
+
+			# Simple format
+			parts = []
+			if delta.years: parts.append(f"{delta.years}y")
+			if delta.months: parts.append(f"{delta.months}m")
+			if delta.days: parts.append(f"{delta.days}d")
+
+			partner.ths_age = " ".join(parts) or "0d"
 
 	# --- Helper to get HR Handled Type IDs ---
 	@api.model
@@ -125,8 +128,8 @@ class ResPartner(models.Model):
 					vals.setdefault('customer_rank', 1)
 		partners = super().create(vals_list)
 		# Generate ref
-		to_ref = partners.filtered(lambda p: p.partner_type_id.sequence_id
-											 and not p.ref and p.partner_type_id.id not in hr_types)
+		to_ref = partners.filtered(lambda x: x.partner_type_id.sequence_id
+											 and not x.ref and x.partner_type_id.id not in hr_types)
 		for p in to_ref:
 			try:
 				p.ref = p.partner_type_id.sequence_id.next_by_id()

@@ -299,9 +299,9 @@
                                 <span class="o_stat_text">Encounter</span>
                             </div>
                         </button>
-                        <button name="action_view_documents" type="object" icon="fa-book" class="oe_stat_button">
+                        <button name="action_view_documents" type="object" icon="fa-camera" class="oe_stat_button">
                             <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_text">Documents</span>
+                                <span class="o_stat_text">Photos</span>
                             </div>
                         </button>
                     </div>
@@ -528,8 +528,8 @@
                 <field name="duration_hours" widget="float_time"/>
                 <field name="state" widget="badge"/>
                 <field name="notes"/>
-                <button name="action_checkin" string="Checkin" type="object" icon="fa-sign-in" invisible="state != 'draft'"/>
-                <button name="action_checkout" string="Checkout" type="object" icon="fa-sign-out" invisible="state in ('checked_out', 'draft')"/>
+                <button name="action_checkin" string="Check-In" type="object" icon="fa-sign-in" invisible="state != 'draft'"/>
+                <button name="action_checkout" string="Check-Out" type="object" icon="fa-sign-out" invisible="state in ('checked_out', 'draft')"/>
                 <button name="action_extend_visit" string="Extend Visit" type="object" icon="fa-clock-o" invisible="state in ('draft', 'checked_in')" help="Extend visit"/>
             </list>
         </field>
@@ -564,6 +564,11 @@
                         <button name="action_view_encounter" type="object" icon="fa-stethoscope" class="oe_stat_button" invisible="not encounter_id">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Encounter</span>
+                            </div>
+                        </button>
+                        <button name="action_view_documents" type="object" icon="fa-camera" class="oe_stat_button">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Photos</span>
                             </div>
                         </button>
                     </div>
@@ -646,7 +651,7 @@
         <field name="view_id" ref="view_vet_park_checkin_list"/>
         <field name="search_view_id" ref="view_vet_park_checkin_search"/>
         <field name="context">{'search_default_filter_today': 1}</field>
-        <field name="domain">[('has_valid_membership', '=', True)]</field>
+        <field name="domain">[]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Record a new park check-in
@@ -848,9 +853,9 @@
                                 <span class="o_stat_text">Encounter</span>
                             </div>
                         </button>
-                        <button name="action_view_documents" type="object" icon="fa-book" class="oe_stat_button">
+                        <button name="action_view_documents" type="object" icon="fa-camera" class="oe_stat_button">
                             <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_text">Documents</span>
+                                <span class="o_stat_text">Photos</span>
                             </div>
                         </button>
                     </div>

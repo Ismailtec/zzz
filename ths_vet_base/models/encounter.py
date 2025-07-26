@@ -30,6 +30,7 @@ class EncounterMixin(models.AbstractModel):
 	partner_mobile = fields.Char(string="Partner Mobile", related='partner_id.mobile', store=False, readonly=True)
 	is_pet = fields.Boolean(string='Is Pet', compute='_compute_partner_flags', store=False, help="Computed field for view compatibility - indicates if partner is a pet")
 	is_pet_owner = fields.Boolean(string='Is Pet Owner', compute='_compute_partner_flags', store=False, help="Computed field - indicates if partner is a pet owner")
+	documents_count_model = fields.Integer(string="Documents count", compute='_compute_documents_count_model')
 	company_currency = fields.Many2one('res.currency', string='Currency', default=lambda self: self.env.company.currency_id, required=True, readonly=True,
 									   help="Currency for monetary calculations")
 
@@ -103,6 +104,64 @@ class EncounterMixin(models.AbstractModel):
 					('department_ids', 'in', rec.room_id.ths_department_id.id)
 				], limit=1)
 				rec.default_appointment_type_id = appointment_type.id if appointment_type else False
+
+	def action_view_documents_model(self, folder_xmlid, title_prefix, tag_xmlid):
+		""" Generic method to view documents for service models
+			:param folder_xmlid: External ID of the folder
+			:param title_prefix: Prefix for the window title
+			:param tag_xmlid: External ID of the default tag """
+		self.ensure_one()
+
+		folder = self.env.ref(folder_xmlid, raise_if_not_found=False)
+		tag = self.env.ref(tag_xmlid, raise_if_not_found=False)
+
+		partner_id = self.patient_ids[0].id if self.patient_ids else (
+			self.pet_owner_id[0].id if hasattr(self, 'pet_owner_id') and self.pet_owner_id else False
+		)
+
+		if not partner_id:
+			return {}
+
+		folder_main = self.env.ref('ths_vet_base.documents_pet_folder', raise_if_not_found=False)
+		domain = [
+			'|',
+			'&', ('type', '=', 'folder'), ('folder_id', '=', folder_main.id if folder_main else False),
+			'&', ('res_model', '=', 'res.partner'), ('res_id', '=', partner_id)
+		]
+
+		context = {
+			'default_res_model': 'res.partner',
+			'default_res_id': partner_id,
+			'default_partner_id': partner_id,
+			'default_folder_id': folder.id if folder else False,
+			'default_tag_ids': [(6, 0, [tag.id])] if tag else False,
+			'searchpanel_default_folder_id': folder.id if folder else False,
+			'res_model': 'res.partner',
+			'partner_id': partner_id,
+		}
+
+		return {
+			'name': _('%s Photos/Documents') % title_prefix,
+			'type': 'ir.actions.act_window',
+			'res_model': 'documents.document',
+			'view_mode': 'kanban,list,form',
+			'target': 'current',
+			'domain': domain,
+			'context': context
+		}
+
+	@api.depends('patient_ids')
+	def _compute_documents_count_model(self):
+		"""Compute number of attached documents for this service record"""
+		for record in self:
+			if record.patient_ids:
+				domain = [
+					('res_model', '=', 'res.partner'),
+					('res_id', '=', record.patient_ids[0].id)
+				]
+				record.documents_count_model = self.env['documents.document'].search_count(domain)
+			else:
+				record.documents_count_model = 0
 
 	def _get_formatted_patient_ids_with_names(self):
 		""" Helper method to format patient_ids as [[id, name], [id, name]] for frontend consumption
@@ -216,6 +275,7 @@ class VetEncounterHeader(models.Model):
 	actual_duration = fields.Float(string='Actual Duration (hours)', help="Actual time spent on encounter")
 	auto_state = fields.Selection([('in_progress', 'In Progress'), ('done', 'Done')], string='Auto State', compute='_compute_auto_state_from_payments', store=False,
 								  help="Automatically computed state based on payment status")
+	documents_count = fields.Integer(string="Photos/Documents", compute='_compute_documents_count')
 
 	# -------- Links to Service Models --------
 	appointment_ids = fields.One2many('calendar.event', 'encounter_id', string='Appointments', help="Daily encounter container for all services",
@@ -319,6 +379,27 @@ class VetEncounterHeader(models.Model):
 						'pet_id': pet.id,
 					})
 				rec.pet_badge_data = badge_data
+
+	@api.depends('partner_id')
+	def _compute_documents_count(self):
+		"""Compute number of documents for all pets under this encounter's partner"""
+		for encounter in self:
+			if encounter.partner_id:
+				pet_ids = self.env['res.partner'].search([
+					('pet_owner_id', '=', encounter.partner_id.id),
+					('is_pet', '=', True)
+				]).ids
+
+				if pet_ids:
+					domain = [
+						('res_model', '=', 'res.partner'),
+						('res_id', 'in', pet_ids)
+					]
+					encounter.documents_count = self.env['documents.document'].search_count(domain)
+				else:
+					encounter.documents_count = 0
+			else:
+				encounter.documents_count = 0
 
 	@api.depends('encounter_line_ids.payment_status', 'encounter_line_ids.sub_total', 'encounter_line_ids.paid_amount', 'encounter_line_ids.remaining_amount',
 				 'encounter_line_ids.invoice_ids.payment_state')
@@ -941,6 +1022,38 @@ class VetEncounterHeader(models.Model):
 			'view_mode': 'list,form',
 			'domain': [('patient_ids', 'in', self.patient_ids.ids)],
 			'context': {'search_default_groupby_patients': 1, 'create': False}
+		}
+
+	def action_view_documents(self):
+		"""View photos/documents"""
+		self.ensure_one()
+
+		folder_main = self.env.ref('ths_vet_base.documents_pet_folder', raise_if_not_found=False)
+		domain = [
+			'|',
+			'&', ('type', '=', 'folder'), ('folder_id', '=', folder_main.id if folder_main else False),
+			('partner_id.pet_owner_id.id', '=', self.partner_id.id)
+		]
+		context = {
+			'default_res_model': 'res.partner',
+			'default_res_id': self.partner_id.id,
+			'default_partner_id': self.partner_id.id,
+			'searchpanel_default_folder_id': folder_main.id if folder_main else False,
+			'res_model': 'res.partner',
+			'partner_id': self.partner_id.id,
+			'searchpanel_folder_id': folder_main.id if folder_main else False,
+			'folder_id': folder_main.id if folder_main else False,
+		}
+
+		return {
+			'name': _('Photos/Documents'),
+			'type': 'ir.actions.act_window',
+			'res_model': 'documents.document',
+			'res_id': self.env.ref('documents.document_action').id,
+			'view_mode': 'kanban,list,form',
+			'target': 'current',
+			'domain': domain,
+			'context': context
 		}
 
 	def action_view_boarding_stays(self):
@@ -2415,9 +2528,9 @@ class AccountMove(models.Model):
 						line._update_refund_history('credit_note', move.id, move.name, refund_amount)
 						line._compute_payment_amounts()
 
-			# Link credit note to encounter
-			# if line.encounter_id:
-			# 	move.encounter_id = line.encounter_id.id
+		# Link credit note to encounter
+		# if line.encounter_id:
+		# 	move.encounter_id = line.encounter_id.id
 
 		return result
 

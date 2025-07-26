@@ -7,92 +7,92 @@
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
+                <field name="company_type" position="replace"/>
 
-                <xpath expr="//field[@name='company_type']" position="replace"/>
+                <!-- Remove the original group structure -->
+                <group position="replace"/>
+                <field name="image_1920" position="attributes">
+                    <attribute name="options">{'preview_image': 'avatar_128', 'size': [90, 90], 'zoom': True}</attribute>
+                    <attribute name="class">oe_avatar ms-3</attribute>
+                </field>
 
-                <xpath expr="//div[hasclass('o_row')]//field[@name='parent_id']" position="before">
-                    <label for="parent_id" string="Parent Company" class="o_form_label"
-                           invisible="not is_company"/>
-                </xpath>
-                <xpath expr="//field[@name='parent_id']" position="attributes">
-                    <attribute name="context">{'default_is_company': True,
-                                               'default_partner_type_id': partner_type_id}</attribute>
-                    <attribute name="invisible">not is_company</attribute>
-                </xpath>
-                <xpath expr="//h1" position="after">
-                    <br/>
-                    <div class="o_row">
-                        <label for="name_ar"></label>
-                        <field name="name_ar" placeholder="Name in Arabic"/>
-                    </div>
-                </xpath>
-                <xpath expr="//span[@name='address_name']" position="before">
-                    <field name="ref"
-                           readonly="1"
-                           force_save="1"/>
-                </xpath>
-                <xpath expr="//page[@name='sales_purchases']//field[@name='ref']" position="replace"></xpath>
-                <xpath expr="//field[@name='ref']" position="before">
-                    <div>
-                        <div>
-                            <label for="partner_type_id" class="o_form_label fw-bold"/>
-                            <div class="bg-secondary rounded p-1 d-inline-block mb-0 fw-bolder fs-4">
-                                <field name="partner_type_id"
-                                       required="1"
-                                       options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"/>
-                            </div>
-                        </div>
-                    </div>
-                </xpath>
+                <div class="oe_title mb24" position="replace">
+                    <!-- This will be filled later via xpath in medical module -->
+                    <group name="activity_summary" class="mb16"></group>
 
-                <xpath expr="//span[@name='address_name']//field[@name='type']" position="attributes">
-                    <attribute name="invisible">1</attribute>
-                </xpath>
+                    <!-- Two-column layout -->
+                    <group col="2" class="mb24">
+                        <group string="Partner Information" name="name_group" colspan="1">
 
-                <xpath expr="//span[@name='address_name']//span" position="attributes">
-                    <attribute name="invisible">0</attribute>
-                </xpath>
+                            <group name="name_group" col="1" class="w-100">
+                                <field name="company_type" widget="radio" options="{'horizontal': true}" invisible="1"/>
+                                <field id="company" options="{'line_breaks': False}" widget="text" class="text-break ths_big_name bg-success-subtle rounded"
+                                       name="name" default_focus="1" placeholder="e.g. Lumber Inc" string="Company Name" invisible="not is_company" required="type == 'contact'"/>
+                                <field id="individual" options="{'line_breaks': False}" widget="text"
+                                       class="text-break ths_big_name bg-success-subtle rounded p-1 d-inline-block mb-0"
+                                       name="name" default_focus="1" placeholder="e.g. Abdullah Ali" invisible="is_company" required="type == 'contact'"/>
+                                <field name="name_ar" placeholder="Name in Arabic is auto translated ..." class="fs-5 text-muted fst-italic"/>
 
-                <xpath expr="//field[@name='vat']" position="attributes">
-                    <attribute name="invisible">not is_company</attribute>
-                </xpath>
+                                <div class="o_row" invisible="not is_company">
+                                    <field name="parent_id" widget="res_partner_many2one" placeholder="Parent Company Name..." invisible="(not is_company) and company_name != ''"
+                                           domain="[('is_company', '=', True)]" context="{'default_is_company': True, 'show_vat': True, 'default_user_id': user_id}"/>
+                                    <field name="company_name" invisible="not company_name or company_name == '' or is_company"/>
+                                    <button name="create_company" icon="fa-plus-square" string="Create company" type="object" class="oe_edit_only btn-link"
+                                            invisible="is_company or company_name == '' or not company_name"/>
+                                </div>
+                            </group>
 
-                <xpath expr="//button[@icon='fa-credit-card']" position="attributes">
-                    <attribute name="invisible">not is_company</attribute>
-                </xpath>
+                            <!-- Two side-by-side groups -->
+                            <group name="partner_type_and_address" col="2" class="w-100">
+                                <group name="partner_type" string="Reference &amp; Type" colspan="1" class="w-50">
+                                    <field name="ref" readonly="1" force_save="1"/>
+                                    <field name="partner_type_id" required="1" options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"
+                                           class="bg-success-subtle rounded p-1 d-inline-block mb-0 ths_big_name"/>
+                                </group>
 
-                <xpath expr="//button[@icon='fa-truck']" position="attributes">
-                    <attribute name="invisible">not is_company</attribute>
-                </xpath>
+                                <group name="address_name" string="Address" colspan="1" class="w-50">
+                                    <div class="o_address_format">
+                                        <field name="type" invisible="is_company" readonly="user_ids" required="not is_company" class="fw-bold"/>
+                                        <field name="street" placeholder="Street..." class="o_address_street" readonly="type == 'contact' and parent_id"/>
+                                        <field name="street2" placeholder="Street 2..." class="o_address_street" readonly="type == 'contact' and parent_id"/>
+                                        <field name="city" placeholder="City" class="o_address_city" readonly="type == 'contact' and parent_id"/>
+                                        <field name="state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}"
+                                               readonly="type == 'contact' and parent_id" context="{'country_id': country_id, 'default_country_id': country_id, 'zip': zip}"/>
+                                        <field name="zip" placeholder="ZIP" class="o_address_zip" readonly="type == 'contact' and parent_id"/>
+                                        <div name="partner_address_country" class="d-flex justify-content-between">
+                                            <field name="country_id" placeholder="Country" class="o_address_country" options="{'no_open': True, 'no_create': True}"
+                                                   readonly="type == 'contact' and parent_id"/>
+                                        </div>
+                                    </div>
+                                    <field name="vat" placeholder="e.g. BE0477472701" invisible="not is_company" readonly="parent_id"/>
+                                </group>
+                            </group>
+                        </group>
 
-                <xpath expr="//button[@name='action_view_stock_lots']" position="attributes">
-                    <attribute name="invisible">not is_company</attribute>
-                </xpath>
-
-                <xpath expr="//sheet//group//group[2]" position="replace">
-                    <group string="Contact Information" name="cont_info">
-                        <field name="title" options="{'no_open': True, 'no_create': True}" invisible="is_company"/>
-                        <field name="phone" widget="phone"/>
-                        <field name="mobile" widget="phone"/>
-                        <field name="ths_gov_id" placeholder="National ID" required="0" invisible="is_company"/>
-                        <field name="gender" widget="radio" options="{'horizontal': true}" class="oe_inline"
-                               invisible="is_company"/>
-                        <field name="ths_nationality" option="{'no_create': True, 'no_quick_create': True}"
-                               invisible="is_company"/>
-                        <field name="ths_dob" placeholder="Date of Birth"
-                               options="{'datepicker': {'showTime': False}}" invisible="is_company"/>
-                        <field name="ths_age" placeholder="Age" readonly="1" invisible="is_company"/>
-                        <field name="user_id" string="Account Manager"
-                               domain="[('share', '=', False)]" invisible="not is_company"/>
-                        <field name="function" placeholder="e.g. Sales Manager" invisible="is_company"/>
-                        <field name="lang" invisible="not is_company and active_lang_count &lt;= 1"/>
-                        <field name="email" widget="email" context="{'gravatar_image': True}" required="user_ids"/>
-                        <field name="website" string="Website" widget="url" placeholder="e.g. https://www.odoo.com"
-                               invisible="not is_company"/>
-                        <field name="category_id" widget="many2many_tags"
-                               options="{'color_field': 'color', 'no_create_edit': True}"/>
+                        <!-- Right Column: Contact Information -->
+                        <group name="cont_info" string="Contact Information" colspan="1">
+                            <field name="title" options="{'no_open': True, 'no_create': True}" invisible="is_company"/>
+                            <field name="mobile" widget="phone"/>
+                            <field name="phone" widget="phone"/>
+                            <field name="ths_gov_id" placeholder="National ID" required="0" invisible="is_company"/>
+                            <field name="gender" widget="radio" options="{'horizontal': true}" class="oe_inline" invisible="is_company"/>
+                            <field name="ths_nationality" option="{'no_create': True, 'no_quick_create': True}" invisible="is_company"/>
+                            <field name="ths_dob" placeholder="Date of Birth" options="{'datepicker': {'showTime': False}}" invisible="is_company"/>
+                            <field name="ths_age" placeholder="Age" readonly="1" invisible="is_company"/>
+                            <field name="user_id" string="Account Manager" domain="[('share', '=', False)]" invisible="not is_company"/>
+                            <field name="function" placeholder="e.g. Sales Manager" invisible="is_company"/>
+                            <field name="lang" invisible="not is_company and active_lang_count &lt;= 1"/>
+                            <field name="email" widget="email" context="{'gravatar_image': True}" required="user_ids"/>
+                            <field name="website" string="Website" widget="url" placeholder="e.g. https://www.odoo.com" invisible="not is_company"/>
+                            <field name="category_id" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" invisible="1"/>
+                        </group>
                     </group>
-                </xpath>
+                </div>
+
+                <xpath expr="//page[@name='sales_purchases']//field[@name='ref']" position="replace"></xpath>
+                <button icon="fa-credit-card" position="attributes"><attribute name="invisible">not is_company</attribute></button>
+                <button icon="fa-truck" position="attributes"><attribute name="invisible">not is_company</attribute></button>
+                <button name="action_view_stock_lots" position="attributes"><attribute name="invisible">not is_company</attribute></button>
 
                 <!-- add partner_type on child_ids form -->
                 <xpath expr="//field[@name='child_ids']/form//field[@name='name']" position="after">

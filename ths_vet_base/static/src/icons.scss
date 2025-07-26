@@ -1,0 +1,22 @@
+.fa.fa-syringe {
+  @extend .fa;
+
+}
+
+.fa.fa-syringe:before {
+  content: "";
+
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+
+  -webkit-mask-image: url('/ths_vet_base/static/src/img/syringe.svg');
+  mask-image: url('/ths_vet_base/static/src/img/syringe.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background-color: currentColor;
+}

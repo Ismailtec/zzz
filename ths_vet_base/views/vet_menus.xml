@@ -289,8 +289,13 @@
         <menuitem id="menu_ths_encounter_lines_billing" name="Encounter Line Items" parent="menu_ths_vet_billing" action="action_vet_encounter_line_item" sequence="10"
                   groups="account.group_account_invoice,ths_vet_base.group_vet_user"/>
         <menuitem id="menu_vet_encounter_line_item_pos" name="POS Encounter Items" parent="point_of_sale.menu_point_config_product" action="action_vet_encounter_line_item"
-                  sequence="100"
-                  groups="point_of_sale.group_pos_user"/>
+                  sequence="20" groups="point_of_sale.group_pos_user"/>
+        <menuitem id="menu_finance_receivables_ths" name="Invoices" parent="menu_ths_vet_billing" sequence="30">
+            <menuitem id="menu_action_move_out_invoice_type_ths" action="account.action_move_out_invoice" sequence="1"/>
+            <menuitem id="menu_action_move_out_refund_type_ths" name="Refunds/Credit Notes" action="account.action_move_out_refund_type" sequence="2"/>
+            <menuitem id="menu_action_move_out_receipt_type" action="account.action_move_out_receipt_type" groups="account.group_sale_receipts" sequence="3"/>
+            <menuitem id="menu_action_account_payments_receivable_ths" name="Payments" action="account.action_account_payments" sequence="15"/>
+        </menuitem>
 
         <!-- Services Submenu -->
         <menuitem id="menu_ths_vet_services" name="Services" parent="menu_ths_vet_root" sequence="25"/>
@@ -316,8 +321,7 @@
                   groups="ths_vet_base.group_vet_user"/>
         <menuitem id="menu_vet_park_reports" name="Park Reports" parent="menu_vet_analytics" action="action_vet_park_report_wizard" sequence="30"
                   groups="ths_vet_base.group_vet_user"/>
-        <menuitem id="menu_vet_near_expiry_memberships" name="Expiring Memberships" parent="menu_vet_analytics" action="action_view_expiring_memberships" sequence="40"
-                  groups="ths_vet_base.group_vet_user"/>
+
 
         <!-- Configuration Submenu -->
         <menuitem id="menu_ths_vet_config" name="Configuration" parent="menu_ths_vet_root" sequence="100"/>
@@ -371,6 +375,8 @@
         <menuitem id="menu_todays_encounters" name="Today's Encounters" parent="menu_todays_activities" action="action_todays_encounters" sequence="20"
                   groups="ths_vet_base.group_vet_user"/>
         <menuitem id="menu_overdue_vaccinations" name="Overdue Vaccinations" parent="menu_todays_activities" action="action_overdue_vaccinations" sequence="30"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_vet_near_expiry_memberships" name="Expiring Memberships" parent="menu_todays_activities" action="action_view_expiring_memberships" sequence="40"
                   groups="ths_vet_base.group_vet_user"/>
 
         <menuitem id="menu_emergency_appointments" name="Emergency Appointments" parent="menu_ths_vet_scheduling" action="action_emergency_appointments" sequence="10"

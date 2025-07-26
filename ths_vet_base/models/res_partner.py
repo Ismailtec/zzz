@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import re
 
+from dateutil.relativedelta import relativedelta
+
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
@@ -104,6 +106,8 @@ class ResPartner(models.Model):
 	documents_count = fields.Integer(string="Photos/Documents", compute='_compute_documents_count')
 	encounter_count = fields.Integer(string="# Encounters", compute='_compute_encounter_count')
 	vaccination_count = fields.Integer(string="# Vaccinations", compute='_compute_vaccination_count')
+	boarding_count = fields.Integer(string="# Boardings", compute='_compute_boarding_count')
+	park_count = fields.Integer(string="# Park Visits", compute='_compute_park_count')
 
 	# --- COMMUNICATION PREFERENCES ---
 	send_whatsapp_reminder = fields.Boolean(string='Send WhatsApp Reminders', default=True)
@@ -158,8 +162,7 @@ class ResPartner(models.Model):
 			partner.phone_normalized = re.sub(r'\D', '', partner.phone) if partner.phone else False
 			partner.mobile_normalized = re.sub(r'\D', '', partner.mobile) if partner.mobile else False
 
-	@api.depends('pet_owner_id.street', 'pet_owner_id.street2', 'pet_owner_id.city',
-				 'pet_owner_id.state_id', 'pet_owner_id.zip', 'pet_owner_id.country_id')
+	@api.depends('pet_owner_id.street', 'pet_owner_id.street2', 'pet_owner_id.city', 'pet_owner_id.state_id', 'pet_owner_id.zip', 'pet_owner_id.country_id')
 	def _compute_owner_address_info(self):
 		""" Compute method to dynamically get address fields from the pet owner. """
 		for pet in self:
@@ -295,23 +298,74 @@ class ResPartner(models.Model):
 			else:
 				rec.encounter_count = 0
 
-	@api.depends('is_pet')
+	@api.depends('is_pet', 'is_pet_owner')
 	def _compute_vaccination_count(self):
-		"""Count vaccinations for pets"""
+		"""Count vaccinations for pets and pet owners"""
 		for partner in self:
 			if partner.is_pet:
 				partner.vaccination_count = self.env['vet.vaccination'].search_count([
 					('patient_ids', 'in', partner.id)
 				])
+			elif partner.is_pet_owner:
+				# Count all vaccinations where this person is the pet owner
+				partner.vaccination_count = self.env['vet.vaccination'].search_count([
+					('partner_id', '=', partner.id)
+				])
 			else:
 				partner.vaccination_count = 0
 
-	@api.depends('is_pet')
-	def _compute_documents_count(self):
-		"""Count documents/photos for pets"""
+	@api.depends('is_pet', 'is_pet_owner')
+	def _compute_boarding_count(self):
+		"""Count Boardings for pets and pet owners"""
 		for partner in self:
 			if partner.is_pet:
-				domain = [('res_model', '=', 'res.partner'), ('res_id', '=', partner.id)]
+				partner.boarding_count = self.env['vet.boarding.stay'].search_count([
+					('patient_ids', 'in', partner.id),
+					('state', 'not in', ('draft', 'cancelled'))
+				])
+			elif partner.is_pet_owner:
+				partner.boarding_count = self.env['vet.boarding.stay'].search_count([
+					('partner_id', '=', partner.id),
+					('state', 'not in', ('draft', 'cancelled'))
+				])
+			else:
+				partner.boarding_count = 0
+
+	@api.depends('is_pet', 'is_pet_owner')
+	def _compute_park_count(self):
+		"""Count Park Visits for pets and pet owners"""
+		for partner in self:
+			if partner.is_pet:
+				partner.park_count = self.env['vet.park.checkin'].search_count([
+					('patient_ids', 'in', partner.id),
+					('state', '!=', 'draft')
+				])
+			elif partner.is_pet_owner:
+				partner.park_count = self.env['vet.park.checkin'].search_count([
+					('partner_id', '=', partner.id),
+					('state', '!=', 'draft')
+				])
+			else:
+				partner.park_count = 0
+
+	@api.depends('is_pet', 'is_pet_owner')
+	def _compute_documents_count(self):
+		"""Count documents/photos for pets and pet owners"""
+		for partner in self:
+			if partner.is_pet:
+				domain = [('partner_id', '=', partner.id)]
+				partner.documents_count = self.env['documents.document'].search_count(domain)
+			elif partner.is_pet_owner:
+				# Count pet owner's personal docs + all their pets' docs
+				pet_ids = self.env['res.partner'].search([
+					('pet_owner_id', '=', partner.id),
+					('is_pet', '=', True)
+				]).ids
+				domain = [
+					'|',
+					('res_model', '=', 'res.partner'), ('res_id', '=', partner.id),
+					('res_model', '=', 'res.partner'), ('res_id', 'in', pet_ids)
+				]
 				partner.documents_count = self.env['documents.document'].search_count(domain)
 			else:
 				partner.documents_count = 0
@@ -355,8 +409,7 @@ class ResPartner(models.Model):
 
 			partner.next_vaccination_due = next_vaccination.expiry_date if next_vaccination else False
 
-	@api.depends('is_pet', 'last_visit_date', 'vaccination_count', 'medical_alerts',
-				 'dietary_restrictions', 'ths_microchip', 'ths_insurance_number')
+	@api.depends('is_pet', 'last_visit_date', 'vaccination_count', 'medical_alerts', 'dietary_restrictions', 'ths_microchip', 'ths_insurance_number')
 	def _compute_full_medical_summary(self):
 		"""Generate complete HTML medical summary"""
 		for partner in self:
@@ -624,7 +677,7 @@ class ResPartner(models.Model):
 	def action_view_encounters(self):
 		"""View the daily encounters for this Partner/Pet Owner/Pet"""
 		self.ensure_one()
-		if not self.is_pet or self.is_pet_owner:
+		if not (self.is_pet or self.is_pet_owner):
 			return {}
 
 		pet_owner_type = self.env.ref('ths_vet_base.partner_type_pet_owner', raise_if_not_found=False)
@@ -639,7 +692,7 @@ class ResPartner(models.Model):
 				'res_model': 'vet.encounter.header',
 				'view_mode': 'list,form',
 				'domain': [('patient_ids', 'in', self.id)],
-				'target': 'new',
+				'target': 'current',
 				'context': {
 					'default_pet_owner_id': self.pet_owner_id.id,
 					'default_patient_ids': [(6, 0, [self.id])],
@@ -655,7 +708,7 @@ class ResPartner(models.Model):
 				'res_model': 'vet.encounter.header',
 				'view_mode': 'list,form',
 				'domain': [('partner_id', '=', self.id)],
-				'target': 'new',
+				'target': 'current',
 				'context': {
 					'default_pet_owner_id': self.id,
 					'default_patient_ids': [],
@@ -707,7 +760,7 @@ class ResPartner(models.Model):
 			'name': name,
 			'type': 'ir.actions.act_window',
 			'res_model': 'calendar.event',
-			'view_mode': 'calendar,list,form',
+			'view_mode': 'list,calendar,form',
 			'domain': domain,
 			'context': context,
 		}
@@ -715,39 +768,61 @@ class ResPartner(models.Model):
 	def action_view_boarding_stays(self):
 		"""View boarding stays"""
 		self.ensure_one()
-		if not self.is_pet:
+		if not (self.is_pet or self.is_pet_owner):
 			return {}
 
+		if self.is_pet:
+			domain = [('patient_ids', 'in', self.id)]
+			context = {
+				'default_partner_id': self.pet_owner_id.id if self.pet_owner_id else False,
+				'default_patient_ids': [(6, 0, [self.id])],
+			}
+			name = _('Boarding Stays for %s') % self.name
+		else:  # is_pet_owner
+			domain = [('partner_id', '=', self.id)]
+			context = {
+				'default_partner_id': self.id,
+			}
+			name = _('Boarding Stays for %s') % self.name
+
 		return {
-			'name': _('Boarding Stays for %s') % self.name,
+			'name': name,
 			'type': 'ir.actions.act_window',
 			'res_model': 'vet.boarding.stay',
 			'view_mode': 'list,form',
-			'domain': [('patient_ids', 'in', self.id)],
-			'context': {
-				'default_partner_id': self.pet_owner_id.id if self.pet_owner_id else False,
-				'default_patient_ids': [(6, 0, [self.id])],
-				'create': True
-			}
+			'domain': domain,
+			'context': context,
+			'target': 'current',
 		}
 
 	def action_view_vaccinations(self):
 		"""View vaccinations"""
 		self.ensure_one()
-		if not self.is_pet:
+		if not (self.is_pet or self.is_pet_owner):
 			return {}
 
+		if self.is_pet:
+			domain = [('patient_ids', 'in', self.id)]
+			context = {
+				'default_partner_id': self.pet_owner_id.id if self.pet_owner_id else False,
+				'default_patient_ids': [(6, 0, [self.id])],
+			}
+			name = _('Vaccinations for %s') % self.name
+		else:  # is_pet_owner
+			domain = [('partner_id', '=', self.id)]
+			context = {
+				'default_partner_id': self.id,
+			}
+			name = _('Vaccinations for %s') % self.name
+
 		return {
-			'name': _('Vaccinations for %s') % self.name,
+			'name': name,
 			'type': 'ir.actions.act_window',
 			'res_model': 'vet.vaccination',
 			'view_mode': 'list,form',
-			'domain': [('patient_ids', 'in', self.id)],
-			'context': {
-				'default_partner_id': self.pet_owner_id.id if self.pet_owner_id else False,
-				'default_patient_ids': [(6, 0, [self.id])],
-				'create': True
-			}
+			'domain': domain,
+			'context': context,
+			'target': 'current',
 		}
 
 	def action_view_vaccination_reminders(self):
@@ -768,20 +843,31 @@ class ResPartner(models.Model):
 	def action_view_park_checkins(self):
 		"""View Park Check-ins"""
 		self.ensure_one()
-		if not self.is_pet:
+		if not (self.is_pet or self.is_pet_owner):
 			return {}
 
+		if self.is_pet:
+			domain = [('patient_ids', 'in', self.id)]
+			context = {
+				'default_partner_id': self.pet_owner_id.id if self.pet_owner_id else False,
+				'default_patient_ids': [(6, 0, [self.id])],
+			}
+			name = _('Park Check-ins for %s') % self.name
+		else:  # is_pet_owner
+			domain = [('partner_id', '=', self.id)]
+			context = {
+				'default_partner_id': self.id,
+			}
+			name = _('Park Check-ins for %s') % self.name
+
 		return {
-			'name': _('Park Check-ins for %s') % self.name,
+			'name': name,
 			'type': 'ir.actions.act_window',
 			'res_model': 'vet.park.checkin',
 			'view_mode': 'list,form',
-			'domain': [('patient_ids', 'in', self.id)],
-			'context': {
-				'default_partner_id': self.pet_owner_id.id if self.pet_owner_id else False,
-				'default_patient_ids': [(6, 0, [self.id])],
-				'create': True
-			}
+			'domain': domain,
+			'context': context,
+			'target': 'current',
 		}
 
 	def action_view_pet_memberships(self):
@@ -825,22 +911,65 @@ class ResPartner(models.Model):
 	def action_view_documents(self):
 		"""View pet photos/documents"""
 		self.ensure_one()
-		if not self.is_pet:
+		if not (self.is_pet or self.is_pet_owner):
 			return {}
 
-		folder = self.env.ref('ths_vet_base.documents_pet_folder', raise_if_not_found=False)
-		domain = [('res_model', '=', 'res.partner'), ('res_id', '=', self.id)]
+		folder_main = self.env.ref('ths_vet_base.documents_pet_folder', raise_if_not_found=False)
+		folder_owner = self.env.ref('ths_vet_base.documents_pet_owner_info', raise_if_not_found=False)
+		tag_pets = self.env.ref('ths_vet_base.documents_tag_pets', raise_if_not_found=False)
+		tag_pet_owner = self.env.ref('ths_vet_base.documents_tag_pet_owner', raise_if_not_found=False)
+
+		if self.is_pet:
+			default_folder = folder_main.id if folder_main else False
+			default_tag = tag_pets.id if tag_pets else False
+			domain = [
+				'|',
+				'&',
+				'&', ('type', '=', 'folder'),
+				('folder_id', '=', folder_main.id if folder_main else False),
+				('id', '!=', folder_owner.id if folder_owner else False),
+				'&', ('res_model', '=', 'res.partner'), ('res_id', '=', self.id)
+			]
+			window_name = _('Photos/Documents for %s') % self.name
+			default_folder = folder_main.id if folder_main else False
+
+		else:
+			default_folder = folder_owner.id if folder_owner else False
+			default_tag = tag_pet_owner.id if tag_pet_owner else False
+			pet_ids = self.env['res.partner'].search([
+				('pet_owner_id', '=', self.id),
+				('is_pet', '=', True)
+			]).ids
+
+			domain = [
+				'|',
+				'&', ('type', '=', 'folder'), ('folder_id', '=', folder_main.id if folder_main else False),
+				'|',
+				'&', ('type', '=', 'folder'), ('id', '=', folder_owner.id if folder_owner else False),
+				'|',
+				'&', ('res_model', '=', 'res.partner'), ('res_id', '=', self.id),
+				'&', ('res_model', '=', 'res.partner'), ('res_id', 'in', pet_ids)
+			]
+			window_name = _('Photos/Documents')
+			default_folder = folder_owner.id if folder_owner else False
+
 		context = {
 			'default_res_model': 'res.partner',
 			'default_res_id': self.id,
-			'default_folder_id': folder.id if folder else False
+			'default_partner_id': self.id,
+			'default_folder_id': default_folder,
+			'default_tag_ids': [(6, 0, [default_tag])] if default_tag else False,
+			'searchpanel_default_folder_id': default_folder,
+			'res_model': 'res.partner',
+			'partner_id': self.id,
 		}
 
 		return {
-			'name': _('Photos/Documents for %s') % self.name,
+			'name': window_name,
 			'type': 'ir.actions.act_window',
 			'res_model': 'documents.document',
 			'view_mode': 'kanban,list,form',
+			'target': 'current',
 			'domain': domain,
 			'context': context
 		}
@@ -897,23 +1026,22 @@ class ResPartner(models.Model):
 		if others:
 			super(ResPartner, others)._compute_display_name()
 
-	def _get_age_display(self):
-		"""Calculate and format partner/pet age for display"""
-		self.ensure_one()
-		if self.is_company or not self.ths_dob:
-			return ''
+	@api.depends('ths_dob', 'ths_deceased', 'ths_deceased_date')
+	def _compute_ths_age(self):
+		"""Extended age calculation that handles deceased pets"""
+		super()._compute_ths_age()
 
-		today = fields.Date.today()
-		end_date = self.ths_deceased_date if self.ths_deceased else today
+		for partner in self:
+			if partner.ths_deceased and partner.ths_deceased_date and partner.ths_dob:
+				# Recalculate with deceased date
+				delta = relativedelta(partner.ths_deceased_date, partner.ths_dob)
 
-		age_days = (end_date - self.ths_dob).days
-		age_years = age_days // 365
-		age_months = (age_days % 365) // 30
+				parts = []
+				if delta.years: parts.append(f"{delta.years}y")
+				if delta.months: parts.append(f"{delta.months}m")
+				if delta.days: parts.append(f"{delta.days}d")
 
-		if age_years > 0:
-			return _('%d years, %d months') % (age_years, age_months)
-		else:
-			return _('%d months') % age_months
+				partner.ths_age = " ".join(parts) or "0d"
 
 	def _get_next_appointment(self):
 		"""Get next scheduled appointment for pet or owner"""

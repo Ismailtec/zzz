@@ -150,7 +150,6 @@ class VetBoardingStay(models.Model):
 		[('draft', 'Draft'), ('scheduled', 'Scheduled'), ('checked_in', 'Checked In'), ('checked_out', 'Checked Out'), ('invoiced', 'Invoiced/Paid'), ('cancelled', 'Cancelled')],
 		string='Status', default='draft', index=True, required=True, tracking=True, copy=False)
 	notes = fields.Text(string='Internal Boarding Notes')
-	documents_count = fields.Integer(string="Photos/Documents", compute='_compute_documents_count')
 
 	# Boarding Information
 	vaccination_proof_received = fields.Boolean(string='Vaccination Proof Received?', tracking=True)
@@ -194,13 +193,6 @@ class VetBoardingStay(models.Model):
 		""" UI sync for expected_check_out_datetime to be atleast = check_in_datetime + 1. """
 		if self.check_in_datetime:
 			self.expected_check_out_datetime = self.check_in_datetime + timedelta(hours=2)
-
-
-	@api.depends('patient_ids')
-	def _compute_documents_count(self):
-		for record in self:
-			domain = [('res_model', '=', 'vet.boarding.stay'), ('res_id', '=', record.id)]
-			record.documents_count = self.env['documents.document'].search_count(domain)
 
 	# @api.onchange('food_instructions', 'medication_instructions', 'duration_days')
 	# def _onchange_generate_schedules(self):
@@ -488,23 +480,12 @@ class VetBoardingStay(models.Model):
 		}
 
 	def action_view_documents(self):
-		"""Smart button for photo uploads using documents module"""
-		self.ensure_one()
-		folder = self.env.ref('ths_vet_base.documents_boarding_folder', raise_if_not_found=False)
-		domain = [('res_model', '=', 'vet.boarding.stay'), ('res_id', '=', self.id)]
-		context = {
-			'default_res_model': 'vet.boarding.stay',
-			'default_res_id': self.id,
-			'default_folder_id': folder.id if folder else False
-		}
-		return {
-			'name': _('Boarding Photos/Documents'),
-			'type': 'ir.actions.act_window',
-			'res_model': 'documents.document',
-			'view_mode': 'kanban,list,form',
-			'domain': domain,
-			'context': context
-		}
+		"""Smart button to view/upload documents for boarding records"""
+		return self.action_view_documents_model(
+			'ths_vet_base.documents_boarding_folder',
+			'Boarding',
+			'ths_vet_base.documents_tag_boarding'
+		)
 
 	@api.model
 	def _cron_boarding_pickup_reminders(self):
@@ -1161,6 +1142,14 @@ class VetParkCheckin(models.Model):
 			}
 		}
 
+	def action_view_documents(self):
+		"""Smart button to view/upload documents for park records"""
+		return self.action_view_documents_model(
+			'ths_vet_base.documents_park_folder',
+			'Park/Membership',
+			'ths_vet_base.documents_tag_park'
+		)
+
 	@api.model
 	def _cron_mark_overdue_visits(self):
 		"""Cron job to automatically mark overdue park visits"""
@@ -1232,7 +1221,6 @@ class VetVaccination(models.Model):
 	expiry_date = fields.Date(string='Expiry Date', compute='_compute_expiry_date', store=True, readonly=False, tracking=True)
 	batch_number = fields.Char(string='Batch/Lot Number', tracking=True)
 	clinic_name = fields.Char(string='Clinic/Hospital Name', default=lambda self: self.env.company.name)
-	documents_count = fields.Integer(string="Documents", compute='_compute_documents_count')
 	notes = fields.Text(string='Notes')
 
 	# Status tracking
@@ -1272,17 +1260,6 @@ class VetVaccination(models.Model):
 		for record in self:
 			if record.date and record.expiry_date and record.expiry_date <= record.date:
 				raise ValidationError(_("Expiry date must be after vaccination date."))
-
-	@api.depends('patient_ids', 'vaccine_type_id')
-	def _compute_documents_count(self):
-		"""Compute number of attached documents for this vaccination"""
-		for record in self:
-			domain = [
-				('res_model', '=', 'vet.vaccination'),
-				('res_id', '=', record.id),
-				('type', '=', 'binary')  # Only binary attachments
-			]
-			record.documents_count = self.env['documents.document'].search_count(domain)
 
 	@api.model
 	def default_get(self, fields_list):
@@ -1363,28 +1340,15 @@ class VetVaccination(models.Model):
 		}
 
 	def action_view_documents(self):
-		"""Smart button to view/upload documents for old vaccine records"""
-		self.ensure_one()
-		folder = self.env.ref('ths_vet_base.documents_vaccine_folder', raise_if_not_found=False)  # Assume a 'Vet Documents' folder
-		domain = [
-			'|',
-			('res_model', '=', 'vet.vaccination'),
-			('res_id', '=', self.id)
-		]
-		context = {
-			'default_res_model': 'vet.vaccination',
-			'default_res_id': self.id,
-			'default_folder_id': folder.id if folder else False,
-			'searchpanel_default_folder_id': folder.id if folder else False
-		}
-		return {
-			'name': _('Vaccine Documents'),
-			'type': 'ir.actions.act_window',
-			'res_model': 'documents.document',
-			'view_mode': 'kanban,list,form',
-			'domain': domain,
-			'context': context
-		}
+		"""Smart button to view/upload documents for vaccination records"""
+		return self.action_view_documents_model(
+			'ths_vet_base.documents_vaccine_folder',
+			'Vaccination',
+			'ths_vet_base.documents_tag_vaccines'
+		)
+
+
+
 
 	def action_schedule_reminder(self):
 		"""Schedule activity reminder for vaccination renewal"""

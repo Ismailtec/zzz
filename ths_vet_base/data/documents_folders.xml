@@ -1,34 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data noupdate="0">
+        <record id="documents_tag_pets" model="documents.tag">
+            <field name="name">Pets</field>
+            <field name="color">2</field> <!-- Blue -->
+        </record>
+
+        <record id="documents_tag_pet_owner" model="documents.tag">
+            <field name="name">Pet Owner</field>
+            <field name="color">3</field> <!-- Yellow -->
+        </record>
+
+        <record id="documents_tag_general_docs" model="documents.tag">
+            <field name="name">General Docs</field>
+            <field name="color">1</field> <!-- Red -->
+        </record>
+
+        <record id="documents_tag_vaccines" model="documents.tag">
+            <field name="name">Vaccines</field>
+            <field name="color">5</field> <!-- Purple -->
+        </record>
+
+        <record id="documents_tag_boarding" model="documents.tag">
+            <field name="name">Boarding</field>
+            <field name="color">7</field> <!-- Cyan -->
+        </record>
+
+        <record id="documents_tag_park" model="documents.tag">
+            <field name="name">Park</field>
+            <field name="color">4</field> <!-- Green -->
+        </record>
+
+        <record id="documents_tag_general_pet_docs" model="documents.tag">
+            <field name="name">General Pet Docs</field>
+            <field name="color">6</field> <!-- Orange -->
+        </record>
+
         <record id="documents_pet_folder" model="documents.document">
-            <field name="name">Pet Documents</field>
+            <field name="name">Pets</field>
             <field name="type">folder</field>
             <field name="folder_id" eval="False"/>
-            <field name="description">Main Folder for Pet Documents</field>
+            <field name="tag_ids" eval="[(6, 0, [ref('documents_tag_pets')])]"/>
+            <field name="description">Main Folder for Pets Documents</field>
+            <field name="active">True</field>
+        </record>
+
+        <record id="documents_pet_owner_info" model="documents.document">
+            <field name="name">Pet Owners</field>
+            <field name="type">folder</field>
+            <field name="folder_id" ref="documents_pet_folder"/>
+            <field name="tag_ids" eval="[(6, 0, [ref('documents_tag_pet_owner')])]"/>
+            <field name="description">Folder for Pet Owner's personal photos/documents</field>
             <field name="active">True</field>
         </record>
 
         <record id="documents_vaccine_folder" model="documents.document">
-            <field name="name">Vaccines Documents</field>
+            <field name="name">Vaccines</field>
             <field name="type">folder</field>
             <field name="folder_id" ref="documents_pet_folder"/>
+            <field name="tag_ids" eval="[(6, 0, [ref('documents_tag_vaccines')])]"/>
             <field name="description">Folder for Vaccines photos/documents</field>
             <field name="active">True</field>
         </record>
 
         <record id="documents_boarding_folder" model="documents.document">
-            <field name="name">Boarding Documents</field>
+            <field name="name">Boardings</field>
             <field name="type">folder</field>
             <field name="folder_id" ref="documents_pet_folder"/>
+            <field name="tag_ids" eval="[(6, 0, [ref('documents_tag_boarding')])]"/>
             <field name="description">Folder for boarding photos/documents</field>
             <field name="active">True</field>
         </record>
 
         <record id="documents_park_folder" model="documents.document">
-            <field name="name">Membership/Park Documents</field>
+            <field name="name">Park/Membership</field>
             <field name="type">folder</field>
             <field name="folder_id" ref="documents_pet_folder"/>
+            <field name="tag_ids" eval="[(6, 0, [ref('documents_tag_park')])]"/>
             <field name="description">Folder for Membership/Park photos/documents</field>
             <field name="active">True</field>
         </record>
@@ -37,6 +85,7 @@
             <field name="name">Pet General Documents</field>
             <field name="type">folder</field>
             <field name="folder_id" ref="documents_pet_folder"/>
+            <field name="tag_ids" eval="[(6, 0, [ref('documents_tag_general_pet_docs')])]"/>
             <field name="description">Folder for Pet General photos/documents</field>
             <field name="active">True</field>
         </record>
