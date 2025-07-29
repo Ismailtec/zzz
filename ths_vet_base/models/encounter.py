@@ -176,17 +176,6 @@ class EncounterMixin(models.AbstractModel):
 
 		return formatted_patients
 
-	@api.model
-	def get_formatted_patients_for_encounter_list(self, encounter_ids):
-		""" Batch method to format patient_ids for multiple encounters, Used in POS data loading to avoid N+1 queries """
-		encounters = self.browse(encounter_ids)
-		result = {}
-
-		for encounter in encounters:
-			result[encounter.id] = encounter._get_formatted_patient_ids_with_names()
-
-		return result
-
 	def _get_formatted_practitioner_with_room(self):
 		"""Helper method to format practitioner with room info for frontend"""
 		self.ensure_one()
@@ -307,15 +296,14 @@ class VetEncounterHeader(models.Model):
 	sale_order_ids = fields.One2many('sale.order', 'encounter_id', string='Sale Orders', readonly=True, copy=False,
 									 context={'default_partner_id': 'partner_id', 'default_pet_owner_id': 'pet_owner_id', 'default_practitioner_id': 'practitioner_id',
 											  'default_room_id': 'room_id', })
-	pos_order_ids = fields.One2many('pos.order', 'encounter_id', string='POS Orders', readonly=True, copy=False,
-									context={'default_partner_id': 'partner_id', 'default_pet_owner_id': 'pet_owner_id', 'default_practitioner_id': 'practitioner_id',
-											 'default_room_id': 'room_id', })
 	direct_invoice_ids = fields.One2many('account.move', 'encounter_id', string='Direct Invoices', copy=False, domain="[('move_type', '=', 'out_invoice')]")
 	credit_note_ids = fields.One2many('account.move', 'encounter_id', string='Credit Notes', domain="[('move_type', '=', 'out_refund')]", copy=False)
 	credit_note_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
 	invoice_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
 	sale_order_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
-	pos_order_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
+
+	kanban_payment_method_id = fields.Many2one('account.journal', string='Payment Method', domain="[('end_user_payment_method', '=', True), ('type', 'in', ['bank', 'cash'])]",
+											   help="Payment method for POS UI processing")
 
 	# -------- EMR Fields (Base Text Fields) --------
 	chief_complaint = fields.Text(string="Chief Complaint")
@@ -499,8 +487,7 @@ class VetEncounterHeader(models.Model):
 		for encounter in self:
 			encounter.total_amount = sum(encounter.encounter_line_ids.mapped('sub_total'))
 
-	@api.depends('direct_invoice_ids', 'credit_note_ids', 'encounter_line_ids.invoice_ids', 'encounter_line_ids.sale_order_ids', 'encounter_line_ids.pos_order_ids',
-				 'treatment_plan_count')
+	@api.depends('direct_invoice_ids', 'credit_note_ids', 'encounter_line_ids.invoice_ids', 'encounter_line_ids.sale_order_ids', 'treatment_plan_count')
 	def _compute_payment_document_counts(self):
 		for header in self:
 			# Count invoices from multiple sources
@@ -509,7 +496,6 @@ class VetEncounterHeader(models.Model):
 			invoice_ids.update(header.encounter_line_ids.mapped('invoice_ids').ids)
 			header.invoice_count = len(invoice_ids)
 			header.sale_order_count = len(header.encounter_line_ids.mapped('sale_order_ids'))
-			header.pos_order_count = len(header.encounter_line_ids.mapped('pos_order_ids'))
 			header.credit_note_count = len(header.credit_note_ids)
 			header.treatment_plan_count = len(header.treatment_plan_ids)
 
@@ -593,6 +579,458 @@ class VetEncounterHeader(models.Model):
 			self._compute_auto_state_from_payments()
 
 		return result
+
+	def unlink(self):
+		"""Prevent deletion of encounters with paid lines"""
+		paid_encounters = self.filtered(lambda e: e.encounter_line_ids.filtered(lambda l: l.payment_status == 'paid'))
+		if paid_encounters:
+			raise UserError(_("Cannot delete encounters with paid lines. Cancel them instead."))
+		return super().unlink()
+
+	@api.model
+	def get_products_by_category(self):
+		"""Get products grouped by sub_type for POS UI"""
+		products = self.env['product.product'].search([
+			('sale_ok', '=', True), ('active', '=', True)
+		])
+		result = {}
+		for product in products:
+			category = product.product_sub_type_id.name or 'Other'
+			if category not in result:
+				result[category] = []
+
+			price = product.lst_price or 0.0
+			# if price == 0:
+			# 	_logger.warning(f"Product {product.name} has zero price!")
+
+			result[category].append({
+				'id': product.id,
+				'name': product.name,
+				'default_code': product.default_code or '',
+				'price': price,
+				'lst_price': price,
+				'barcode': product.barcode or '',
+				'image_128': product.image_128,
+			})
+		return result
+
+	def process_payment_kanban_ui(self, payment_method_id, selected_line_ids=None):
+		"""Process payment through POS UI with proper validation at each step"""
+		self.ensure_one()
+
+		try:
+			# Simple check without creating attributes
+			current_processing = self.env.context.get('processing_payment_' + str(self.id), False)
+			if current_processing:
+				raise UserError("Payment is already being processed for this encounter.")
+
+			# Set processing context
+			self = self.with_context(processing_payment=True)
+
+			if not selected_line_ids:
+				selected_line_ids = self.encounter_line_ids.filtered(
+					lambda l: l.payment_status in ['pending', 'partial'] and l.remaining_amount > 0
+				).ids
+
+			if not selected_line_ids:
+				raise UserError("No lines available for payment processing.")
+
+			lines_to_process = self.encounter_line_ids.filtered(lambda l: l.id in selected_line_ids)
+
+			# Check if we have recurring products to determine if this is a subscription
+			has_recurring_products = any(line.product_id.recurring_invoice for line in lines_to_process)
+
+			# STEP 1: Create/Update Sale Order
+			try:
+				existing_so = self.env['sale.order'].search([
+					('encounter_id', '=', self.id),
+					('state', '=', 'draft')
+				], limit=1)
+
+				if existing_so:
+					sale_order = existing_so
+					# Update existing order if it needs subscription setup
+					if has_recurring_products and not sale_order.plan_id:
+						subscription_plan = self._get_or_create_subscription_plan(lines_to_process)
+						if not subscription_plan:
+							raise UserError("Could not determine subscription plan for recurring products.")
+						sale_order.write({
+							'plan_id': subscription_plan.id,
+							'is_subscription': True,
+							'subscription_state': '1_draft',
+							'start_date': fields.Date.today(),
+						})
+				else:
+					so_vals = {
+						'partner_id': self.partner_id.id,
+						'partner_type_id': self.partner_id.partner_type_id.id,
+						'encounter_id': self.id,
+						'state': 'draft',
+						'patient_ids': self.patient_ids.ids if hasattr(self, 'patient_ids') and self.patient_ids else False,
+						'practitioner_id': self.practitioner_id.id if self.practitioner_id else False,
+						'room_id': self.room_id.id if self.room_id else False,
+					}
+
+					# Add subscription-related fields if we have recurring products
+					if has_recurring_products:
+						subscription_plan = self._get_or_create_subscription_plan(lines_to_process)
+						if not subscription_plan:
+							raise UserError("Could not determine subscription plan for recurring products.")
+						so_vals.update({
+							'plan_id': subscription_plan.id,
+							'is_subscription': True,
+							'subscription_state': '1_draft',
+							'start_date': fields.Date.today(),
+						})
+
+					sale_order = self.env['sale.order'].create(so_vals)
+			except Exception as e:
+				raise UserError(f"Failed to create/update Sale Order: {str(e)}")
+
+			# STEP 2: Create Sale Order Lines
+			try:
+				for encounter_line in lines_to_process:
+					existing_sol = self.env['sale.order.line'].search([
+						('encounter_line_id', '=', encounter_line.id),
+						('order_id', '=', sale_order.id)
+					], limit=1)
+
+					if not existing_sol:
+						sol_vals = {
+							'order_id': sale_order.id,
+							'product_id': encounter_line.product_id.id,
+							'product_uom_qty': encounter_line.qty,
+							'product_uom': encounter_line.product_uom.id,
+							'price_unit': encounter_line.unit_price,
+							'discount': encounter_line.discount * 100 if encounter_line.discount else 0.0,
+							'encounter_line_id': encounter_line.id,
+							'partner_id': self.partner_id.id,
+							'patient_ids': encounter_line.patient_ids.ids if hasattr(encounter_line, 'patient_ids') and encounter_line.patient_ids else False,
+							'practitioner_id': encounter_line.practitioner_id.id if hasattr(encounter_line, 'practitioner_id') and encounter_line.practitioner_id else False,
+							'room_id': encounter_line.room_id.id if hasattr(encounter_line, 'room_id') and encounter_line.room_id else False,
+						}
+
+						self.env['sale.order.line'].create(sol_vals)
+			except Exception as e:
+				raise UserError(f"Failed to create Sale Order Lines: {str(e)}")
+
+			# STEP 3: Confirm Sale Order
+			try:
+				if sale_order.state == 'draft':
+					sale_order.action_confirm()
+			except Exception as e:
+				raise UserError(f"Failed to confirm Sale Order: {str(e)}")
+
+			# STEP 4: Handle Deliveries (only for non-subscription products)
+			try:
+				non_subscription_pickings = sale_order.picking_ids.filtered(
+					lambda p: p.state not in ['done', 'cancel'] and
+							  not any(mv.sale_line_id.product_id.recurring_invoice for mv in p.move_ids)
+				)
+
+				for picking in non_subscription_pickings:
+					picking.action_confirm()
+					picking.action_assign()
+					for move in picking.move_ids:
+						move.quantity_done = move.product_uom_qty
+					picking.button_validate()
+			except Exception as e:
+				raise UserError(f"Failed to process deliveries: {str(e)}")
+
+			# STEP 5: Create Invoice
+			try:
+				existing_invoice = sale_order.invoice_ids.filtered(lambda inv: inv.state == 'draft')
+
+				if existing_invoice:
+					invoice = existing_invoice[0]
+				else:
+					# Create invoice based on order type
+					if sale_order.is_subscription:
+						# Get invoiceable lines for subscriptions
+						invoiceable_lines = sale_order._get_invoiceable_lines()
+						if not invoiceable_lines:
+							raise UserError("No invoiceable lines found for subscription.")
+						invoices = sale_order._create_invoices()
+					else:
+						invoices = sale_order._create_invoices()
+
+					if not invoices:
+						raise UserError("Failed to create invoice.")
+					invoice = invoices[0]
+
+				# Update invoice header with encounter data
+				invoice_vals = {
+					'encounter_id': self.id,
+				}
+
+				if hasattr(self, 'patient_ids') and self.patient_ids:
+					invoice_vals['patient_ids'] = self.patient_ids.ids
+				if hasattr(self, 'practitioner_id') and self.practitioner_id:
+					invoice_vals['practitioner_id'] = self.practitioner_id.id
+				if hasattr(self, 'room_id') and self.room_id:
+					invoice_vals['room_id'] = self.room_id.id
+				if hasattr(self.partner_id, 'partner_type_id') and self.partner_id.partner_type_id:
+					invoice_vals['partner_type_id'] = self.partner_id.partner_type_id.id
+
+				invoice.write(invoice_vals)
+
+				# Update invoice lines with encounter line data BEFORE posting
+				for encounter_line in lines_to_process:
+					# Find the corresponding sale order line
+					sale_line = sale_order.order_line.filtered(lambda l: l.encounter_line_id.id == encounter_line.id)
+					if sale_line:
+						# Find the corresponding invoice lines using the sale_line relationship
+						invoice_lines = sale_line.invoice_lines
+						for inv_line in invoice_lines:
+							inv_line_vals = {}
+
+							if hasattr(encounter_line, 'patient_ids') and encounter_line.patient_ids:
+								inv_line_vals['patient_ids'] = encounter_line.patient_ids.ids
+							if hasattr(encounter_line, 'practitioner_id') and encounter_line.practitioner_id:
+								inv_line_vals['practitioner_id'] = encounter_line.practitioner_id.id
+							if hasattr(encounter_line, 'room_id') and encounter_line.room_id:
+								inv_line_vals['room_id'] = encounter_line.room_id.id
+
+							if inv_line_vals:
+								inv_line.write(inv_line_vals)
+			except Exception as e:
+				raise UserError(f"Failed to create/update invoice: {str(e)}")
+
+			# STEP 6: Post Invoice
+			try:
+				if invoice.state == 'draft':
+					invoice.action_post()
+			except Exception as e:
+				raise UserError(f"Failed to post invoice: {str(e)}")
+
+			# STEP 7: Create and Process Payment
+			try:
+				payment_journal = self.env['account.journal'].browse(payment_method_id)
+				if not payment_journal.exists():
+					raise UserError("Invalid payment method selected.")
+
+				existing_payment = self.env['account.payment'].search([
+					('partner_id', '=', self.partner_id.id),
+					('amount', '=', invoice.amount_total),
+					('state', '=', 'draft'),
+					('journal_id', '=', payment_journal.id)
+				], limit=1)
+
+				if existing_payment:
+					payment = existing_payment
+				else:
+					payment_vals = {
+						'amount': invoice.amount_total,
+						'payment_type': 'inbound',
+						'partner_type': 'customer',
+						'partner_id': self.partner_id.id,
+						'journal_id': payment_journal.id,
+						'date': fields.Date.today(),
+						'memo': f"Payment for {invoice.name}",
+					}
+
+					payment_method_line = payment_journal.inbound_payment_method_line_ids[:1]
+					if payment_method_line:
+						payment_vals['payment_method_line_id'] = payment_method_line.id
+
+					payment = self.env['account.payment'].create(payment_vals)
+
+				if payment.state == 'draft':
+					payment.action_post()
+			except Exception as e:
+				raise UserError(f"Failed to create/process payment: {str(e)}")
+
+			# STEP 8: Reconcile Payment with Invoice
+			try:
+				if invoice.state == 'posted' and payment.state == 'paid':
+					invoice_receivable_lines = invoice.line_ids.filtered(
+						lambda line: line.account_id.account_type == 'asset_receivable'
+					)
+					payment_receivable_lines = payment.move_id.line_ids.filtered(
+						lambda line: line.account_id.account_type == 'asset_receivable'
+					)
+
+					if invoice_receivable_lines and payment_receivable_lines:
+						(invoice_receivable_lines + payment_receivable_lines).reconcile()
+			except Exception as e:
+				raise UserError(f"Failed to reconcile payment: {str(e)}")
+
+			# STEP 9: Update Subscription (if applicable)
+			try:
+				if sale_order.is_subscription and sale_order.subscription_state == '3_progress':
+					sale_order._update_next_invoice_date()
+			except Exception as e:
+				# Log but don't fail the entire process for subscription updates
+				_logger.warning(f"Failed to update subscription dates: {str(e)}")
+
+			# STEP 10: Update Encounter Lines
+			try:
+				for encounter_line in lines_to_process:
+					encounter_line.write({
+						'payment_status': 'paid',
+					})
+					encounter_line._compute_payment_amounts()
+			except Exception as e:
+				raise UserError(f"Failed to update encounter lines: {str(e)}")
+
+			# ALL STEPS COMPLETED SUCCESSFULLY - Return success with actions
+			return {
+				'success': True,
+				'sale_order_id': sale_order.id,
+				'invoice_id': invoice.id,
+				'payment_id': payment.id,
+				'message': f'Payment of {invoice.amount_total} processed successfully',
+				'print_invoice': True,  # Trigger invoice printing
+				'clear_cart': True,  # Clear the cart/selection
+			}
+
+		except Exception as e:
+			# If any step fails, return error without clearing cart or printing
+			return {
+				'success': False,
+				'error': str(e),
+				'message': f'Payment processing failed: {str(e)}',
+				'print_invoice': False,
+				'clear_cart': False,
+			}
+
+	def _get_or_create_subscription_plan(self, lines_to_process):
+		"""Find or create subscription plan based on product's ths_membership_duration"""
+
+		# Get duration from the first recurring product
+		duration_months = None
+		for line in lines_to_process:
+			if (line.product_id.recurring_invoice and
+					hasattr(line.product_id, 'ths_membership_duration') and
+					line.product_id.ths_membership_duration):
+				duration_months = line.product_id.ths_membership_duration
+				break
+
+		if not duration_months:
+			return None
+
+		# First, try to find existing plans that match the duration
+		# Check for yearly plans first (more common for longer durations)
+		if duration_months >= 12 and duration_months % 12 == 0:
+			years = duration_months // 12
+			yearly_plan = self.env['sale.subscription.plan'].search([
+				('billing_period_value', '=', years),
+				('billing_period_unit', '=', 'year'),
+				('company_id', 'in', [self.env.company.id, False])
+			], limit=1)
+			if yearly_plan:
+				return yearly_plan
+
+		# Check for monthly plans
+		monthly_plan = self.env['sale.subscription.plan'].search([
+			('billing_period_value', '=', duration_months),
+			('billing_period_unit', '=', 'month'),
+			('company_id', 'in', [self.env.company.id, False])
+		], limit=1)
+		if monthly_plan:
+			return monthly_plan
+
+		# If no existing plan found, create one
+		if duration_months >= 12 and duration_months % 12 == 0:
+			# Create yearly plan for multiples of 12 months
+			years = duration_months // 12
+			plan_name = f"{years} Year{'s' if years > 1 else ''} Subscription Plan"
+			return self.env['sale.subscription.plan'].create({
+				'name': plan_name,
+				'billing_period_value': years,
+				'billing_period_unit': 'year',
+				'company_id': self.env.company.id,
+			})
+		else:
+			# Create monthly plan
+			plan_name = f"{duration_months} Month{'s' if duration_months > 1 else ''} Subscription Plan"
+			return self.env['sale.subscription.plan'].create({
+				'name': plan_name,
+				'billing_period_value': duration_months,
+				'billing_period_unit': 'month',
+				'company_id': self.env.company.id,
+			})
+
+	def add_product_to_encounter_kanban(self, product_id, qty=1, patient_ids=None, discount=0.0, practitioner_id=None, room_id=None):
+		"""Add product to encounter from POS interface"""
+		self.ensure_one()
+
+		try:
+			# Clean patient_ids - filter out None/null values
+			if patient_ids:
+				patient_ids = [pid for pid in patient_ids if pid is not None and pid != False]
+				if not patient_ids:  # If empty after filtering
+					patient_ids = None
+
+			product = self.env['product.product'].browse(product_id)
+			if not product.exists():
+				raise UserError(f"Product with ID {product_id} not found.")
+
+			existing_line = self.encounter_line_ids.filtered(
+				lambda l: l.product_id.id == product_id and
+						  l.payment_status in ['pending', 'partial'] and
+						  set(l.patient_ids.ids) == set(patient_ids or []) and
+						  l.practitioner_id.id == (practitioner_id or False) and
+						  l.room_id.id == (room_id or False)
+			)
+
+			if existing_line:
+				existing_line.write({
+					'qty': existing_line.qty + qty,
+					'discount': discount / 100 if discount > 1 else discount,
+				})
+				existing_line._compute_payment_amounts()
+				return existing_line.id
+			else:
+				line_vals = {
+					'encounter_id': self.id,
+					'partner_id': self.partner_id.id,
+					'product_id': product_id,
+					'qty': qty,
+					'unit_price': product.lst_price,
+					'discount': discount / 100 if discount > 1 else discount,
+					'payment_status': 'pending',
+					'practitioner_id': practitioner_id or (self.practitioner_id.id if self.practitioner_id else False),
+					'room_id': room_id or (self.room_id.id if self.room_id else False),
+				}
+
+				if patient_ids:
+					line_vals['patient_ids'] = [(6, 0, patient_ids)]
+				elif self.patient_ids:
+					line_vals['patient_ids'] = [(6, 0, self.patient_ids.ids)]
+
+				encounter_line = self.env['vet.encounter.line'].create(line_vals)
+				encounter_line._compute_payment_amounts()
+				return encounter_line.id
+
+		except Exception as e:
+			raise UserError(f"Failed to add product to encounter: {str(e)}")
+
+	@api.model
+	def get_payment_methods_kanban(self):
+		"""Get payment methods for kanban UI"""
+		journals = self.env['account.journal'].search([
+			('end_user_payment_method', '=', True),
+			('type', 'in', ['bank', 'cash'])
+		])
+		return [{
+			'id': j.id,
+			'name': j.name,
+			'type': j.type,
+			'code': j.code,
+		} for j in journals]
+
+	def action_process_payment(self):
+		"""Open POS-style payment interface"""
+		return {
+			'type': 'ir.actions.client',
+			'name': _('Payment Interface'),
+			'tag': 'vet_pos_interface_action',
+			'target': 'new',
+			'context': {
+				'encounter_id': self.id,
+			}
+		}
 
 	def action_create_invoice_from_pending_lines(self):
 		self.ensure_one()
@@ -1129,17 +1567,6 @@ class VetEncounterHeader(models.Model):
 			'context': {'create': False}
 		}
 
-	def action_view_pos_orders(self):
-		pos_ids = self.encounter_line_ids.mapped('pos_order_ids').ids
-		return {
-			'type': 'ir.actions.act_window',
-			'name': _('Related POS Orders'),
-			'res_model': 'pos.order',
-			'view_mode': 'list,form',
-			'domain': [('id', 'in', pos_ids)],
-			'context': {'create': False}
-		}
-
 	def action_refresh_all_payment_status(self):
 		"""Refresh payment status for all encounter lines"""
 		self.encounter_line_ids.action_refresh_payment_status()
@@ -1448,27 +1875,6 @@ class VetEncounterHeader(models.Model):
 		return "\n".join(notes)
 
 	@api.model
-	def get_pos_encounter_data(self, partner_id, encounter_date=None):
-		"""Get or create encounter data for POS integration"""
-		if not encounter_date:
-			encounter_date = fields.Date.context_today(self)
-
-		encounter = self._find_or_create_daily_encounter(
-			partner_id=partner_id,
-			encounter_date=encounter_date
-		)
-
-		return {
-			'encounter_id': encounter.id,
-			'encounter_name': encounter.name,
-			'partner_name': encounter.partner_id.name,
-			'patient_ids': encounter._get_formatted_patient_ids_with_names(),
-			'practitioner_data': encounter._get_formatted_practitioner_with_room(),
-			'practitioner_name': encounter.practitioner_id.name if encounter.practitioner_id else False,
-			'room_id': encounter.room_id.id if encounter.room_id else False,
-		}
-
-	@api.model
 	def _cron_encounter_daily_summary_email(self):
 		"""Send daily encounter summary to managers"""
 		today = fields.Date.today()
@@ -1612,6 +2018,7 @@ class VetEncounterLine(models.Model):
 	product_id = fields.Many2one('product.product', string='Product/Service', required=True, help="Service or product provided in this line item.")
 	product_description = fields.Text(string='Description', help="Optional override for the product description on the product line.")
 	qty = fields.Float(string='Quantity', required=True, digits='Product Unit of Measure', default=1.0)
+	product_uom = fields.Many2one(string="UoM", related='product_id.uom_id', store=True, help="Unit of Measure of the product.")
 	discount = fields.Float(string='Discount (%)', default=0.0, help="Discount percentage applied to this line.")
 	unit_price = fields.Float(string='Unit Price', related='product_id.lst_price', store=True)
 	sub_total = fields.Monetary(string='Subtotal', compute='_compute_sub_total', currency_field='company_currency', store=True, tracking=True,
@@ -1621,7 +2028,7 @@ class VetEncounterLine(models.Model):
 		string='Payment Status', default='pending', required=True, index=True, copy=False, tracking=True)
 	source_model = fields.Selection(
 		[('calendar.event', 'Appointment'), ('vet.boarding.stay', 'Boarding Stay'), ('vet.park.checkin', 'Park Check-in'), ('vet.vaccination', 'Vaccination'),
-		 ('vet.pet.membership', 'Pet Membership'), ('sale.order', 'Sale Order'), ('account.move', 'Invoice'), ('pos.order', 'POS Order'), ('manual', 'Manual Entry')],
+		 ('vet.pet.membership', 'Pet Membership'), ('sale.order', 'Sale Order'), ('account.move', 'Invoice'), ('manual', 'Manual Entry')],
 		string='Source Service', help='Service type that generated this billing line')
 
 	# Payment Tracking
@@ -1635,18 +2042,15 @@ class VetEncounterLine(models.Model):
 	multiple_payment_sources = fields.Char(string='Payment Sources', compute='_compute_payment_sources', store=True, help="Comma-separated list of payment document names",
 										   copy=False, readonly=True)
 	payment_document_ids = fields.One2many('vet.line.payment.track', 'encounter_line_id', string='Payment Documents')
-	source_payment = fields.Char(string='Source Payment', help='Payment method, e.g., POS, SO, Invoice', copy=False, readonly=True)
+	source_payment = fields.Char(string='Source Payment', help='Payment method, e.g., SO, Invoice', copy=False, readonly=True)
 	processed_date = fields.Datetime(string='Processed Date', readonly=True, copy=False, index=True)
 	processed_by = fields.Many2one('res.users', string='Processed By', readonly=True, copy=False, ondelete='set null')
-	pos_order_id = fields.Many2one('pos.order', string='Main POS Order', ondelete='set null', copy=False, readonly=True, index=True)
 	sale_order_id = fields.Many2one('sale.order', string='Main Sale Order', ondelete='set null', copy=False, readonly=True, index=True)
 	invoice_id = fields.Many2one('account.move', string='Main Invoice', ondelete='set null', copy=False, readonly=True, index=True)
 	invoice_ids = fields.Many2many('account.move', 'encounter_line_invoice_rel', 'line_id', 'invoice_id', string='All Invoices', help="All invoices that include this line",
 								   copy=False, readonly=True, tracking=True)
 	sale_order_ids = fields.Many2many('sale.order', 'encounter_line_sale_rel', 'line_id', 'sale_order_id', string='All Sale Orders', help="All sale orders that include this line",
 									  copy=False, readonly=True, tracking=True)
-	pos_order_ids = fields.Many2many('pos.order', 'encounter_line_pos_rel', 'line_id', 'pos_order_id', string='All POS Orders', help="All POS orders that include this line",
-									 copy=False, readonly=True, tracking=True)
 	fields_readonly = fields.Boolean(compute='_compute_readonly_fields', store=False)
 
 	# Refund tracking
@@ -1679,7 +2083,7 @@ class VetEncounterLine(models.Model):
 			else:
 				item.sub_total = 0.0
 
-	@api.depends('invoice_ids.payment_state', 'invoice_ids.state', 'sale_order_ids.invoice_status', 'sale_order_ids.state', 'pos_order_ids.state', 'refunded_amount', 'sub_total')
+	@api.depends('invoice_ids.payment_state', 'invoice_ids.state', 'sale_order_ids.invoice_status', 'sale_order_ids.state', 'refunded_amount', 'sub_total')
 	def _compute_payment_amounts(self):
 		for line in self:
 			line.paid_amount = float(line._calculate_paid_amount())
@@ -1713,7 +2117,7 @@ class VetEncounterLine(models.Model):
 		for line in self:
 			line.fields_readonly = line.payment_status in ['paid', 'posted', 'refunded']
 
-	@api.depends('invoice_ids.name', 'invoice_ids.payment_state', 'sale_order_ids.name', 'pos_order_ids.name')
+	@api.depends('invoice_ids.name', 'invoice_ids.payment_state', 'sale_order_ids.name')
 	def _compute_payment_sources(self):
 		for line in self:
 			sources = []
@@ -1728,11 +2132,7 @@ class VetEncounterLine(models.Model):
 					sources.append(f"Sale {so.name}")
 				else:
 					sources.append(f"Sale #{so.id}")
-			for pos in line.pos_order_ids:
-				if pos.name and pos.name != '/':
-					sources.append(f"POS {pos.name}")
-				else:
-					sources.append(f"POS #{pos.id}")
+
 			line.multiple_payment_sources = ", ".join(sources)
 
 	def _calculate_paid_amount(self):
@@ -1751,11 +2151,6 @@ class VetEncounterLine(models.Model):
 			for so_line in so_lines:
 				invoice_lines = so_line.invoice_lines.filtered(lambda l: l.move_id.payment_state == 'paid')
 				paid_amount += sum(invoice_lines.mapped('price_subtotal'))
-
-		# From paid POS orders
-		for pos in self.pos_order_ids.filtered(lambda p: p.state == 'paid'):
-			pos_lines = pos.lines.filtered(lambda l: l.encounter_line_id == self)
-			paid_amount += sum(pos_lines.mapped('price_subtotal'))
 
 		return paid_amount - self.refunded_amount
 
@@ -1788,11 +2183,6 @@ class VetEncounterLine(models.Model):
 		for so in self.sale_order_ids.filtered(lambda s: s.state == 'sale'):
 			so_lines = so.order_line.filtered(lambda l: l.encounter_line_id == self)
 			committed += sum(so_lines.mapped('price_total'))
-
-		# From POS orders
-		for pos in self.pos_order_ids:
-			pos_lines = pos.lines.filtered(lambda l: l.encounter_line_id == self)
-			committed += sum(pos_lines.mapped('price_subtotal'))
 
 		return committed
 
@@ -1949,7 +2339,7 @@ class VetEncounterLine(models.Model):
 			patient_count = len(line.patient_ids) or 1
 			line.revenue_per_patient = line.sub_total / patient_count
 
-	@api.constrains('invoice_ids', 'sale_order_ids', 'pos_order_ids')
+	@api.constrains('invoice_ids', 'sale_order_ids')
 	def _check_payment_overlap(self):
 		for line in self:
 			total_committed = line._calculate_total_committed_amount()
@@ -2051,7 +2441,7 @@ class VetEncounterLine(models.Model):
 	@api.constrains('source_model')
 	def _check_source_model(self):
 		allowed = ['calendar.event', 'vet.boarding.stay', 'vet.park.checkin', 'vet.vaccination', 'vet.pet.membership', 'vet.encounter.header', 'sale.order', 'account.move',
-				   'pos.order', 'manual']
+				   'manual']
 		for record in self:
 			if record.source_model and record.source_model not in allowed:
 				selection_dict = dict(record._fields['source_model'].selection)
@@ -2145,24 +2535,11 @@ class VetEncounterLine(models.Model):
 
 		return res
 
-	def _prepare_pos_order_line_data(self):
-		"""Prepare data for POS order line creation."""
-		self.ensure_one()
-		return {
-			'product_id': self.product_id.id,
-			'qty': self.qty,
-			'discount': self.discount,
-			'price_unit': self.unit_price,  # Default to list price, POS can override
-			'description': self.product_description or self.product_id.name,
-			'order_id': False,  # To be set by POS when creating the order
-		}
-
 	def action_cancel(self):
 		paid_items = self.filtered(lambda i: i.payment_status == 'paid')
 		if paid_items:
 			_logger.warning("Attempting to cancel already paid items: %s. Only setting state.",
 							paid_items.ids)
-			paid_items.write({'pos_order_id': False})
 
 		self.write({'payment_status': 'cancelled'})
 		_logger.info("Cancelled pending items: %s", self.ids)
@@ -2290,22 +2667,6 @@ class VetEncounterLine(models.Model):
 		}
 
 
-class VetVitalsLog(models.Model):
-	_name = 'vet.vitals.log'
-	_description = 'Vitals Log'
-
-	encounter_id = fields.Many2one('vet.encounter.header', string='Encounter', required=True, ondelete='cascade')
-	patient_id = fields.Many2one('res.partner', string='Pet', domain="[('is_pet', '=', True), ('pet_owner_id', '=?', pet_owner_id)]", required=True)
-	pet_owner_id = fields.Many2one('res.partner', string='Pet Owner', store=True, index=True, context={'default_is_pet': False, 'default_is_pet_owner': True})
-	log_date = fields.Datetime(string='Log Date', default=fields.Datetime.now)
-	weight = fields.Float(string='Weight (kg)')
-	height = fields.Float(string='Height (cm)')
-	temperature = fields.Float(string='Temperature (°C)')
-	heart_rate = fields.Integer(string='Heart Rate (bpm)')
-	respiratory_rate = fields.Integer(string='Respiratory Rate (rpm)')
-	notes = fields.Text(string='Notes')
-
-
 class EncounterAnalyticsWizard(models.TransientModel):
 	_name = 'encounter.analytics.wizard'
 	_description = 'Encounter Analytics Wizard'
@@ -2381,8 +2742,6 @@ class AccountMove(models.Model):
 
 	encounter_id = fields.Many2one('vet.encounter.header', string='Encounter', copy=False, index=True, ondelete='set null', help="Encounter this Invoice belongs to")
 	encounter_line_ids = fields.One2many('vet.encounter.line', 'invoice_id', string='Encounter Lines', copy=False, readonly=True)
-	partner_type_id = fields.Many2one('ths.partner.type', string='Partner Type', readonly=False, copy=True, index=True, ondelete='cascade',
-									  help="Choose proper Partner Type to show related Partners")
 	patient_ids = fields.Many2many('res.partner', 'account_move_patient_rel', 'move_id', 'patient_id', string='Pets', store=True, copy=False, index=True, ondelete='cascade',
 								   domain="[('is_pet', '=', True),('pet_owner_id', '=?', partner_id)]", help="Pets this invoice belongs to")
 	practitioner_id = fields.Many2one('appointment.resource', string='Primary Practitioner', domain="[('resource_category', '=', 'practitioner')]",
@@ -2392,43 +2751,10 @@ class AccountMove(models.Model):
 	reversed_entry_id = fields.Many2one('account.move', string='Reversal of', help="Original invoice this credit note reverses")
 	reversal_entry_ids = fields.One2many('account.move', 'reversed_entry_id', string='Credit Notes')
 
-	payment_journal_name = fields.Char(string='Payment Journal', compute='_compute_payment_info', store=True)
-	payment_method_name = fields.Char(string='Payment Method', compute='_compute_payment_info', store=True)
-	amount_paid = fields.Monetary(string='Amount Paid', compute='_compute_payment_info', store=True)
-
 	@api.depends('encounter_line_ids')
 	def _compute_encounter_counts(self):
 		for move in self:
 			move.encounter_line_count = len(move.encounter_line_ids)
-
-	@api.depends('payment_state', 'line_ids.matched_debit_ids', 'line_ids.matched_credit_ids')
-	def _compute_payment_info(self):
-		"""Compute payment information when invoice is paid"""
-		for move in self:
-			if move.payment_state == 'paid':
-				# Find payment lines
-				payment_lines = move.line_ids.filtered(lambda l: l.account_id.account_type in ['asset_receivable', 'liability_payable'])
-				payments = payment_lines.mapped('matched_debit_ids.debit_move_id.payment_id') | payment_lines.mapped('matched_credit_ids.credit_move_id.payment_id')
-
-				if payments:
-					payment = payments[0]  # Take first payment
-					move.payment_journal_name = payment.journal_id.name
-					move.payment_method_name = payment.payment_method_line_id.name
-					move.amount_paid = payment.amount
-				else:
-					move.payment_journal_name = ''
-					move.payment_method_name = ''
-					move.amount_paid = 0.0
-			else:
-				move.payment_journal_name = ''
-				move.payment_method_name = ''
-				move.amount_paid = 0.0
-
-	@api.onchange('partner_type_id')
-	def _onchange_partner_type_clear_partner(self):
-		"""Clear partner when partner type changes"""
-		if self.partner_type_id:
-			self.partner_id = False
 
 	@api.onchange('move_type')
 	def _onchange_move_type_partner_type(self):
@@ -2609,6 +2935,19 @@ class AccountMove(models.Model):
 		}
 
 
+class AccountMoveLine(models.Model):
+	_inherit = 'account.move.line'
+
+	encounter_line_id = fields.Many2one('vet.encounter.line', string='Encounter Line', help="Encounter line this invoice line represents", index=True, ondelete='set null',
+										copy=False, readonly=True)
+	partner_id = fields.Many2one('res.partner', string='Pet Owner', context={'default_is_pet': False, 'default_is_pet_owner': True}, required=True, index=True,
+								 domain="[('is_pet_owner', '=', True)]", help="Pet owner.")
+	patient_ids = fields.Many2many('res.partner', 'account_move_line_patient_rel', 'move_id', 'patient_id', string='Pets', store=True, copy=False, index=True, ondelete='cascade',
+								   domain="[('is_pet', '=', True),('pet_owner_id', '=?', partner_id)]", help="Pets this invoice belongs to")
+	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")
+	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]")
+
+
 class AccountPartialReconcile(models.Model):
 	_inherit = 'account.partial.reconcile'
 
@@ -2630,19 +2969,6 @@ class AccountPartialReconcile(models.Model):
 						line._compute_payment_amounts()
 
 		return result
-
-
-class AccountMoveLine(models.Model):
-	_inherit = 'account.move.line'
-
-	encounter_line_id = fields.Many2one('vet.encounter.line', string='Encounter Line', help="Encounter line this invoice line represents", index=True, ondelete='set null',
-										copy=False, readonly=True)
-	partner_id = fields.Many2one('res.partner', string='Pet Owner', context={'default_is_pet': False, 'default_is_pet_owner': True}, required=True, index=True,
-								 domain="[('is_pet_owner', '=', True)]", help="Pet owner.")
-	patient_ids = fields.Many2many('res.partner', 'account_move_line_patient_rel', 'move_id', 'patient_id', string='Pets', store=True, copy=False, index=True, ondelete='cascade',
-								   domain="[('is_pet', '=', True),('pet_owner_id', '=?', partner_id)]", help="Pets this invoice belongs to")
-	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")
-	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]")
 
 
 class SaleOrder(models.Model):
@@ -2704,46 +3030,6 @@ class SaleOrderLine(models.Model):
 								 domain="[('is_pet_owner', '=', True)]", help="Pet owner.")
 	patient_ids = fields.Many2many('res.partner', 'sale_order_line_patient_rel', 'order_line_id', 'patient_id', string='Pets', store=True, copy=False, index=True,
 								   ondelete='cascade', domain="[('is_pet', '=', True),('pet_owner_id', '=?', partner_id)]", help="Pets this sale order line belongs to")
-	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")
-	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]")
-
-
-class PosOrder(models.Model):
-	_inherit = 'pos.order'
-
-	encounter_id = fields.Many2one('vet.encounter.header', string='Encounter', index=True, ondelete='set null', copy=False)
-	encounter_line_ids = fields.One2many('vet.encounter.line', 'pos_order_id', string='Encounter Lines', copy=False, readonly=True)
-	encounter_line_count = fields.Integer(compute='_compute_encounter_counts', store=False)
-
-	patient_ids = fields.Many2many('res.partner', 'pos_order_patient_rel', 'order_id', 'patient_id', string='Pets', store=True, copy=False, index=True,
-								   ondelete='cascade', domain="[('is_pet', '=', True),('pet_owner_id', '=?', partner_id)]", help="Pets this pos order belongs to")
-	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")
-	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]")
-
-	@api.depends('encounter_line_ids')
-	def _compute_encounter_counts(self):
-		for order in self:
-			order.encounter_line_count = len(order.encounter_line_ids)
-
-	def action_view_encounter_lines(self):
-		return {
-			'type': 'ir.actions.act_window',
-			'name': _('Related Encounter Lines'),
-			'res_model': 'vet.encounter.line',
-			'view_mode': 'list,form',
-			'domain': [('pos_order_ids', 'in', [self.id])],
-			'context': {'create': False}
-		}
-
-
-class PosOrderLine(models.Model):
-	_inherit = 'pos.order.line'
-
-	encounter_line_id = fields.Many2one('vet.encounter.line', string='Encounter Line', index=True, ondelete='set null', copy=False, readonly=True)
-	partner_id = fields.Many2one('res.partner', string='Pet Owner', context={'default_is_pet': False, 'default_is_pet_owner': True}, required=True, index=True,
-								 domain="[('is_pet_owner', '=', True)]", help="Pet owner.")
-	patient_ids = fields.Many2many('res.partner', 'pos_order_line_patient_rel', 'order_line_id', 'patient_id', string='Pets', store=True, copy=False, index=True,
-								   ondelete='cascade', domain="[('is_pet', '=', True),('pet_owner_id', '=?', partner_id)]", help="Pets this pos order line belongs to")
 	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")
 	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]")
 
@@ -2938,7 +3224,7 @@ class VetLinePaymentTrack(models.Model):
 	_order = 'date desc'
 
 	encounter_line_id = fields.Many2one('vet.encounter.line', required=True, ondelete='cascade')
-	document_type = fields.Selection([('invoice', 'Invoice'), ('credit_note', 'Credit Note'), ('sale_order', 'Sale Order'), ('pos_order', 'POS Order')], required=True)
+	document_type = fields.Selection([('invoice', 'Invoice'), ('credit_note', 'Credit Note'), ('sale_order', 'Sale Order')], required=True)
 	document_id = fields.Integer(required=True)
 	document_name = fields.Char(required=True)
 	amount = fields.Monetary(required=True)
@@ -2946,3 +3232,19 @@ class VetLinePaymentTrack(models.Model):
 	date = fields.Datetime(required=True)
 	user_id = fields.Many2one('res.users', required=True)
 	currency_id = fields.Many2one('res.currency', default=lambda self: self.env.company.currency_id)
+
+
+class VetVitalsLog(models.Model):
+	_name = 'vet.vitals.log'
+	_description = 'Vitals Log'
+
+	encounter_id = fields.Many2one('vet.encounter.header', string='Encounter', required=True, ondelete='cascade')
+	patient_id = fields.Many2one('res.partner', string='Pet', domain="[('is_pet', '=', True), ('pet_owner_id', '=?', pet_owner_id)]", required=True)
+	pet_owner_id = fields.Many2one('res.partner', string='Pet Owner', store=True, index=True, context={'default_is_pet': False, 'default_is_pet_owner': True})
+	log_date = fields.Datetime(string='Log Date', default=fields.Datetime.now)
+	weight = fields.Float(string='Weight (kg)')
+	height = fields.Float(string='Height (cm)')
+	temperature = fields.Float(string='Temperature (°C)')
+	heart_rate = fields.Integer(string='Heart Rate (bpm)')
+	respiratory_rate = fields.Integer(string='Respiratory Rate (rpm)')
+	notes = fields.Text(string='Notes')

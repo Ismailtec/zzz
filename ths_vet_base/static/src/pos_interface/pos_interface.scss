@@ -1,0 +1,790 @@
+// ===========================
+// GLOBAL DIALOG SIZING
+// ===========================
+.o_dialog.o_warning_dialog .modal-dialog {
+  max-width: 500px !important;
+  width: 500px !important;
+  margin: 20vh auto !important;
+}
+
+.o_dialog.o_warning_dialog .modal-content {
+  height: auto !important;
+  max-height: 400px !important;
+}
+
+.o_dialog.o_warning_dialog .modal-body {
+  padding: 1rem !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.o_dialog:not(.o_warning_dialog) .modal-dialog {
+  max-width: 98vw !important;
+  width: 98vw !important;
+  margin: 1vh auto !important;
+}
+
+.o_dialog:not(.o_warning_dialog) .modal-content {
+  height: 98vh !important;
+  max-height: 98vh !important;
+}
+
+.o_dialog:not(.o_warning_dialog) .modal-body {
+  padding: 0 !important;
+  height: calc(98vh - 60px) !important;
+  overflow: hidden !important;
+}
+
+// ===========================
+// NO SPINNER INPUT FIELDS
+// ===========================
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number].no-spinner {
+  appearance: textfield;
+}
+
+// ===========================
+// MAIN POS INTERFACE
+// ===========================
+.pos-loading {
+  height: 100vh;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .loading-content {
+    text-align: center;
+  }
+}
+
+.vet-pos-interface {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+// ===========================
+// COMPACT HEADER
+// ===========================
+.pos-header-compact {
+  background: white;
+  border-bottom: 2px solid #e9ecef;
+  padding: 0.75rem;
+  flex-shrink: 0;
+  display: flex;
+  gap: 1rem;
+  min-height: 80px;
+  max-height: 100px;
+}
+
+.encounter-section-compact {
+  width: 35%;
+  min-width: 350px;
+}
+
+.encounter-title-compact {
+  margin: 0 0 0.5rem 0;
+  color: #343a40;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.encounter-grid-compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.field-compact {
+  display: flex;
+  flex-direction: column;
+
+  label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    color: #495057;
+  }
+
+  span {
+    font-size: 0.8rem;
+    color: #343a40;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0.2rem 0;
+  }
+}
+
+.select-compact {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.3rem;
+  height: 26px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  background: white;
+}
+
+.patient-tags-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.patient-tag-compact {
+  padding: 0.15rem 0.4rem;
+  background: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    background: #dee2e6;
+  }
+
+  &.selected {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+  }
+}
+
+.categories-section-compact {
+  width: 65%;
+  display: flex;
+  align-items: center;
+}
+
+.categories-wrap-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-height: 80px;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.category-tab-compact {
+  padding: 0.3rem 0.6rem;
+  background: #e9ecef;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-weight: 500;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #dee2e6;
+    border-color: #007bff;
+  }
+
+  &.active {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+  }
+}
+
+// ===========================
+// MAIN CONTENT
+// ===========================
+.pos-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+// ===========================
+// PERFECT PRODUCTS
+// ===========================
+.pos-products-perfect {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  align-content: start;
+
+  .products-empty-perfect {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    color: #6c757d;
+    text-align: center;
+  }
+}
+
+.product-card-perfect {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+  }
+
+  .product-image-perfect {
+    margin-bottom: 0.75rem;
+
+    img {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    i {
+      font-size: 3rem;
+      color: #6c757d;
+      margin: 1rem 0;
+    }
+  }
+
+  .product-info-perfect {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .product-name-perfect {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .product-price-perfect {
+    color: #28a745;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+}
+
+// ===========================
+// COMPACT CART
+// ===========================
+.pos-cart-compact {
+  width: 32%;
+  min-width: 400px;
+  max-width: 450px;
+  background: white;
+  border-left: 2px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.cart-header-compact {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+
+  h6 {
+    margin: 0;
+    font-size: 1rem;
+    color: #495057;
+  }
+}
+
+.cart-body-compact {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem;
+}
+
+.cart-empty-compact {
+  text-align: center;
+  color: #6c757d;
+  padding: 2rem 0;
+  font-size: 0.9rem;
+
+  i {
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+}
+
+// ===========================
+// COMPACT CART ITEMS
+// ===========================
+.cart-item-compact {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.item-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+
+  strong {
+    font-size: 0.9rem;
+    line-height: 1.2;
+    flex: 1;
+  }
+}
+
+.btn-remove-compact {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+
+  &:hover {
+    color: #a71e2a;
+  }
+}
+
+// ===========================
+// COMPACT CONTROLS
+// ===========================
+.controls-compact {
+  display: grid;
+  grid-template-columns: 70px 1fr 70px 1fr;
+  gap: 0.5rem;
+  align-items: end;
+  margin-bottom: 0.5rem;
+}
+
+.control-group-compact {
+  display: flex;
+  flex-direction: column;
+
+  label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.2rem;
+  }
+}
+
+.qty-group-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.btn-qty-compact {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #ced4da;
+  background: white;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #f8f9fa;
+  }
+}
+
+.qty-input-compact {
+  width: 30px;
+  text-align: center;
+  font-weight: 600;
+  padding: 0.2rem 0.1rem;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  font-size: 0.75rem;
+}
+
+.input-compact {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+  height: 26px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  width: 100%;
+}
+
+.total-compact {
+  font-weight: 600;
+  color: #28a745;
+  font-size: 0.75rem;
+  text-align: right;
+  padding: 0.2rem 0;
+}
+
+// ===========================
+// COMPACT LINE DETAILS
+// ===========================
+.line-details-compact {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.detail-row-compact {
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  &.patients-row {
+    width: 100%;
+  }
+
+  &.dual-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #495057;
+    min-width: 60px;
+    flex-shrink: 0;
+  }
+
+  .patient-tags-line-compact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+    flex: 1;
+  }
+
+  .clear-btn-compact {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0.1rem 0.2rem;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+
+    &:hover {
+      color: #dc3545;
+    }
+  }
+}
+
+.detail-half {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+
+  label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #495057;
+    min-width: 50px;
+    flex-shrink: 0;
+  }
+}
+
+.select-line-compact {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.25rem;
+  height: 22px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  flex: 1;
+}
+
+.patient-tag-line-compact {
+  padding: 0.1rem 0.3rem;
+  background: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.65rem;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    background: #dee2e6;
+  }
+
+  &.selected {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+  }
+}
+
+// ===========================
+// COMPACT FOOTER
+// ===========================
+.cart-footer-compact {
+  padding: 0.75rem;
+  border-top: 2px solid #e9ecef;
+  background: white;
+}
+
+.footer-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  gap: 1rem;
+}
+
+.global-discount-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #495057;
+  }
+}
+
+.discount-controls-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.input-small-compact {
+  width: 50px;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.3rem;
+  height: 24px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+}
+
+.toggle-btn-compact {
+  padding: 0.2rem 0.4rem;
+  border: 1px solid #ced4da;
+  background: white;
+  cursor: pointer;
+  font-size: 0.7rem;
+  border-radius: 3px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f8f9fa;
+  }
+
+  &.active {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+  }
+}
+
+.totals-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.total-line-compact {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  gap: 1rem;
+
+  &.discount-line {
+    color: #dc3545;
+  }
+
+  &.final-total {
+    border-top: 1px solid #dee2e6;
+    padding-top: 0.2rem;
+    margin-top: 0.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+}
+
+// ===========================
+// COMPACT PAYMENT METHODS
+// ===========================
+.payment-methods-compact {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.payment-method-compact {
+  padding: 0.4rem 0.6rem;
+  border: 2px solid #e9ecef;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  font-size: 0.7rem;
+  flex: 1;
+  min-width: 70px;
+
+  &:hover {
+    border-color: #007bff;
+    background: #f0f8ff;
+  }
+
+  &.selected {
+    border-color: #007bff;
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+
+  i {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.9rem;
+  }
+
+  span {
+    font-weight: 500;
+  }
+}
+
+// ===========================
+// COMPACT PAY BUTTON
+// ===========================
+.pay-button-compact {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #218838;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  i {
+    margin-right: 0.3rem;
+  }
+}
+
+// ===========================
+// RESPONSIVE DESIGN
+// ===========================
+@media (max-width: 1400px) {
+  .pos-cart-compact {
+    width: 35%;
+    min-width: 380px;
+  }
+
+  .pos-products-perfect {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .pos-header-compact {
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 120px;
+  }
+
+  .encounter-section-compact,
+  .categories-section-compact {
+    width: 100%;
+  }
+
+  .encounter-grid-compact {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1200px) {
+  .pos-cart-compact {
+    width: 38%;
+    min-width: 360px;
+  }
+
+  .pos-products-perfect {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  .controls-compact {
+    grid-template-columns: 60px 1fr 60px 1fr;
+    gap: 0.4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .pos-content {
+    flex-direction: column;
+  }
+
+  .pos-cart-compact {
+    width: 100%;
+    max-height: 50vh;
+    min-width: unset;
+  }
+
+  .encounter-grid-compact {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detail-row-compact.dual-row {
+    flex-direction: column;
+    gap: 0.3rem;
+
+    .detail-half {
+      width: 100%;
+    }
+  }
+
+  .footer-top-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

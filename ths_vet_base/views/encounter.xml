@@ -25,7 +25,6 @@
                 <field name="company_currency" column_invisible="1"/>
                 <!-- Quick Action Buttons -->
                 <button name="action_view_appointments" string="Appointments" type="object" icon="fa-calendar" invisible="not appointment_ids"/>
-                <button name="action_view_pos_orders" string="POS" type="object" icon="fa-shopping-cart" invisible="not pos_order_ids"/>
             </list>
         </field>
     </record>
@@ -37,6 +36,7 @@
             <form string="Encounter">
                 <header>
                     <field name="state" widget="statusbar" options="{'clickable': '1'}" statusbar_visible="in_progress,done" readonly="0"/>
+                    <button name="action_process_payment" string="Process Payment" type="object" class="btn-primary" icon="fa-credit-card"/>
                     <button name="action_create_invoice_from_pending_lines" type="object" string="Create Invoice" class="btn-primary" invisible="pending_amount == 0"/>
                     <button name="action_create_sale_order_from_pending_lines" type="object" string="Create Sale Order" class="btn-secondary" invisible="pending_amount == 0"/>
                     <button name="action_refresh_all_payment_status" type="object" string="Refresh Payment Status" class="btn-secondary"/>
@@ -95,9 +95,6 @@
                         <button name="action_view_sale_orders" type="object" class="oe_stat_button" icon="fa-shopping-cart" invisible="sale_order_count == 0">
                             <field name="sale_order_count" widget="statinfo" string="Sales Orders"/>
                         </button>
-                        <button name="action_view_pos_orders" type="object" class="oe_stat_button" icon="fa-credit-card" invisible="pos_order_count == 0">
-                            <field name="pos_order_count" widget="statinfo" string="POS Orders"/>
-                        </button>
                         <button name="action_view_credit_notes" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="credit_note_count == 0">
                             <field name="credit_note_count" widget="statinfo" string="Refunds"/>
                         </button>
@@ -126,7 +123,6 @@
                                 <field name="pending_payments" readonly="1" widget="boolean_toggle" string="Has Pending Payments"/>
                                 <field name="invoice_count" invisible="1"/>
                                 <field name="sale_order_count" invisible="1"/>
-                                <field name="pos_order_count" invisible="1"/>
                                 <field name="company_currency" invisible="1"/>
                             </group>
                         </group>
@@ -139,33 +135,15 @@
                             <group string="Encounter Lines">
                                 <field name="encounter_line_ids" context="{'default_encounter_id': id}" nolabel="1"/>
                             </group>
-                            <group string="POS Order">
-                                <field name="pos_order_ids" context="{'default_encounter_id': id}" nolabel="1"/>
-                            </group>
                             <group string="Direct Invoices">
                                 <field name="direct_invoice_ids" nolabel="1" readonly="1" context="{'default_encounter_id': id}" view_mode="list,form">
                                 </field>
                             </group>
-                            <group string="Credit Notes/Refunds">
-                                <field name="credit_note_ids" nolabel="1" readonly="1" context="{'default_move_type': 'out_refund', 'default_encounter_id': id}"
-                                       decoration-danger="name">
-                                    <!--                                    <list create="false" edit="false">-->
-                                    <!--                                        <field name="name"/>-->
-                                    <!--                                        <field name="invoice_date" string="Date"/>-->
-                                    <!--                                        <field name="encounter_id" optional="hide"/>-->
-                                    <!--                                        <field name="partner_id" string="Pet Owner"/>-->
-                                    <!--                                        <field name="patient_ids" widget="many2many_tags" optional="hide"/>-->
-                                    <!--                                        <field name="practitioner_id" optional="hide"/>-->
-                                    <!--                                        <field name="room_id" optional="hide"/>-->
-                                    <!--                                        <field name="amount_total" decoration-danger="amount_total &lt; 0" widget="monetary" options="{'currency_field': 'company_currency'}"/>-->
-                                    <!--                                        <field name="state"/>-->
-                                    <!--                                        <field name="payment_state"/>-->
-                                    <!--                                        <field name="payment_journal_name" optional="show"/>-->
-                                    <!--                                        <field name="payment_method_name" optional="hide"/>-->
-                                    <!--                                        <field name="reversed_entry_id" string="Original Invoice"/>-->
-                                    <!--                                    </list>-->
-                                </field>
-                            </group>
+                            <!--                            <group string="Credit Notes/Refunds">-->
+                            <!--                                <field name="credit_note_ids" nolabel="1" readonly="1" context="{'default_move_type': 'out_refund', 'default_encounter_id': id}"-->
+                            <!--                                       decoration-danger="name">-->
+                            <!--                                </field>-->
+                            <!--                            </group>-->
                             <group string="Sales Order">
                                 <field name="sale_order_ids" context="{'default_encounter_id': id}" nolabel="1" can_write="1" can_create="true"/>
                             </group>
@@ -176,6 +154,7 @@
                                     <field name="product_id" required="1"/>
                                     <field name="product_description" optional="hide"/>
                                     <field name="qty" string="Qty"/>
+                                    <field name="product_uom" optional="show"/>
                                     <field name="unit_price" widget="monetary" options="{'currency_field': 'company_currency'}"/>
                                     <field name="discount" widget="percentage" optional="show"/>
                                     <field name="sub_total" readonly="1" widget="monetary" sum="Total" options="{'currency_field': 'company_currency'}" optional="show"/>
@@ -191,7 +170,6 @@
                                            optional="show"/>
                                     <field name="source_model" optional="show" widget="selection" decoration-info="source_model in ('calendar.event', 'manual')"
                                            decoration-primary="source_model in ('vet.boarding.stay', 'vet.vaccination')"
-                                           decoration-success="source_model in ('sale.order', 'pos.order')"
                                            decoration-warning="source_model == 'vet.pet.membership'"/>
                                     <field name="encounter_id" optional="hide" required="1"/>
                                     <field name="notes" optional="hide"/>
@@ -519,6 +497,7 @@
                 <field name="patient_ids" widget="many2many_tags"/>
                 <field name="product_id" readonly="fields_readonly"/>
                 <field name="qty" readonly="fields_readonly"/>
+                <field name="product_uom" readonly="fields_readonly" optional="show"/>
                 <field name="unit_price" widget="monetary" options="{'currency_field': 'company_currency'}" readonly="fields_readonly"/>
                 <field name="discount" widget="percentage" optional="show" readonly="fields_readonly"/>
                 <field name="sub_total" sum="Total Amount" widget="monetary" options="{'currency_field': 'company_currency'}"/>
@@ -530,7 +509,6 @@
                 <field name="multiple_payment_sources" optional="hide"/>
                 <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-info="payment_status in ('pending', 'posted')"
                        decoration-warning="payment_status in ('partial', 'cancelled', 'refunded')"/>
-                <field name="pos_order_id" optional="hide"/>
                 <field name="refunded_amount" sum="Refunded" widget="monetary" options="{'currency_field': 'company_currency'}" optional="show"/>
                 <field name="is_refunded" widget="boolean_toggle" optional="show"/>
                 <field name="company_currency" column_invisible="1"/>
@@ -571,6 +549,7 @@
                             <field name="product_id"/>
                             <field name="product_description" placeholder="Optional description override..."/>
                             <field name="qty" readonly="payment_status !='pending'"/>
+                            <field name="product_uom" readonly="payment_status !='pending'"/>
                             <field name="unit_price" widget="monetary"/>
                             <field name="discount" widget="percentage" readonly="payment_status !='pending'"/>
                             <field name="sub_total" readonly="1" widget="monetary"/>
@@ -595,7 +574,6 @@
                             <field name="multiple_payment_sources"/>
                             <field name="processed_date" readonly="1" invisible="not processed_date"/>
                             <field name="processed_by" readonly="1" invisible="not processed_by"/>
-                            <field name="pos_order_id" readonly="1" invisible="not pos_order_id"/>
                             <field name="sale_order_id" readonly="1" invisible="not sale_order_id"/>
                             <field name="invoice_id" readonly="1" invisible="not invoice_id"/>
                         </group>
@@ -603,12 +581,10 @@
                             <group string="Main Documents">
                                 <field name="invoice_id"/>
                                 <field name="sale_order_id"/>
-                                <field name="pos_order_id"/>
                             </group>
                             <group string="All Documents">
                                 <field name="invoice_ids" widget="many2many_tags"/>
                                 <field name="sale_order_ids" widget="many2many_tags"/>
-                                <field name="pos_order_ids" widget="many2many_tags"/>
                             </group>
                         </group>
                     </group>
@@ -1861,12 +1837,6 @@
             <xpath expr="//header" position="inside">
                 <button name="action_select_encounter_lines" type="object" string="Add Encounter Lines" class="btn-secondary" invisible="state != 'draft'"/>
             </xpath>
-            <xpath expr="//field[@name='name']" position="attributes">
-                <attribute name="readonly">1</attribute>
-            </xpath>
-            <label for="partner_id" position="replace"/>
-            <field name="quick_edit_total_amount" position="replace"/>
-
             <xpath expr="//div[field[@name='partner_id']]" position="replace">
                 <group colspan="2">
                     <field name="partner_type_id" options="{'no_open': True, 'no_create': True}" readonly="state == 'posted'"
@@ -1881,29 +1851,6 @@
                 </group>
                 <field name="encounter_line_count" invisible="1"/>
             </xpath>
-            <xpath expr="//field[@name='partner_id']" position="attributes">
-                <attribute name="context">{'show_address': 0}</attribute>
-            </xpath>
-            <xpath expr="//field[@name='partner_shipping_id']" position="attributes">
-                <attribute name="invisible">move_type == 'out_invoice'</attribute>
-            </xpath>
-            <xpath expr="//div[@name='journal_div']" position="after">
-                <field name="payment_journal_name" string="Payment Journal" invisible="payment_state != 'paid'" readonly="1"/>
-                <field name="payment_method_name" string="Payment Method" invisible="payment_state != 'paid'" readonly="1"/>
-                <field name="amount_paid" string="Amount Paid" widget="monetary" invisible="payment_state != 'paid'" readonly="1"/>
-            </xpath>
-            <xpath expr="//field[@name='account_id']" position="attributes">
-                <attribute name="optional">hide</attribute>
-            </xpath>
-            <xpath expr="//field[@name='name']" position="attributes">
-                <attribute name="optional">hide</attribute>
-            </xpath>
-            <xpath expr="//field[@name='analytic_distribution']" position="attributes">
-                <attribute name="optional">hide</attribute>
-            </xpath>
-            <xpath expr="//field[@name='invoice_line_ids']//field[@name='partner_id']" position="attributes">
-                <attribute name="column_invisible">0</attribute>
-            </xpath>
 
             <xpath expr="//field[@name='invoice_line_ids']//field[@name='quantity']" position="before">
                 <xpath expr="//field[@name='invoice_line_ids']//field[@name='partner_id']" position="move"/>
@@ -1911,13 +1858,6 @@
                 <field name="practitioner_id" optional="show"/>
                 <field name="room_id" optional="hide"/>
             </xpath>
-
-            <!--            <xpath expr="//field[@name='invoice_line_ids']//field[@name='partner_id']" position="after">-->
-            <!--                <field name="patient_ids" widget="many2many_tags" optional="show"/>-->
-            <!--                <field name="practitioner_id" optional="show"/>-->
-            <!--                <field name="room_id" optional="hide"/>-->
-            <!--            </xpath>-->
-
 
         </field>
     </record>
@@ -1928,9 +1868,6 @@
         <field name="inherit_id" ref="account.view_out_invoice_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='amount_total_in_currency_signed']" position="after">
-                <field name="payment_journal_name" optional="show"/>
-                <field name="payment_method_name" optional="hide"/>
-                <field name="amount_paid" optional="show" widget="monetary" sum="Total Paid"/>
                 <field name="practitioner_id" optional="show"/>
                 <field name="room_id" optional="hide"/>
             </xpath>
@@ -1947,9 +1884,6 @@
         <field name="inherit_id" ref="account.view_move_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='amount_total_signed']" position="after">
-                <field name="payment_journal_name" optional="show"/>
-                <field name="payment_method_name" optional="hide"/>
-                <field name="amount_paid" optional="show" widget="monetary" sum="Total Paid"/>
                 <field name="practitioner_id" optional="show"/>
                 <field name="room_id" optional="hide"/>
             </xpath>
@@ -1972,12 +1906,21 @@
             </xpath>
 
             <xpath expr="//field[@name='partner_id']" position="after">
-                <field name="patient_ids" widget="many2many_tags"/>
-                <field name="practitioner_id"/>
-                <field name="room_id"/>
-                <field name="encounter_id"/>
+                <field name="patient_ids" widget="many2many_tags" readonly="state == 'sale'"/>
+                <field name="practitioner_id" readonly="state == 'sale'"/>
+                <field name="room_id" readonly="state == 'sale'"/>
+                <field name="encounter_id" readonly="state == 'sale'"/>
                 <field name="encounter_line_count" invisible="1"/>
             </xpath>
+
+            <xpath expr="//field[@name='order_line']//list//field[@name='product_uom_qty']" position="before">
+                <field name="order_partner_id" optional="hide"/>
+                <field name="patient_ids" widget="many2many_tags" optional="show"/>
+                <field name="practitioner_id" optional="show"/>
+                <field name="room_id" optional="hide"/>
+            </xpath>
+
+            <field name="partner_invoice_id" position="replace"/>
 
             <xpath expr="//header" position="inside">
                 <button name="action_select_encounter_lines" type="object" string="Add Encounter Lines" class="btn-secondary" invisible="state not in ['draft', 'sent']"/>
@@ -2045,5 +1988,89 @@
         </field>
     </record>
 
+<!--    <template id="report_invoice_document_vet" inherit_id="account.report_invoice_document">-->
+
+<!--        &lt;!&ndash; Replace entire address row with vet info for out_invoice/out_refund &ndash;&gt;-->
+<!--        <xpath expr="//div[hasclass('row')][1]" position="replace">-->
+<!--            <t t-if="o.move_type in ['out_invoice', 'out_refund']">-->
+<!--                &lt;!&ndash; VET INFO SECTION &ndash;&gt;-->
+<!--                <div class="row">-->
+<!--                    <div class="offset-col-6 col-6">-->
+<!--                        &lt;!&ndash; Pet Owner &ndash;&gt;-->
+<!--                        <div class="mb-2">-->
+<!--                            <strong>Pet Owner: </strong><span t-field="o.partner_id.name"/>-->
+<!--                        </div>-->
+
+<!--                        &lt;!&ndash; Patients - just names with commas &ndash;&gt;-->
+<!--                        <div t-if="o.patient_ids" class="mb-2">-->
+<!--                            <strong>Patient(s): </strong>-->
+<!--                            <span t-foreach="o.patient_ids" t-as="patient">-->
+<!--                                <span t-field="patient.name"/>-->
+<!--                                <t t-if="not patient_last">, </t>-->
+<!--                            </span>-->
+<!--                        </div>-->
+
+<!--                        &lt;!&ndash; Practitioner &ndash;&gt;-->
+<!--                        <div t-if="o.practitioner_id" class="mb-1">-->
+<!--                            <strong>Practitioner: </strong><span t-field="o.practitioner_id.name"/>-->
+<!--                        </div>-->
+
+<!--                        &lt;!&ndash; Room &ndash;&gt;-->
+<!--                        <div t-if="o.room_id" class="mb-1">-->
+<!--                            <strong>Treatment Room: </strong><span t-field="o.room_id.name"/>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </t>-->
+
+<!--            &lt;!&ndash; Keep original for non-vet invoices &ndash;&gt;-->
+<!--            <t t-else="">-->
+<!--                <div class="row">-->
+<!--                    <t t-if="o.partner_shipping_id and (o.partner_shipping_id != o.partner_id)">-->
+<!--                        <div class="col-6">-->
+<!--                            <t t-set="information_block">-->
+<!--                                <div groups="account.group_delivery_invoice_address" name="shipping_address_block">-->
+<!--                                    <strong>Shipping Address</strong>-->
+<!--                                    <div t-field="o.partner_shipping_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>-->
+<!--                                </div>-->
+<!--                            </t>-->
+<!--                        </div>-->
+<!--                        <div class="col-6" name="address_not_same_as_shipping">-->
+<!--                            <t t-set="address">-->
+<!--                                <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>-->
+<!--                                <div t-if="o.partner_id.vat" id="partner_vat_address_not_same_as_shipping">-->
+<!--                                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>-->
+<!--                                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>-->
+<!--                                </div>-->
+<!--                            </t>-->
+<!--                        </div>-->
+<!--                    </t>-->
+<!--                    <t t-elif="o.partner_shipping_id and (o.partner_shipping_id == o.partner_id)">-->
+<!--                        <div class="offset-col-6 col-6" name="address_same_as_shipping">-->
+<!--                            <t t-set="address">-->
+<!--                                <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>-->
+<!--                                <div t-if="o.partner_id.vat" id="partner_vat_address_same_as_shipping">-->
+<!--                                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>-->
+<!--                                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>-->
+<!--                                </div>-->
+<!--                            </t>-->
+<!--                        </div>-->
+<!--                    </t>-->
+<!--                    <t t-else="">-->
+<!--                        <div class="offset-col-6 col-6" name="no_shipping">-->
+<!--                            <t t-set="address">-->
+<!--                                <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>-->
+<!--                                <div t-if="o.partner_id.vat" id="partner_vat_no_shipping">-->
+<!--                                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>-->
+<!--                                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>-->
+<!--                                </div>-->
+<!--                            </t>-->
+<!--                        </div>-->
+<!--                    </t>-->
+<!--                </div>-->
+<!--            </t>-->
+<!--        </xpath>-->
+
+<!--    </template>-->
 
 </odoo>

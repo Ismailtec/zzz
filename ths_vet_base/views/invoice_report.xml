@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Inherit invoice report for vet-specific information -->
+        <template id="report_invoice_document_vet" inherit_id="account.report_invoice_document">
+
+            <!-- Only apply to out_invoice and out_refund -->
+            <xpath expr="//div[@id='informations']" position="before">
+                <t t-if="o.move_type in ['out_invoice', 'out_refund']" t-set="is_vet_invoice" t-value="True"/>
+            </xpath>
+
+            <!-- Rename partner_id to Pet Owner for vet invoices -->
+            <xpath expr="//address[@class='mb-0']" position="before">
+                <t t-if="is_vet_invoice">
+                    <div class="mb-2">
+                        <strong>Pet Owner</strong>
+                    </div>
+                </t>
+            </xpath>
+
+            <!-- Add vet-specific information after address section -->
+            <xpath expr="//div[@id='informations']" position="after">
+                <div t-if="is_vet_invoice" class="row mb-4" id="vet_information">
+
+                    <!-- Patient Information -->
+                    <div class="col-12" t-if="o.patient_ids" name="patient_info">
+                        <div class="mb-3">
+                            <strong>Patient(s):</strong>
+                            <div t-foreach="o.patient_ids" t-as="patient" class="ms-2">
+                                <div>
+                                    <span t-field="patient.name" class="fw-bold"/>
+
+                                    <!-- Species and Breed (only if not null) -->
+                                    <t t-if="patient.species_id">
+                                        <br/>
+                                        <span class="text-muted">Species: </span>
+                                        <span t-field="patient.species_id.name"/>
+
+                                        <!-- breed_id should be on the patient, not on species -->
+                                        <t t-if="patient.breed_id">
+                                            <span class="text-muted"> | Breed: </span>
+                                            <span t-field="patient.breed_id.name"/>
+                                        </t>
+                                    </t>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Practitioner and Room Information (only if not null) -->
+                    <div class="col-6" t-if="o.practitioner_id" name="practitioner_info">
+                        <strong>Practitioner:</strong>
+                        <div t-field="o.practitioner_id.name"/>
+                    </div>
+
+                    <div class="col-6" t-if="o.room_id" name="room_info">
+                        <strong>Treatment Room:</strong>
+                        <div t-field="o.room_id.name"/>
+                    </div>
+
+                </div>
+            </xpath>
+
+            <!-- Add patient info to invoice lines if available online level -->
+            <xpath expr="//td[@name='account_invoice_line_name']" position="after">
+                <t t-if="is_vet_invoice and line.patient_ids">
+                    <td name="td_line_patients" class="text-start">
+                        <div class="small text-muted">
+                            <span>For: </span>
+                            <span t-foreach="line.patient_ids" t-as="line_patient">
+                                <span t-field="line_patient.name"/>
+                                <t t-if="not line_patient_last">, </t>
+                            </span>
+                        </div>
+                    </td>
+                </t>
+                <t t-else="">
+                    <td t-if="is_vet_invoice" name="td_line_patients_empty" class="text-start"></td>
+                </t>
+            </xpath>
+
+            <!-- Add header for patient column -->
+            <xpath expr="//th[@name='th_description']" position="after">
+                <th t-if="is_vet_invoice" name="th_line_patients" class="text-start">
+                    <span>Patient</span>
+                </th>
+            </xpath>
+
+        </template>
+    </data>
+</odoo>

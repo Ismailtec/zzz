@@ -288,8 +288,6 @@
         <menuitem id="menu_ths_vet_billing" name="Billing" parent="menu_ths_vet_root" sequence="20"/>
         <menuitem id="menu_ths_encounter_lines_billing" name="Encounter Line Items" parent="menu_ths_vet_billing" action="action_vet_encounter_line_item" sequence="10"
                   groups="account.group_account_invoice,ths_vet_base.group_vet_user"/>
-        <menuitem id="menu_vet_encounter_line_item_pos" name="POS Encounter Items" parent="point_of_sale.menu_point_config_product" action="action_vet_encounter_line_item"
-                  sequence="20" groups="point_of_sale.group_pos_user"/>
         <menuitem id="menu_finance_receivables_ths" name="Invoices" parent="menu_ths_vet_billing" sequence="30">
             <menuitem id="menu_action_move_out_invoice_type_ths" action="account.action_move_out_invoice" sequence="1"/>
             <menuitem id="menu_action_move_out_refund_type_ths" name="Refunds/Credit Notes" action="account.action_move_out_refund_type" sequence="2"/>
@@ -381,8 +379,6 @@
 
         <menuitem id="menu_emergency_appointments" name="Emergency Appointments" parent="menu_ths_vet_scheduling" action="action_emergency_appointments" sequence="10"
                   groups="ths_vet_base.group_vet_user"/>
-        <menuitem id="menu_vet_encounter_line_item" name="Encounter Line Items" parent="point_of_sale.menu_point_config_product" action="action_vet_encounter_line_item"
-                  sequence="100" groups="account.group_account_invoice"/>
 
         <!-- Dashboards Submenu -->
 
@@ -416,6 +412,12 @@
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="active">True</field>
+        </record>
+
+        <record id="action_vet_pos_interface" model="ir.actions.client">
+            <field name="name">Payment Interface</field>
+            <field name="tag">vet_pos_interface_action</field>
+            <field name="target">fullscreen</field>
         </record>
 
     </data>

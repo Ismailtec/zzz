@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="ths_vet_base.PosInterface">
+        <!-- Loading State -->
+        <div t-if="state.isLoading" class="pos-loading">
+            <div class="loading-content">
+                <i class="fa fa-spinner fa-spin fa-3x mb-3 text-primary" title="Loading"/>
+                <h4>Loading POS Interface...</h4>
+            </div>
+        </div>
+
+        <!-- Main POS Interface -->
+        <div t-else="" class="vet-pos-interface">
+            <!-- Compact Header -->
+            <div class="pos-header-compact">
+                <div class="encounter-section-compact">
+                    <h5 class="encounter-title-compact">
+                        <i class="fa fa-file-text-o"/>
+                        <span t-esc="state.encounter.name || 'New Encounter'"/>
+                    </h5>
+
+                    <div class="encounter-grid-compact">
+                        <div class="field-compact">
+                            <label>Customer:</label>
+                            <span t-esc="state.encounter.partner_id ? state.encounter.partner_id[1] : 'No Customer'"/>
+                        </div>
+
+                        <div class="field-compact">
+                            <label>Practitioner:</label>
+                            <select class="select-compact">
+                                <option value="">Select</option>
+                                <option t-foreach="state.availablePractitioners" t-as="prac" t-key="prac.id"
+                                        t-att-value="prac.id"
+                                        t-att-selected="state.encounter.practitioner_id ? state.encounter.practitioner_id[0] === prac.id : false"
+                                        t-esc="prac.name"/>
+                            </select>
+                        </div>
+
+                        <div class="field-compact">
+                            <label>Room:</label>
+                            <select class="select-compact">
+                                <option value="">Select</option>
+                                <option t-foreach="state.availableRooms" t-as="room" t-key="room.id"
+                                        t-att-value="room.id"
+                                        t-att-selected="state.encounter.room_id ? state.encounter.room_id[0] === room.id : false"
+                                        t-esc="room.name"/>
+                            </select>
+                        </div>
+
+                        <div class="field-compact">
+                            <label>Patients:</label>
+                            <div class="patient-tags-compact">
+                                <span t-foreach="state.availablePatients" t-as="patient" t-key="patient.id"
+                                      class="patient-tag-compact"
+                                      t-att-class="state.encounter.patient_ids &amp;&amp; state.encounter.patient_ids.map(p => p[0]).includes(patient.id) ? 'selected' : ''"
+                                      t-on-click="() => this.togglePatientSelection(patient.id)"
+                                      t-esc="patient.name"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="categories-section-compact">
+                    <div class="categories-wrap-compact">
+                        <div t-foreach="Object.keys(state.productsByCategory)" t-as="category" t-key="category"
+                             class="category-tab-compact"
+                             t-att-class="state.selectedCategory === category ? 'active' : ''"
+                             t-on-click="() => this.selectCategory(category)">
+                            <span t-esc="category"/> (<span t-esc="state.productsByCategory[category].length"/>)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="pos-content">
+                <!-- Products -->
+                <div class="pos-products-perfect">
+                    <div t-if="state.filteredProducts.length === 0" class="products-empty-perfect">
+                        <i class="fa fa-cube fa-3x mb-3"/>
+                        <h5>No products in this category</h5>
+                    </div>
+
+                    <div t-foreach="state.filteredProducts" t-as="product" t-key="product.id"
+                         class="product-card-perfect"
+                         t-on-click="() => this.addToCart(product)"
+                         t-att-title="product.name">
+                        <div class="product-image-perfect">
+                            <img t-if="product.image_128" t-attf-src="data:image/png;base64,{{product.image_128}}" t-att-alt="product.name"/>
+                            <i t-else="" class="fa fa-cube"/>
+                        </div>
+                        <div class="product-info-perfect">
+                            <div class="product-name-perfect" t-esc="product.name"/>
+                            <div class="product-price-perfect" t-esc="this.formatCurrency(product.lst_price)"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compact Cart -->
+                <div class="pos-cart-compact">
+                    <div class="cart-header-compact">
+                        <h6><i class="fa fa-shopping-cart"/> Cart (<span t-esc="state.cartItems.length"/>)</h6>
+                    </div>
+
+                    <div class="cart-body-compact">
+                        <div t-if="state.cartItems.length === 0" class="cart-empty-compact">
+                            <i class="fa fa-shopping-cart fa-2x mb-2"/>
+                            <p>Add products to get started</p>
+                        </div>
+
+                        <!-- Compact Cart Items -->
+                        <div t-foreach="state.cartItems" t-as="item" t-key="item.id" class="cart-item-compact">
+                            <!-- Item Header -->
+                            <div class="item-header-compact">
+                                <strong t-esc="item.name"/>
+                                <button class="btn-remove-compact" t-on-click="() => this.removeFromCart(item.id)">
+                                    <i class="fa fa-times"/>
+                                </button>
+                            </div>
+
+                            <!-- Controls -->
+                            <div class="controls-compact">
+                                <!-- Qty -->
+                                <div class="control-group-compact">
+                                    <label>Qty</label>
+                                    <div class="qty-group-compact">
+                                        <button class="btn-qty-compact" t-on-click="() => this.updateQuantity(item.id, -1)">-</button>
+                                        <input type="number" class="qty-input-compact no-spinner"
+                                               t-att-value="item.qty"
+                                               t-on-input="(ev) => this.updateQuantity(item.id, parseInt(ev.target.value) - item.qty)"
+                                               min="1"/>
+                                        <button class="btn-qty-compact" t-on-click="() => this.updateQuantity(item.id, 1)">+</button>
+                                    </div>
+                                </div>
+
+                                <!-- Price -->
+                                <div class="control-group-compact">
+                                    <label>Price</label>
+                                    <input type="number" class="input-compact no-spinner" step="0.250"
+                                           t-att-value="item.price" t-on-change="(ev) => this.updatePrice(item.id, ev.target.value)"/>
+                                </div>
+
+                                <!-- Discount -->
+                                <div class="control-group-compact">
+                                    <label>Disc %</label>
+                                    <input type="number" class="input-compact no-spinner" step="1"
+                                           t-att-value="item.discount || 0" t-on-change="(ev) => this.updateDiscount(item.id, ev.target.value)"/>
+                                </div>
+
+                                <!-- Total -->
+                                <div class="control-group-compact">
+                                    <label>Total</label>
+                                    <div class="total-compact" t-esc="this.formatCurrency(this.getLineTotal(item))"/>
+                                </div>
+                            </div>
+
+                            <!-- Compact Line Details -->
+                            <div class="line-details-compact">
+                                <div class="detail-row-compact patients-row">
+                                    <label>Patients:</label>
+                                    <div class="patient-tags-line-compact">
+                                        <span t-foreach="state.availablePatients" t-as="patient" t-key="patient.id"
+                                              class="patient-tag-line-compact"
+                                              t-att-class="item.patient_ids.includes(patient.id) ? 'selected' : ''"
+                                              t-on-click="() => this.toggleLinePatient(item.id, patient.id)"
+                                              t-esc="patient.name"/>
+                                    </div>
+                                    <button class="clear-btn-compact" t-on-click="() => this.clearLinePatients(item.id)">
+                                        <i class="fa fa-times"/>
+                                    </button>
+                                </div>
+
+                                <div class="detail-row-compact dual-row">
+                                    <div class="detail-half">
+                                        <label>Practitioner:</label>
+                                        <select class="select-line-compact" t-att-value="item.practitioner_id || ''"
+                                                t-on-change="(ev) => this.updateLinePractitioner(item.id, parseInt(ev.target.value) || null)">
+                                            <option value="">None</option>
+                                            <option t-foreach="state.availablePractitioners" t-as="practitioner" t-key="practitioner.id"
+                                                    t-att-value="practitioner.id" t-esc="practitioner.name"/>
+                                        </select>
+                                        <button class="clear-btn-compact" t-on-click="() => this.clearLinePractitioner(item.id)">
+                                            <i class="fa fa-times"/>
+                                        </button>
+                                    </div>
+
+                                    <div class="detail-half">
+                                        <label>Room:</label>
+                                        <select class="select-line-compact" t-att-value="item.room_id || ''"
+                                                t-on-change="(ev) => this.updateLineRoom(item.id, parseInt(ev.target.value) || null)">
+                                            <option value="">None</option>
+                                            <option t-foreach="this.getAvailableRoomsForPractitioner(item.practitioner_id)" t-as="room" t-key="room.id"
+                                                    t-att-value="room.id" t-esc="room.name"/>
+                                        </select>
+                                        <button class="clear-btn-compact" t-on-click="() => this.clearLineRoom(item.id)">
+                                            <i class="fa fa-times"/>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Compact Footer -->
+                    <div class="cart-footer-compact">
+                        <!-- Side by Side Global Discount & Totals -->
+                        <div class="footer-top-row">
+                            <div class="global-discount-left">
+                                <label>Global Discount:</label>
+                                <div class="discount-controls-inline">
+                                    <input type="number" class="input-small-compact no-spinner" t-att-value="state.globalDiscount || 0"
+                                           t-on-change="(ev) => this.updateGlobalDiscount(ev.target.value)"/>
+                                    <button class="toggle-btn-compact" t-att-class="state.globalDiscountType === 'percent' ? 'active' : ''"
+                                            t-on-click="() => this.updateGlobalDiscountType('percent')">%</button>
+                                    <button class="toggle-btn-compact" t-att-class="state.globalDiscountType === 'amount' ? 'active' : ''"
+                                            t-on-click="() => this.updateGlobalDiscountType('amount')">Amt</button>
+                                </div>
+                            </div>
+
+                            <div class="totals-right">
+                                <div class="total-line-compact">
+                                    <span>Subtotal:</span>
+                                    <span t-esc="this.formatCurrency(state.cartItems.reduce((t, i) => t + this.getLineTotal(i), 0))"/>
+                                </div>
+                                <div t-if="state.globalDiscount > 0" class="total-line-compact discount-line">
+                                    <span>Global Discount:</span>
+                                    <span t-esc="'-' + this.formatCurrency(this.getGlobalDiscountAmount())"/>
+                                </div>
+                                <div class="total-line-compact final-total">
+                                    <strong>Total: <span t-esc="this.formatCurrency(state.cartTotal)"/></strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Compact Payment Methods -->
+                        <div class="payment-methods-compact">
+                            <div t-foreach="state.paymentMethods" t-as="method" t-key="method.id"
+                                 class="payment-method-compact" t-att-class="state.selectedPaymentMethod?.id === method.id ? 'selected' : ''"
+                                 t-on-click="() => this.selectPaymentMethod(method)">
+                                <i t-att-class="method.type === 'cash' ? 'fa fa-money' : 'fa fa-credit-card'"/>
+                                <span t-esc="method.name"/>
+                            </div>
+                        </div>
+
+                        <!-- Compact Pay Button -->
+                        <button class="pay-button-compact" t-att-disabled="state.cartItems.length === 0 || !state.selectedPaymentMethod"
+                                t-on-click="processPayment">
+                            <i class="fa fa-credit-card"/> Pay <span t-esc="this.formatCurrency(state.cartTotal)"/>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

@@ -75,6 +75,7 @@ Detailed Feature List (User-Friendly)
 		'data/partner_type_data.xml',
 		# Views
 		'views/partner_type.xml',
+		'views/account_payment.xml',
 		'views/purchase_order.xml',
 		'views/sales_order.xml',
 		'views/account_move.xml',

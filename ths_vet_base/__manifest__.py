@@ -134,39 +134,23 @@ and efficient business operations.""",
 	'author': 'Techouse Solutions / Ismail Abdelkhalik',
 	'website': 'https://www.techouse.ae',
 	'depends': [
-		# Core Odoo modules
 		'base',
 		'mail',
 		'resource',
-
-		# Human Resources
 		'hr',
 		'hr_holidays',
 		'hr_work_entry',
-
-		# Custom THS modules
 		'ths_hr',
 		'ths_base',
-
-		# Inventory & Products
 		'stock',
 		'product',
-
-		# Accounting & Finance
 		'account',
+		'sale',
+		'sale_subscription',
 		'analytic',
-
-		# Scheduling & Calendar
 		'appointment',
 		'calendar',
-
-		# Point of Sale
-		'point_of_sale',
-
-		# Document Management
 		'documents',
-
-		# Communication
 		'whatsapp',
 	],
 	'data': [
@@ -190,6 +174,7 @@ and efficient business operations.""",
 		'views/product.xml',  # Product sub-types and medical products
 		'views/encounter.xml',  # Core encounter management
 		'views/service_models.xml',  # All service models (boarding, vaccination, etc.)
+		'views/invoice_report.xml',
 		'views/vet_menus.xml',
 		'wizard/species_breed_import_view.xml',
 	],
@@ -214,11 +199,13 @@ and efficient business operations.""",
 			'ths_vet_base/static/src/style.scss',
 			'ths_vet_base/static/src/icons.scss',
 			'ths_vet_base/static/src/img/syringe.svg',
+			'ths_vet_base/static/src/pos_interface/pos_interface.scss',
 
 			# Custom JavaScript components
+			'ths_vet_base/static/src/pos_interface/pos_interface.xml',
+			'ths_vet_base/static/src/pos_interface/pos_interface.js',
 			'ths_vet_base/static/src/js/encounter_dashboard.xml',
 			'ths_vet_base/static/src/js/encounter_dashboard.js',
-			# 'ths_vet_base/static/src/js/medical_dashboard.js',
 			'ths_vet_base/static/src/js/executive_dashboard.xml',
 			'ths_vet_base/static/src/js/executive_dashboard.js',
 		],

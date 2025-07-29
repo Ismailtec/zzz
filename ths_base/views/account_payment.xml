@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View: Add partner_type_id before partner_id -->
+    <record id="view_account_payment_form_inherit" model="ir.ui.view">
+        <field name="name">account.payment.form.inherit</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
+            <!-- Add partner_type_id before partner_id -->
+            <xpath expr="//field[@name='partner_id']" position="before">
+                <field name="partner_type_id" readonly="state != 'draft'"/>
+            </xpath>
+
+            <!-- Add amount fields after the amount field -->
+            <xpath expr="//field[@name='date']" position="before">
+                <field name="amount_used" invisible="state not in ('in_process', 'paid')" style="color: green; font-weight: bold;"/>
+                <field name="amount_remaining" invisible="state not in ('in_process', 'paid')" style="color: red; font-weight: bold;"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- List View: Add amount_remaining column -->
+    <record id="view_account_payment_list_inherit" model="ir.ui.view">
+        <field name="name">account.payment.list.inherit</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_tree"/>
+        <field name="arch" type="xml">
+            <!-- Add amount_remaining after amount column -->
+            <xpath expr="//field[@name='amount_signed']" position="after">
+                <field name="amount_remaining" string="Amount Left" decoration-danger="amount_remaining &gt; 0" decoration-success="amount_remaining == 0"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Search View: Add filters for amount tracking -->
+    <record id="view_account_payment_search_inherit" model="ir.ui.view">
+        <field name="name">account.payment.search.inherit</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='reconciled']" position="after">
+                <separator/>
+                <filter name="has_remaining" string="Has Remaining Amount" domain="[('amount_remaining', '>', 0)]"/>
+                <filter name="fully_used" string="Fully Used" domain="[('amount_remaining', '=', 0)]"/>
+            </xpath>
+
+            <!-- Add group by partner type -->
+            <xpath expr="//filter[@name='partner']" position="before">
+                <filter string="Partner Type" name="group_partner_type" context="{'group_by': 'partner_type_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Optional: Kanban View for better visualization -->
+    <record id="view_account_payment_kanban_inherit" model="ir.ui.view">
+        <field name="name">account.payment.kanban.inherit</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('col-6')]//field[@name='amount']" position="after">
+                <span style="color: green; font-weight: bold;">Used: <field name="amount_used"/></span>
+                <span style="color: red; font-weight: bold;">Left: <field name="amount_remaining"/></span>
+            </xpath>
+        </field>
+    </record>
+</odoo>

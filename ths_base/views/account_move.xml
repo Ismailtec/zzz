@@ -6,17 +6,63 @@
             <field name="model">account.move</field>
             <field name="inherit_id" ref="account.view_move_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='partner_id']" position="after">
+                <xpath expr="//sheet" position="inside">
                     <field name="ths_hide_taxes" invisible="1"/>
                 </xpath>
+                <label for="partner_id" position="replace"/>
+                <field name="quick_edit_total_amount" position="replace"/>
 
                 <xpath expr="//div[@name='button_box']" position="inside">
-                    <button type="object" name="action_view_landed_costs"
-                            class="oe_stat_button" icon="fa-truck"
-                            invisible="landed_cost_count == 0 or move_type != 'in_invoice'">
+                    <button type="object" name="action_view_landed_costs" class="oe_stat_button" icon="fa-truck" invisible="landed_cost_count == 0 or move_type != 'in_invoice'">
                         <field name="landed_cost_count" widget="statinfo" string="Landed Costs"/>
                     </button>
                 </xpath>
+
+                <field name="partner_id" position="before">
+                    <field name="partner_type_id" options="{'no_open': True, 'no_create': True}" readonly="state == 'posted'"
+                           placeholder="Select Partner Type first to see partners..."/>
+                </field>
+                <field name="partner_id" position="replace">
+                    <field name="partner_id" string="Customer" domain="[('partner_type_id', '=?', partner_type_id)]" context="{'show_address': False, 'show_email': False}"
+                           readonly="state == 'posted'" options="{'no_open': True, 'no_create': True}" placeholder="Select Customer..."/>
+                </field>
+
+                <xpath expr="//field[@name='name']" position="attributes">
+                    <attribute name="readonly">1</attribute>
+                </xpath>
+
+                <xpath expr="//field[@name='partner_id']" position="attributes">
+                    <attribute name="context">{'show_address': 0}</attribute>
+                </xpath>
+                <xpath expr="//field[@name='partner_shipping_id']" position="attributes">
+                    <attribute name="invisible">move_type == 'out_invoice'</attribute>
+                </xpath>
+                <xpath expr="//div[@name='journal_div']" position="after">
+                    <field name="payment_journal_name" string="Payment Journal" invisible="payment_state != 'paid'" readonly="1"/>
+                    <field name="payment_method_name" string="Payment Method" invisible="payment_state != 'paid'" readonly="1"/>
+                    <field name="amount_paid" string="Amount Paid" widget="monetary" invisible="payment_state != 'paid'" readonly="1"/>
+                </xpath>
+                <xpath expr="//group[hasclass('oe_subtotal_footer')]" position="before">
+                    <field name="global_discount_type" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']"/>
+                    <field name="global_discount_rate" readonly="state != 'draft'" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']"/>
+                </xpath>
+                <xpath expr="//field[@name='tax_totals']" position="before">
+                    <field name="global_discount_amount" readonly="1"
+                           invisible="global_discount_amount == 0 or move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']"/>
+                </xpath>
+                <xpath expr="//field[@name='account_id']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='name']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='analytic_distribution']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='invoice_line_ids']//field[@name='partner_id']" position="attributes">
+                    <attribute name="column_invisible">0</attribute>
+                </xpath>
+
                 <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='product_id']" position="attributes">
                     <attribute name="options">{'no_quick_create': True, 'no_create_edit': True}</attribute>
                 </xpath>
@@ -30,13 +76,114 @@
                 <xpath expr="//field[@name='line_ids']/list/field[@name='tax_ids']" position="attributes">
                     <attribute name="column_invisible">parent.ths_hide_taxes == True</attribute>
                 </xpath>
-                <xpath expr="//field[@name='line_ids']/list/field[@name='tax_tag_ids']" position="attributes">
+                <xpath expr="//page[@id='aml_tab']//field[@name='line_ids']//list//field[@name='tax_tag_ids']" position="attributes">
                     <attribute name="column_invisible">parent.ths_hide_taxes == True</attribute>
                 </xpath>
-                <xpath expr="//field[@name='line_ids']/list/field[@name='tax_tag_invert']" position="attributes">
+                <xpath expr="//page[@id='aml_tab']//field[@name='line_ids']//list//field[@name='tax_tag_invert']" position="attributes">
                     <attribute name="column_invisible">parent.ths_hide_taxes == True</attribute>
                 </xpath>
             </field>
         </record>
+
+        <record id="view_account_move_invoice_list_inherit_ths_base" model="ir.ui.view">
+            <field name="name">view.account.move.invoice.list.inherit.ths.base</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_out_invoice_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='amount_total_in_currency_signed']" position="after">
+                    <field name="payment_journal_name" optional="show"/>
+                    <field name="payment_method_name" optional="hide"/>
+                    <field name="amount_paid" optional="show" widget="monetary" sum="Total Paid"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- account.move list view (MAIN JE LIST VIEW) -->
+        <record id="view_account_move_list_inherit_ths_base" model="ir.ui.view">
+            <field name="name">view.account.move.list.inherit.ths.base</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='amount_total_signed']" position="after">
+                    <field name="payment_journal_name" optional="show"/>
+                    <field name="payment_method_name" optional="hide"/>
+                    <field name="amount_paid" optional="show" widget="monetary" sum="Total Paid"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_account_journal_form_inherit_ths_base" model="ir.ui.view">
+            <field name="name">account.journal.form.inherit.ths.base</field>
+            <field name="model">account.journal</field>
+            <field name="inherit_id" ref="account.view_account_journal_form"/>
+            <field name="arch" type="xml">
+                <field name="code" position="after">
+                    <field name="end_user_payment_method" invisible="type not in ['bank', 'cash']"/>
+                </field>
+            </field>
+        </record>
+
+        <template id="report_invoice_document_ths_base" inherit_id="account.report_invoice_document">
+
+            <!-- 1. HIDE TAXES when ths_hide_taxes is True -->
+            <xpath expr="//th[@name='th_taxes']" position="attributes">
+                <attribute name="t-if">not o.ths_hide_taxes</attribute>
+            </xpath>
+
+            <xpath expr="//td[@name='td_taxes']" position="attributes">
+                <attribute name="t-if">not o.ths_hide_taxes</attribute>
+            </xpath>
+
+
+            <!-- 3. PAYMENT TABLE after payment terms -->
+            <xpath expr="//div[@id='payment_term']" position="after">
+                <div t-if="print_with_payments" class="mb-3">
+                    <t t-if="o.payment_state != 'invoicing_legacy'">
+                        <t t-set="payments_vals" t-value="o.sudo().invoice_payments_widget and o.sudo().invoice_payments_widget['content'] or []"/>
+                        <t t-if="payments_vals">
+                            <h5>Payment Information</h5>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Payment Date</th>
+                                        <th>Payment Method</th>
+                                        <th>Journal</th>
+                                        <th>Payment Reference</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="payments_vals" t-as="payment_vals">
+                                        <tr t-if="payment_vals['is_exchange'] == 0">
+                                            <td><span t-out="payment_vals['date']" t-options='{"widget": "date"}'/></td>
+                                            <td><span t-out="payment_vals.get('payment_method_name', '')"/></td>
+                                            <td><span t-out="payment_vals.get('journal_name', '')"/></td>
+                                            <td><span t-out="payment_vals.get('ref', payment_vals.get('name', ''))"/></td>
+                                            <td><span t-out="payment_vals['amount']" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                    </t>
+                </div>
+            </xpath>
+
+        </template>
+
+        <template id="report_invoice_document_ths_base_2" inherit_id="account.document_tax_totals_template">
+            <xpath expr="//tr[hasclass('o_subtotal')]/td[1]/span" position="replace">
+                <span t-out="subtotal['name']">Total Amount</span>
+            </xpath>
+        </template>
+
+        <template id="report_invoice_document_ths_base_3" inherit_id="account.document_tax_totals_company_currency_template">
+            <xpath expr="//tr[hasclass('o_subtotal')]/td[1]/span" position="replace">
+                <span t-out="subtotal['name']">Total Amount</span>
+            </xpath>
+        </template>
+
+
+
     </data>
 </odoo>
