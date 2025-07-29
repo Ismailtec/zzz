@@ -1,39 +1,42 @@
 // ===========================
 // GLOBAL DIALOG SIZING
 // ===========================
-.o_dialog.o_warning_dialog .modal-dialog {
-  max-width: 500px !important;
-  width: 500px !important;
-  margin: 20vh auto !important;
-}
-
-.o_dialog.o_warning_dialog .modal-content {
-  height: auto !important;
-  max-height: 400px !important;
-}
-
-.o_dialog.o_warning_dialog .modal-body {
-  padding: 1rem !important;
-  height: auto !important;
-  overflow: visible !important;
-}
-
-.o_dialog:not(.o_warning_dialog) .modal-dialog {
-  max-width: 98vw !important;
-  width: 98vw !important;
-  margin: 1vh auto !important;
-}
-
-.o_dialog:not(.o_warning_dialog) .modal-content {
-  height: 98vh !important;
-  max-height: 98vh !important;
-}
-
-.o_dialog:not(.o_warning_dialog) .modal-body {
-  padding: 0 !important;
-  height: calc(98vh - 60px) !important;
-  overflow: hidden !important;
-}
+//.o_dialog.o_warning_dialog .modal-dialog {
+//  max-width: 40vh !important;
+//  width: 40vh !important;
+//  margin: 20vh auto !important;
+//}
+//
+//.o_dialog.o_warning_dialog .modal-content {
+//  height: auto !important;
+//  max-height: 400px !important;
+//  display: flex;
+//  align-items: center;
+//  justify-content: center;
+//}
+//
+//.o_dialog.o_warning_dialog .modal-body {
+//  padding: 1rem !important;
+//  height: auto !important;
+//  overflow: visible !important;
+//}
+//
+//.o_dialog:not(.o_warning_dialog) .modal-dialog {
+//  max-width: 98vw !important;
+//  width: 98vw !important;
+//  margin: 1vh auto !important;
+//}
+//
+//.o_dialog:not(.o_warning_dialog) .modal-content {
+//  height: 98vh !important;
+//  max-height: 98vh !important;
+//}
+//
+//.o_dialog:not(.o_warning_dialog) .modal-body {
+//  padding: 0 !important;
+//  height: calc(98vh - 60px) !important;
+//  overflow: hidden !important;
+//}
 
 // ===========================
 // NO SPINNER INPUT FIELDS
@@ -70,6 +73,7 @@ input[type=number].no-spinner {
   width: 100%;
   background: #f8f9fa;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding-bottom: 80px;
 }
 
 // ===========================
@@ -786,5 +790,19 @@ input[type=number].no-spinner {
   .footer-top-row {
     flex-direction: column;
     gap: 0.5rem;
+  }
+}
+
+.barcode-footer-section {
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+
+  .input-group-text {
+    font-weight: 600;
+    color: #495057;
+  }
+
+  input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
   }
 }

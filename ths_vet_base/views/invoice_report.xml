@@ -4,86 +4,85 @@
         <!-- Inherit invoice report for vet-specific information -->
         <template id="report_invoice_document_vet" inherit_id="account.report_invoice_document">
 
-            <!-- Only apply to out_invoice and out_refund -->
-            <xpath expr="//div[@id='informations']" position="before">
-                <t t-if="o.move_type in ['out_invoice', 'out_refund']" t-set="is_vet_invoice" t-value="True"/>
-            </xpath>
+            <!-- Replace entire address row with vet info for out_invoice/out_refund -->
+            <xpath expr="//div[hasclass('row')][1]" position="replace">
+                <t t-if="o.move_type in ['out_invoice', 'out_refund']">
+                    <!-- VET INFO SECTION -->
+                    <div class="row">
+                        <div class="offset-col-6 col-6">
+                            <!-- Pet Owner -->
+                            <div class="mb-2">
+                                <strong>Pet Owner: </strong><span t-field="o.partner_id.name"/>
+                            </div>
 
-            <!-- Rename partner_id to Pet Owner for vet invoices -->
-            <xpath expr="//address[@class='mb-0']" position="before">
-                <t t-if="is_vet_invoice">
-                    <div class="mb-2">
-                        <strong>Pet Owner</strong>
-                    </div>
-                </t>
-            </xpath>
+                            <!-- Patients - just names with commas -->
+                            <div t-if="o.patient_ids" class="mb-2">
+                                <strong>Patient(s): </strong>
+                                <span t-foreach="o.patient_ids" t-as="patient">
+                                    <span t-field="patient.name"/>
+                                    <t t-if="not patient_last">, </t>
+                                </span>
+                            </div>
 
-            <!-- Add vet-specific information after address section -->
-            <xpath expr="//div[@id='informations']" position="after">
-                <div t-if="is_vet_invoice" class="row mb-4" id="vet_information">
+                            <!-- Practitioner -->
+                            <div t-if="o.practitioner_id" class="mb-1">
+                                <strong>Practitioner: </strong><span t-field="o.practitioner_id.name"/>
+                            </div>
 
-                    <!-- Patient Information -->
-                    <div class="col-12" t-if="o.patient_ids" name="patient_info">
-                        <div class="mb-3">
-                            <strong>Patient(s):</strong>
-                            <div t-foreach="o.patient_ids" t-as="patient" class="ms-2">
-                                <div>
-                                    <span t-field="patient.name" class="fw-bold"/>
-
-                                    <!-- Species and Breed (only if not null) -->
-                                    <t t-if="patient.species_id">
-                                        <br/>
-                                        <span class="text-muted">Species: </span>
-                                        <span t-field="patient.species_id.name"/>
-
-                                        <!-- breed_id should be on the patient, not on species -->
-                                        <t t-if="patient.breed_id">
-                                            <span class="text-muted"> | Breed: </span>
-                                            <span t-field="patient.breed_id.name"/>
-                                        </t>
-                                    </t>
-                                </div>
+                            <!-- Room -->
+                            <div t-if="o.room_id" class="mb-1">
+                                <strong>Treatment Room: </strong><span t-field="o.room_id.name"/>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Practitioner and Room Information (only if not null) -->
-                    <div class="col-6" t-if="o.practitioner_id" name="practitioner_info">
-                        <strong>Practitioner:</strong>
-                        <div t-field="o.practitioner_id.name"/>
-                    </div>
-
-                    <div class="col-6" t-if="o.room_id" name="room_info">
-                        <strong>Treatment Room:</strong>
-                        <div t-field="o.room_id.name"/>
-                    </div>
-
-                </div>
-            </xpath>
-
-            <!-- Add patient info to invoice lines if available online level -->
-            <xpath expr="//td[@name='account_invoice_line_name']" position="after">
-                <t t-if="is_vet_invoice and line.patient_ids">
-                    <td name="td_line_patients" class="text-start">
-                        <div class="small text-muted">
-                            <span>For: </span>
-                            <span t-foreach="line.patient_ids" t-as="line_patient">
-                                <span t-field="line_patient.name"/>
-                                <t t-if="not line_patient_last">, </t>
-                            </span>
-                        </div>
-                    </td>
                 </t>
+
+                <!-- Keep original for non-vet invoices -->
                 <t t-else="">
-                    <td t-if="is_vet_invoice" name="td_line_patients_empty" class="text-start"></td>
+                    <div class="row">
+                        <t t-if="o.partner_shipping_id and (o.partner_shipping_id != o.partner_id)">
+                            <div class="col-6">
+                                <t t-set="information_block">
+                                    <div groups="account.group_delivery_invoice_address" name="shipping_address_block">
+                                        <strong>Shipping Address</strong>
+                                        <div t-field="o.partner_shipping_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                                    </div>
+                                </t>
+                            </div>
+                            <div class="col-6" name="address_not_same_as_shipping">
+                                <t t-set="address">
+                                    <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                                    <div t-if="o.partner_id.vat" id="partner_vat_address_not_same_as_shipping">
+                                        <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
+                                        <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </t>
+                        <t t-elif="o.partner_shipping_id and (o.partner_shipping_id == o.partner_id)">
+                            <div class="offset-col-6 col-6" name="address_same_as_shipping">
+                                <t t-set="address">
+                                    <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                                    <div t-if="o.partner_id.vat" id="partner_vat_address_same_as_shipping">
+                                        <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
+                                        <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="offset-col-6 col-6" name="no_shipping">
+                                <t t-set="address">
+                                    <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
+                                    <div t-if="o.partner_id.vat" id="partner_vat_no_shipping">
+                                        <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
+                                        <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </t>
+                    </div>
                 </t>
-            </xpath>
-
-            <!-- Add header for patient column -->
-            <xpath expr="//th[@name='th_description']" position="after">
-                <th t-if="is_vet_invoice" name="th_line_patients" class="text-start">
-                    <span>Patient</span>
-                </th>
             </xpath>
 
         </template>

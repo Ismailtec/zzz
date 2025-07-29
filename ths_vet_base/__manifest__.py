@@ -174,7 +174,7 @@ and efficient business operations.""",
 		'views/product.xml',  # Product sub-types and medical products
 		'views/encounter.xml',  # Core encounter management
 		'views/service_models.xml',  # All service models (boarding, vaccination, etc.)
-		'views/invoice_report.xml',
+		# 'views/invoice_report.xml',
 		'views/vet_menus.xml',
 		'wizard/species_breed_import_view.xml',
 	],

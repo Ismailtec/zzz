@@ -6,9 +6,9 @@
             <field name="model">account.move</field>
             <field name="inherit_id" ref="account.view_move_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//sheet" position="inside">
+                <field name="id" position="after">
                     <field name="ths_hide_taxes" invisible="1"/>
-                </xpath>
+                </field>
                 <label for="partner_id" position="replace"/>
                 <field name="quick_edit_total_amount" position="replace"/>
 
@@ -42,14 +42,61 @@
                     <field name="payment_method_name" string="Payment Method" invisible="payment_state != 'paid'" readonly="1"/>
                     <field name="amount_paid" string="Amount Paid" widget="monetary" invisible="payment_state != 'paid'" readonly="1"/>
                 </xpath>
-                <xpath expr="//group[hasclass('oe_subtotal_footer')]" position="before">
-                    <field name="global_discount_type" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']"/>
-                    <field name="global_discount_rate" readonly="state != 'draft'" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']"/>
+
+                <xpath expr="//group[hasclass('oe_invoice_lines_tab')]" position="after">
+                    <!-- Global Discount Controls -->
+                    <div class="row" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']">
+                        <div>
+                            <label for="global_discount_type" class="o_form_label">Global Discount Type:</label>
+                            <field name="global_discount_type" readonly="state != 'draft'" nolabel="1"/>
+                        </div>
+                        <div>
+                            <label for="global_discount_rate" class="o_form_label">
+                                <span invisible="global_discount_type != 'percent'">Discount (%):</span>
+                                <span invisible="global_discount_type != 'amount'">Discount Amount:</span>
+                            </label>
+                            <field name="global_discount_rate" readonly="state != 'draft'" nolabel="1"/><span invisible="global_discount_type != 'amount'"> KWD</span>
+                        </div>
+                    </div>
                 </xpath>
-                <xpath expr="//field[@name='tax_totals']" position="before">
-                    <field name="global_discount_amount" readonly="1"
-                           invisible="global_discount_amount == 0 or move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']"/>
-                </xpath>
+
+                <field name="tax_totals" position="before">
+                    <field name="subtotal_before_global_discount" string="Total W/o Disc." colspan="2" widget="monetary" readonly="1"
+                           invisible="line_discount_amount == 0 and global_discount_amount == 0"/>
+                    <field name="line_discount_amount" widget="monetary" string="Line Discount" colspan="2" readonly="1" class="text-danger"
+                           invisible="line_discount_amount == 0"/>
+                    <field name="global_discount_amount" widget="monetary" string="Global Discount" colspan="2" readonly="1" class="text-danger"
+                           invisible="global_discount_amount == 0"/>
+                </field>
+
+                <!-- Discount Breakdown Display -->
+                <!--                <xpath expr="//group[hasclass('oe_subtotal_footer')]" position="before">-->
+                <!--                    <div class="row mt-2" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund'] or (global_discount_amount == 0 and line_discount_amount == 0)">-->
+                <!--                        <div class="col-12">-->
+                <!--                            <table class="table table-sm">-->
+                <!--                                <tr invisible="subtotal_before_global_discount == 0">-->
+                <!--                                    <td class="text-right"><strong>Subtotal Before Discounts:</strong></td>-->
+                <!--                                    <td class="text-right">-->
+                <!--                                        <field name="subtotal_before_global_discount" string="Total W/o Disc." colspan="2" widget="monetary" nolabel="1" readonly="1"-->
+                <!--                                               class="text-right"/>-->
+                <!--                                    </td>-->
+                <!--                                </tr>-->
+                <!--                                <tr invisible="line_discount_amount == 0">-->
+                <!--                                    <td class="text-right">Line Discounts:</td>-->
+                <!--                                    <td class="text-right text-danger">-->
+                <!--                                        -<field name="line_discount_amount" widget="monetary" string="Line Discount" colspan="2" readonly="1" class="text-right text-danger"/>-->
+                <!--                                    </td>-->
+                <!--                                </tr>-->
+                <!--                                <tr invisible="global_discount_amount == 0">-->
+                <!--                                    <td class="text-right">Global Discount:</td>-->
+                <!--                                    <td class="text-right text-danger">-->
+                <!--                                        -<field name="global_discount_amount" widget="monetary" string="Global Discount" colspan="2" readonly="1" class="text-right text-danger"/>-->
+                <!--                                    </td>-->
+                <!--                                </tr>-->
+                <!--                            </table>-->
+                <!--                        </div>-->
+                <!--                    </div>-->
+                <!--                </xpath>-->
                 <xpath expr="//field[@name='account_id']" position="attributes">
                     <attribute name="optional">hide</attribute>
                 </xpath>
@@ -59,6 +106,10 @@
                 <xpath expr="//field[@name='analytic_distribution']" position="attributes">
                     <attribute name="optional">hide</attribute>
                 </xpath>
+                <xpath expr="//field[@name='invoice_line_ids']/list" position="inside">
+                    <field name="ths_hide_taxes" column_invisible="True"/>
+                </xpath>
+
                 <xpath expr="//field[@name='invoice_line_ids']//field[@name='partner_id']" position="attributes">
                     <attribute name="column_invisible">0</attribute>
                 </xpath>
@@ -71,16 +122,20 @@
                 </xpath>
                 <xpath expr="//field[@name='invoice_line_ids']/list/field[@name='tax_ids']" position="attributes">
                     <attribute name="column_invisible">parent.ths_hide_taxes == True</attribute>
+                    <attribute name="optional">hide</attribute>
                 </xpath>
 
                 <xpath expr="//field[@name='line_ids']/list/field[@name='tax_ids']" position="attributes">
                     <attribute name="column_invisible">parent.ths_hide_taxes == True</attribute>
+                    <attribute name="optional">hide</attribute>
                 </xpath>
                 <xpath expr="//page[@id='aml_tab']//field[@name='line_ids']//list//field[@name='tax_tag_ids']" position="attributes">
                     <attribute name="column_invisible">parent.ths_hide_taxes == True</attribute>
+                    <attribute name="optional">hide</attribute>
                 </xpath>
                 <xpath expr="//page[@id='aml_tab']//field[@name='line_ids']//list//field[@name='tax_tag_invert']" position="attributes">
                     <attribute name="column_invisible">parent.ths_hide_taxes == True</attribute>
+                    <attribute name="optional">hide</attribute>
                 </xpath>
             </field>
         </record>
@@ -112,11 +167,53 @@
             </field>
         </record>
 
+        <record id="view_move_line_form_inherit_ths_base" model="ir.ui.view">
+            <field name="name">account.move.line.form.inherit.ths.base</field>
+            <field name="model">account.move.line</field>
+            <field name="inherit_id" ref="account.view_move_line_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="inside">
+                    <field name="ths_hide_taxes" invisible="1"/>
+                </xpath>
+                <xpath expr="//group[@invisible='not tax_line_id and not tax_ids']" position="attributes">
+                    <attribute name="invisible">parent.ths_hide_taxes == True or (not tax_line_id and not tax_ids)</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_move_line_list_inherit_ths_base" model="ir.ui.view">
+            <field name="name">account.move.line.list.inherit.ths.base</field>
+            <field name="model">account.move.line</field>
+            <field name="inherit_id" ref="account.view_move_line_tree"/>
+            <field name="arch" type="xml">
+                <list name="move_line_tree" position="inside">
+                    <field name="ths_hide_taxes" column_invisible="1"/>
+                </list>
+
+                <field name="tax_ids" position="attributes">
+                    <attribute name="column_invisible">ths_hide_taxes == True</attribute>
+                    <attribute name="optional">hide</attribute>
+                </field>
+                <field name="tax_tag_ids" position="attributes">
+                    <attribute name="column_invisible">ths_hide_taxes == True</attribute>
+                    <attribute name="optional">hide</attribute>
+                </field>
+                <field name="tax_line_id" position="attributes">
+                    <attribute name="column_invisible">ths_hide_taxes == True</attribute>
+                    <attribute name="optional">hide</attribute>
+                </field>
+
+            </field>
+        </record>
+
         <record id="view_account_journal_form_inherit_ths_base" model="ir.ui.view">
             <field name="name">account.journal.form.inherit.ths.base</field>
             <field name="model">account.journal</field>
             <field name="inherit_id" ref="account.view_account_journal_form"/>
             <field name="arch" type="xml">
+                <xpath expr="//sheet" position="inside">
+                    <field name="ths_hide_taxes" invisible="1"/>
+                </xpath>
                 <field name="code" position="after">
                     <field name="end_user_payment_method" invisible="type not in ['bank', 'cash']"/>
                 </field>
@@ -125,18 +222,55 @@
 
         <template id="report_invoice_document_ths_base" inherit_id="account.report_invoice_document">
 
-            <!-- 1. HIDE TAXES when ths_hide_taxes is True -->
-            <xpath expr="//th[@name='th_taxes']" position="attributes">
-                <attribute name="t-if">not o.ths_hide_taxes</attribute>
+            <!-- Add discount breakdown before tax totals -->
+            <xpath expr="//t[@t-if='o.tax_totals'][@t-call='account.document_tax_totals']" position="before">
+                <div t-if="o.line_discount_amount > 0 or o.global_discount_amount > 0" class="clearfix">
+                    <div id="discount_breakdown">
+                        <table class="table table-sm" style="page-break-inside: avoid;">
+                            <t t-if="o.subtotal_before_global_discount > 0">
+                                <tr>
+                                    <td class="text-right"><strong>Subtotal Before Discounts:</strong></td>
+                                    <td class="text-right">
+                                        <span t-field="o.subtotal_before_global_discount + o.line_discount_amount"
+                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+                            <t t-if="o.line_discount_amount > 0">
+                                <tr>
+                                    <td class="text-right">Line Discounts:</td>
+                                    <td class="text-right" style="color: #d9534f;">
+                                        -<span t-field="o.line_discount_amount"
+                                               t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+                            <t t-if="o.global_discount_amount > 0">
+                                <tr>
+                                    <td class="text-right">Global Discount:</td>
+                                    <td class="text-right" style="color: #d9534f;">
+                                        -<span t-field="o.global_discount_amount"
+                                               t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+                            <tr style="border-top: 1px solid #000;">
+                                <td class="text-right"><strong>Subtotal After Discounts:</strong></td>
+                                <td class="text-right">
+                                    <strong>
+                                        <span t-field="o.amount_untaxed"
+                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
             </xpath>
-
-            <xpath expr="//td[@name='td_taxes']" position="attributes">
-                <attribute name="t-if">not o.ths_hide_taxes</attribute>
-            </xpath>
-
 
             <!-- 3. PAYMENT TABLE after payment terms -->
             <xpath expr="//div[@id='payment_term']" position="after">
+                <br/><br/><br/>
                 <div t-if="print_with_payments" class="mb-3">
                     <t t-if="o.payment_state != 'invoicing_legacy'">
                         <t t-set="payments_vals" t-value="o.sudo().invoice_payments_widget and o.sudo().invoice_payments_widget['content'] or []"/>
@@ -170,20 +304,6 @@
             </xpath>
 
         </template>
-
-        <template id="report_invoice_document_ths_base_2" inherit_id="account.document_tax_totals_template">
-            <xpath expr="//tr[hasclass('o_subtotal')]/td[1]/span" position="replace">
-                <span t-out="subtotal['name']">Total Amount</span>
-            </xpath>
-        </template>
-
-        <template id="report_invoice_document_ths_base_3" inherit_id="account.document_tax_totals_company_currency_template">
-            <xpath expr="//tr[hasclass('o_subtotal')]/td[1]/span" position="replace">
-                <span t-out="subtotal['name']">Total Amount</span>
-            </xpath>
-        </template>
-
-
 
     </data>
 </odoo>

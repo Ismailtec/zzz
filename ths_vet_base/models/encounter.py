@@ -305,6 +305,9 @@ class VetEncounterHeader(models.Model):
 	kanban_payment_method_id = fields.Many2one('account.journal', string='Payment Method', domain="[('end_user_payment_method', '=', True), ('type', 'in', ['bank', 'cash'])]",
 											   help="Payment method for POS UI processing")
 
+	global_discount_type = fields.Selection([('percent', 'Percentage'), ('amount', 'Fixed Amount')], string='Global Discount Type', default='percent')
+	global_discount_rate = fields.Float(string='Global Discount Rate', digits=(16, 3), default=0.0)
+
 	# -------- EMR Fields (Base Text Fields) --------
 	chief_complaint = fields.Text(string="Chief Complaint")
 	history_illness = fields.Text(string="History of Present Illness")
@@ -669,7 +672,10 @@ class VetEncounterHeader(models.Model):
 						'patient_ids': self.patient_ids.ids if hasattr(self, 'patient_ids') and self.patient_ids else False,
 						'practitioner_id': self.practitioner_id.id if self.practitioner_id else False,
 						'room_id': self.room_id.id if self.room_id else False,
+						'global_discount_type': getattr(self, 'global_discount_type', 'percent'),
+						'global_discount_rate': getattr(self, 'global_discount_rate', 0.0),
 					}
+					_logger.info(f"Processing SO with global discount: {self.global_discount_type} {self.global_discount_rate}")
 
 					# Add subscription-related fields if we have recurring products
 					if has_recurring_products:
@@ -721,23 +727,7 @@ class VetEncounterHeader(models.Model):
 			except Exception as e:
 				raise UserError(f"Failed to confirm Sale Order: {str(e)}")
 
-			# STEP 4: Handle Deliveries (only for non-subscription products)
-			try:
-				non_subscription_pickings = sale_order.picking_ids.filtered(
-					lambda p: p.state not in ['done', 'cancel'] and
-							  not any(mv.sale_line_id.product_id.recurring_invoice for mv in p.move_ids)
-				)
-
-				for picking in non_subscription_pickings:
-					picking.action_confirm()
-					picking.action_assign()
-					for move in picking.move_ids:
-						move.quantity_done = move.product_uom_qty
-					picking.button_validate()
-			except Exception as e:
-				raise UserError(f"Failed to process deliveries: {str(e)}")
-
-			# STEP 5: Create Invoice
+			# STEP 4: Create Invoice
 			try:
 				existing_invoice = sale_order.invoice_ids.filtered(lambda inv: inv.state == 'draft')
 
@@ -761,7 +751,10 @@ class VetEncounterHeader(models.Model):
 				# Update invoice header with encounter data
 				invoice_vals = {
 					'encounter_id': self.id,
+					'global_discount_type': getattr(self, 'global_discount_type', 'percent'),
+					'global_discount_rate': getattr(self, 'global_discount_rate', 0.0),
 				}
+				_logger.info(f"Processing payment with global discount: {self.global_discount_type} {self.global_discount_rate}")
 
 				if hasattr(self, 'patient_ids') and self.patient_ids:
 					invoice_vals['patient_ids'] = self.patient_ids.ids
@@ -773,6 +766,7 @@ class VetEncounterHeader(models.Model):
 					invoice_vals['partner_type_id'] = self.partner_id.partner_type_id.id
 
 				invoice.write(invoice_vals)
+				invoice._update_global_discount_line()
 
 				# Update invoice lines with encounter line data BEFORE posting
 				for encounter_line in lines_to_process:
@@ -793,17 +787,18 @@ class VetEncounterHeader(models.Model):
 
 							if inv_line_vals:
 								inv_line.write(inv_line_vals)
+
 			except Exception as e:
 				raise UserError(f"Failed to create/update invoice: {str(e)}")
 
-			# STEP 6: Post Invoice
+			# STEP 5: Post Invoice
 			try:
 				if invoice.state == 'draft':
 					invoice.action_post()
 			except Exception as e:
 				raise UserError(f"Failed to post invoice: {str(e)}")
 
-			# STEP 7: Create and Process Payment
+			# STEP 6: Create and Process Payment
 			try:
 				payment_journal = self.env['account.journal'].browse(payment_method_id)
 				if not payment_journal.exists():
@@ -840,7 +835,7 @@ class VetEncounterHeader(models.Model):
 			except Exception as e:
 				raise UserError(f"Failed to create/process payment: {str(e)}")
 
-			# STEP 8: Reconcile Payment with Invoice
+			# STEP 7: Reconcile Payment with Invoice
 			try:
 				if invoice.state == 'posted' and payment.state == 'paid':
 					invoice_receivable_lines = invoice.line_ids.filtered(
@@ -854,6 +849,80 @@ class VetEncounterHeader(models.Model):
 						(invoice_receivable_lines + payment_receivable_lines).reconcile()
 			except Exception as e:
 				raise UserError(f"Failed to reconcile payment: {str(e)}")
+
+			# STEP 8: Handle Deliveries (only for non-subscription products)
+			try:
+				for picking in sale_order.picking_ids.filtered(lambda p: p.state not in ['done', 'cancel']):
+					# Confirm the picking
+					if picking.state == 'draft':
+						picking.action_confirm()
+
+					# Assign whatever is available
+					if picking.state == 'confirmed':
+						picking.action_assign()
+
+					# Process each move - just set quantities and go
+					for move in picking.move_ids:
+						# Set quantity done = quantity ordered (regardless of stock)
+						move.quantity = move.product_uom_qty
+
+						# Handle lot/serial if needed (create dummy ones)
+						if move.product_id.tracking == 'lot':
+							# Create lot if needed
+							lot = self.env['stock.lot'].create({
+								'name': f"LOT-{fields.Datetime.now().strftime('%Y%m%d%H%M%S')}",
+								'product_id': move.product_id.id,
+								'company_id': move.company_id.id,
+							})
+
+							if not move.move_line_ids:
+								self.env['stock.move.line'].create({
+									'move_id': move.id,
+									'product_id': move.product_id.id,
+									'lot_id': lot.id,
+									'quantity': move.product_uom_qty,
+									'location_id': move.location_id.id,
+									'location_dest_id': move.location_dest_id.id,
+									'product_uom_id': move.product_uom.id,
+								})
+						elif move.product_id.tracking == 'serial':
+							# Create serial numbers
+							for i in range(int(move.product_uom_qty)):
+								serial = self.env['stock.lot'].create({
+									'name': f"SN-{fields.Datetime.now().strftime('%Y%m%d%H%M%S')}-{i + 1:03d}",
+									'product_id': move.product_id.id,
+									'company_id': move.company_id.id,
+								})
+								self.env['stock.move.line'].create({
+									'move_id': move.id,
+									'product_id': move.product_id.id,
+									'lot_id': serial.id,
+									'quantity': 1.0,
+									'location_id': move.location_id.id,
+									'location_dest_id': move.location_dest_id.id,
+									'product_uom_id': move.product_uom.id,
+								})
+						else:
+							# No tracking - create simple move line if needed
+							if not move.move_line_ids:
+								self.env['stock.move.line'].create({
+									'move_id': move.id,
+									'product_id': move.product_id.id,
+									'quantity': move.product_uom_qty,
+									'location_id': move.location_id.id,
+									'location_dest_id': move.location_dest_id.id,
+									'product_uom_id': move.product_uom.id,
+								})
+							else:
+								# Set quantity on existing move lines
+								for ml in move.move_line_ids:
+									ml.quantity = move.product_uom_qty
+
+					# Force validate the picking
+					picking.with_context(skip_backorder=True)._action_done()
+
+			except Exception as e:
+				_logger.error(f"Delivery error: {str(e)}")
 
 			# STEP 9: Update Subscription (if applicable)
 			try:
@@ -2947,6 +3016,22 @@ class AccountMoveLine(models.Model):
 	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")
 	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]")
 
+	@api.model
+	def default_get(self, fields_list):
+		defaults = super(AccountMoveLine, self).default_get(fields_list)
+
+		if self.move_id.move_type == 'out_invoice':
+			if self.move_id.partner_id and 'patient_ids' not in fields_list and not self.patient_ids:
+				self.patient_ids = self.move_id.patient_ids.ids
+
+			if self.move_id.practitioner_id and 'practitioner_id' not in fields_list and not self.practitioner_id:
+				self.practitioner_id = self.move_id.practitioner_id.id
+
+			if self.move_id.room_id and 'room_id' not in fields_list and not self.room_id:
+				self.room_id = self.move_id.room_id.id
+
+		return defaults
+
 
 class AccountPartialReconcile(models.Model):
 	_inherit = 'account.partial.reconcile'
@@ -2981,6 +3066,8 @@ class SaleOrder(models.Model):
 	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")
 	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]")
 	encounter_line_count = fields.Integer(compute='_compute_encounter_counts', store=False)
+	global_discount_type = fields.Selection([('percent', 'Percentage'), ('amount', 'Fixed Amount')], string='Global Discount Type', default='percent')
+	global_discount_rate = fields.Float(string='Global Discount Rate', digits=(16, 3), default=0.0)
 
 	@api.depends('encounter_line_ids')
 	def _compute_encounter_counts(self):

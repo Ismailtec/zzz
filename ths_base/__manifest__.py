@@ -73,6 +73,7 @@ Detailed Feature List (User-Friendly)
 		# Data files
 		'data/ir_sequence.xml',
 		'data/partner_type_data.xml',
+		'data/global_discount_data.xml',
 		# Views
 		'views/partner_type.xml',
 		'views/account_payment.xml',
@@ -88,7 +89,7 @@ Detailed Feature List (User-Friendly)
 		'views/product_category.xml',
 		'views/product_service.xml',
 		'views/res_config.xml',
-		# 'views/reports.xml',
+		'views/reports.xml',
 		'views/res_partner.xml',
 		'views/menus.xml',
 	],

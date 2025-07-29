@@ -24,9 +24,11 @@ class AccountMove(models.Model):
 	amount_paid = fields.Monetary(string='Amount Paid', compute='_compute_payment_info', store=True)
 
 	global_discount_type = fields.Selection([('percent', 'Percentage'), ('amount', 'Fixed Amount')], string='Global Discount Type', default='percent', tracking=True)
-	global_discount_rate = fields.Float(string='Global Discount Rate', default=0.0, tracking=True, help="Discount rate as percentage (0-100) or fixed amount")
+	global_discount_rate = fields.Float(string='Global Discount Rate', default=0.0, digits=(16, 3), tracking=True, help="Discount rate as percentage (0-100) or fixed amount")
 	global_discount_amount = fields.Monetary(string='Global Discount Amount', currency_field='currency_id', compute='_compute_global_discount_amount',
 											 help="Calculated global discount amount")
+	subtotal_before_global_discount = fields.Monetary(string='Subtotal Before Global Discount', compute='_compute_discount_breakdown', currency_field='currency_id')
+	line_discount_amount = fields.Monetary(string='Line Discounts Total', compute='_compute_discount_breakdown', currency_field='currency_id')
 
 	@api.onchange('partner_type_id')
 	def _onchange_partner_type_clear_partner(self):
@@ -63,29 +65,99 @@ class AccountMove(models.Model):
 				move.payment_method_name = ''
 				move.amount_paid = 0.0
 
-	@api.depends('amount_untaxed', 'global_discount_type', 'global_discount_rate')
+	@api.depends('invoice_line_ids.price_subtotal', 'global_discount_type', 'global_discount_rate')
 	def _compute_global_discount_amount(self):
 		for move in self:
 			if move.global_discount_rate > 0:
-				# Get the original amount_untaxed before any discounts
-				original_untaxed = sum(move.line_ids.filtered(lambda l: not l.display_type).mapped('price_subtotal'))
+				# Get global discount product to exclude from calculation
+				discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+
+				# Calculate based on lines excluding the global discount line itself
+				regular_lines = move.invoice_line_ids.filtered(
+					lambda l: not l.display_type and (not discount_product or l.product_id != discount_product)
+				)
+				subtotal_before_global_discount = sum(regular_lines.mapped('price_subtotal'))
 
 				if move.global_discount_type == 'percent':
-					move.global_discount_amount = original_untaxed * (move.global_discount_rate / 100)
+					move.global_discount_amount = subtotal_before_global_discount * (move.global_discount_rate / 100)
 				else:  # amount
 					move.global_discount_amount = move.global_discount_rate
 			else:
 				move.global_discount_amount = 0.0
 
-	@api.depends('line_ids.price_subtotal', 'line_ids.price_total', 'line_ids.tax_ids', 'partner_id', 'currency_id', 'global_discount_amount')
-	def _compute_amount(self):
-		"""Override to include global discount in total calculation"""
-		super()._compute_amount()
+	@api.depends('invoice_line_ids.price_subtotal', 'invoice_line_ids.price_unit', 'invoice_line_ids.quantity', 'invoice_line_ids.discount')
+	def _compute_discount_breakdown(self):
 		for move in self:
-			if move.global_discount_amount > 0:
-				# Apply global discount to both untaxed and total
-				move.amount_untaxed = move.amount_untaxed - move.global_discount_amount
-				move.amount_total = move.amount_total - move.global_discount_amount
+			# Get global discount product to exclude from calculation
+			discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+
+			regular_lines = move.invoice_line_ids.filtered(
+				lambda l: not l.display_type and (not discount_product or l.product_id != discount_product)
+			)
+
+			if regular_lines:
+				# Subtotal before any discounts (using price_unit * quantity)
+				subtotal_before_discounts = sum(line.price_unit * line.quantity for line in regular_lines)
+
+				# Current subtotal (after line discounts but before global discount)
+				move.subtotal_before_global_discount = sum(regular_lines.mapped('price_subtotal'))
+
+				# Line discount amount (difference between before and after line discounts)
+				move.line_discount_amount = subtotal_before_discounts - move.subtotal_before_global_discount
+			else:
+				move.subtotal_before_global_discount = 0.0
+				move.line_discount_amount = 0.0
+
+	@api.onchange('global_discount_type', 'global_discount_rate')
+	def _onchange_global_discount(self):
+		"""Update global discount line when discount changes"""
+		if self.state == 'draft':
+			self._update_global_discount_line()
+
+	def _update_global_discount_line(self):
+		"""Add, update, or remove global discount line"""
+		self.ensure_one()
+
+		if self.state != 'draft':
+			return
+
+		# Get global discount product
+		discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+		if not discount_product:
+			return
+
+		# Find existing global discount line
+		existing_discount_line = self.invoice_line_ids.filtered(
+			lambda l: l.product_id == discount_product
+		)
+
+		# Calculate discount amount
+		self._compute_global_discount_amount()
+
+		if self.global_discount_amount > 0:
+			# Create or update discount line
+			discount_line_vals = {
+				'product_id': discount_product.id,
+				'name': f"Global Discount ({self.global_discount_rate}{'%' if self.global_discount_type == 'percent' else ' ' + self.currency_id.symbol})",
+				'quantity': 1,
+				'price_unit': -self.global_discount_amount,  # Negative for discount
+				'account_id': discount_product.property_account_income_id.id or
+							  discount_product.categ_id.property_account_income_categ_id.id,
+			}
+
+			if existing_discount_line:
+				# Update existing line
+				existing_discount_line.write({
+					'name': discount_line_vals['name'],
+					'price_unit': discount_line_vals['price_unit'],
+				})
+			else:
+				# Create new line
+				self.invoice_line_ids = [(0, 0, discount_line_vals)]
+		else:
+			# Remove existing discount line if amount is 0
+			if existing_discount_line:
+				self.invoice_line_ids = [(3, existing_discount_line.id, 0)]
 
 	@api.constrains('global_discount_rate', 'global_discount_type')
 	def _check_global_discount_rate(self):
@@ -94,24 +166,6 @@ class AccountMove(models.Model):
 				raise ValidationError("Discount percentage must be between 0 and 100.")
 			elif move.global_discount_type == 'amount' and move.global_discount_rate < 0:
 				raise ValidationError("Discount amount cannot be negative.")
-
-	@api.onchange('global_discount_type', 'global_discount_rate')
-	def _onchange_global_discount(self):
-		"""Update amounts immediately when discount changes"""
-		self._compute_global_discount_amount()
-		# Force recomputation of totals
-		self._compute_amount()
-
-	@api.depends('line_ids.matched_debit_ids', 'line_ids.matched_credit_ids', 'line_ids.debit', 'line_ids.credit', 'line_ids.currency_id', 'line_ids.amount_currency',
-				 'line_ids.amount_residual', 'line_ids.amount_residual_currency', 'line_ids.payment_id.state', 'line_ids.full_reconcile_id', 'global_discount_amount')
-	def _compute_amount_residual(self):
-		"""Override to ensure amount_residual reflects global discount"""
-		super()._compute_amount_residual()
-		for move in self:
-			if move.global_discount_amount > 0 and move.move_type in ('out_invoice', 'out_refund'):
-				# amount_residual should be based on amount_total which already includes discount
-				# So this should automatically be correct, but if not working, we can force it
-				pass
 
 	def _compute_landed_costs(self):
 		""" Find landed costs linked via PO (if bill from PO) or directly """
@@ -266,6 +320,24 @@ class AccountMove(models.Model):
 
 		return defaults
 
+	@api.model_create_multi
+	def create(self, vals_list):
+		moves = super().create(vals_list)
+		for move in moves:
+			if move.move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and move.global_discount_rate > 0:
+				move._update_global_discount_line()
+		return moves
+
+	def write(self, vals):
+		result = super().write(vals)
+
+		# Update global discount line if relevant fields changed
+		if any(field in vals for field in ['global_discount_type', 'global_discount_rate']) and self.state == 'draft':
+			for move in self:
+				move._update_global_discount_line()
+
+		return result
+
 
 class AccountInvoiceLine(models.Model):
 	_inherit = "account.move.line"
@@ -277,3 +349,4 @@ class AccountJournal(models.Model):
 	_inherit = 'account.journal'
 
 	end_user_payment_method = fields.Boolean(string='Payment Method', default=False, help="If checked, this journal will appear in the POS-like payment interface")
+	ths_hide_taxes = fields.Boolean(related="company_id.ths_hide_taxes", readonly=False, string="Hide Taxes", help="Technical field to read the global config setting.")

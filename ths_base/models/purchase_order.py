@@ -12,34 +12,14 @@ class PurchaseOrder(models.Model):
 	_inherit = 'purchase.order'
 
 	# --- Fields ---
-	ths_effective_date = fields.Date(
-		string="Date",
-		copy=False,
-		index=True,
-		help="The primary effective date for this order. Sets the Order Deadline and lines' Expected Arrival. "
-			 "This date will be propagated to the corresponding receipts (attempted via picking default_get).",
-		default=fields.Date.context_today,
-		tracking=True,
-	)
+	ths_effective_date = fields.Date(string="Date", copy=False, index=True, default=fields.Date.context_today, tracking=True,
+									 help="The primary effective date for this order. Sets the Order Deadline and lines' Expected Arrival. "
+										  "This date will be propagated to the corresponding receipts (attempted via picking default_get).")
 	# Link to potentially multiple LC records created from this PO or related Bills
-	ths_stock_landed_cost_ids = fields.One2many(
-		'stock.landed.cost',
-		'purchase_order_id',
-		string='Landed Costs',
-		copy=False,
-		readonly=True,
-		help="Landed Cost record(s) generated or linked from this PO."
-	)
-	ths_landed_cost_count = fields.Integer(
-		compute='_compute_landed_cost_count',
-		string="# Landed Costs"
-	)
-	ths_hide_taxes = fields.Boolean(
-		related="company_id.ths_hide_taxes",
-		readonly=False,
-		string="Hide Taxes",
-		help="Technical field to read the global config setting."
-	)
+	ths_stock_landed_cost_ids = fields.One2many('stock.landed.cost', 'purchase_order_id', string='Landed Costs', copy=False, readonly=True,
+												help="Landed Cost record(s) generated or linked from this PO.")
+	ths_landed_cost_count = fields.Integer(compute='_compute_landed_cost_count', string="# Landed Costs")
+	ths_hide_taxes = fields.Boolean(related="company_id.ths_hide_taxes", readonly=False, string="Hide Taxes", help="Technical field to read the global config setting.")
 
 	# --- Compute Methods ---
 	@api.depends('ths_stock_landed_cost_ids')
@@ -201,9 +181,4 @@ class PurchaseOrder(models.Model):
 class PurchaseOrderLine(models.Model):
 	_inherit = "purchase.order.line"
 
-	ths_hide_taxes = fields.Boolean(
-		related="company_id.ths_hide_taxes",
-		readonly=False,
-		string="Hide Taxes",
-		help="Technical field to read the global config setting."
-	)
+	ths_hide_taxes = fields.Boolean(related="company_id.ths_hide_taxes", readonly=False, string="Hide Taxes", help="Technical field to read the global config setting.")

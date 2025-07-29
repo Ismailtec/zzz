@@ -1,7 +1,7 @@
 /** @odoo-module **/
 
 import {registry} from "@web/core/registry";
-import {Component, useState, onWillStart} from "@odoo/owl";
+import {Component, onWillStart, useState} from "@odoo/owl";
 import {useService} from "@web/core/utils/hooks";
 import {_t} from "@web/core/l10n/translation";
 import {ConfirmationDialog} from "@web/core/confirmation_dialog/confirmation_dialog";
@@ -24,7 +24,9 @@ class VetPosClientAction extends Component {
                 practitioner_id: null,
                 room_id: null,
                 encounter_line_ids: [],
-                company_currency: 'KWD'
+                company_currency: 'KWD',
+                global_discount_type: 'percent',
+                global_discount_rate: 0.0
             },
             productsByCategory: {},
             paymentMethods: [],
@@ -39,6 +41,10 @@ class VetPosClientAction extends Component {
             availablePatients: [],
             availablePractitioners: [],
             availableRooms: [],
+            practitionerDepartments: {},
+            roomDepartments: {},
+            isProcessingPayment: false,
+            paymentCompleted: false,
         });
 
         onWillStart(async () => {
@@ -54,9 +60,13 @@ class VetPosClientAction extends Component {
                 const data = await this.orm.read(
                     "vet.encounter.header",
                     [encounterId],
-                    ["id", "name", "partner_id", "patient_ids", "practitioner_id", "room_id", "encounter_line_ids", "company_currency"]
+                    ["id", "name", "partner_id", "patient_ids", "practitioner_id", "room_id", "encounter_line_ids", "company_currency", "global_discount_type", "global_discount_rate"]
                 );
-                this.state.encounter = {...this.state.encounter, ...data[0]};
+                const encounter_data = data[0];
+                this.state.encounter = {...this.state.encounter, ...encounter_data};
+
+                this.state.globalDiscountType = encounter_data.global_discount_type || 'percent';
+                this.state.globalDiscount = encounter_data.global_discount_rate || 0;
             }
 
             this.state.productsByCategory = await this.orm.call(
@@ -82,6 +92,7 @@ class VetPosClientAction extends Component {
                 await this.loadExistingLines();
             }
 
+            this.updateCartTotal();
             this.state.isLoading = false;
         } catch (error) {
             console.error("Error loading POS data:", error);
@@ -104,12 +115,26 @@ class VetPosClientAction extends Component {
                 {fields: ["id", "name", "ths_department_id"]}
             );
 
+            this.state.practitionerDepartments = {};
+            this.state.availablePractitioners.forEach(prac => {
+                if (prac.ths_department_id) {
+                    this.state.practitionerDepartments[prac.id] = Array.isArray(prac.ths_department_id) ? prac.ths_department_id[0] : prac.ths_department_id;
+                }
+            });
+
             this.state.availableRooms = await this.orm.call(
                 "appointment.resource",
                 "search_read",
                 [[['resource_category', '=', 'location'], ['active', '=', true]]],
                 {fields: ["id", "name", "ths_department_id"]}
             );
+
+            this.state.roomDepartments = {};
+            this.state.availableRooms.forEach(room => {
+                if (room.ths_department_id) {
+                    this.state.roomDepartments[room.id] = Array.isArray(room.ths_department_id) ? room.ths_department_id[0] : room.ths_department_id;
+                }
+            });
 
         } catch (error) {
             console.error("Error loading resources:", error);
@@ -270,6 +295,7 @@ class VetPosClientAction extends Component {
             return total + this.getLineTotal(item);
         }, 0);
 
+        // Calculate global discount amount
         let globalDiscountAmount = 0;
         if (this.state.globalDiscount > 0) {
             if (this.state.globalDiscountType === 'percent') {
@@ -279,17 +305,55 @@ class VetPosClientAction extends Component {
             }
         }
 
-        this.state.cartTotal = subtotal - globalDiscountAmount;
+        // Final total after global discount
+        this.state.cartTotal = Math.max(0, subtotal - globalDiscountAmount);
+        this.state.globalDiscountAmount = globalDiscountAmount;
+
+        console.log("Cart calculation:", {
+            subtotal: subtotal,
+            globalDiscountAmount: globalDiscountAmount,
+            finalTotal: this.state.cartTotal
+        });
     }
 
-    updateGlobalDiscount(discount) {
+    getGlobalDiscountAmount() {
+        let subtotal = this.state.cartItems.reduce((total, item) => {
+            return total + this.getLineTotal(item);
+        }, 0);
+
+        if (this.state.globalDiscount > 0) {
+            if (this.state.globalDiscountType === 'percent') {
+                return subtotal * (this.state.globalDiscount / 100);
+            } else {
+                return this.state.globalDiscount;
+            }
+        }
+        return 0;
+    }
+
+    async updateGlobalDiscount(discount) {
         this.state.globalDiscount = parseFloat(discount) || 0;
         this.updateCartTotal();
+        await this.updateEncounterGlobalDiscount();
     }
 
-    updateGlobalDiscountType(type) {
+    async updateGlobalDiscountType(type) {
         this.state.globalDiscountType = type;
         this.updateCartTotal();
+        await this.updateEncounterGlobalDiscount();
+    }
+
+    async updateEncounterGlobalDiscount() {
+        if (!this.state.encounter.id) return;
+
+        try {
+            await this.orm.write("vet.encounter.header", [this.state.encounter.id], {
+                'global_discount_type': this.state.globalDiscountType,
+                'global_discount_rate': this.state.globalDiscount,
+            });
+        } catch (error) {
+            console.error("Error updating encounter global discount:", error);
+        }
     }
 
     selectPaymentMethod(method) {
@@ -330,17 +394,14 @@ class VetPosClientAction extends Component {
             return this.state.availableRooms;
         }
 
-        const practitioner = this.state.availablePractitioners.find(p => p.id === practitionerId);
-        if (practitioner && practitioner.ths_department_id) {
-            const departmentId = Array.isArray(practitioner.ths_department_id) ? practitioner.ths_department_id[0] : practitioner.ths_department_id;
-            return this.state.availableRooms.filter(room => {
-                if (!room.ths_department_id) return false;
-                const roomDeptId = Array.isArray(room.ths_department_id) ? room.ths_department_id[0] : room.ths_department_id;
-                return roomDeptId === departmentId;
-            });
+        const practitionerDeptId = this.state.practitionerDepartments[practitionerId];
+        if (!practitionerDeptId) {
+            return this.state.availableRooms;
         }
 
-        return this.state.availableRooms;
+        return this.state.availableRooms.filter(room => {
+            return this.state.roomDepartments[room.id] === practitionerDeptId;
+        });
     }
 
     updateLinePractitioner(itemId, practitionerId) {
@@ -467,6 +528,11 @@ class VetPosClientAction extends Component {
     }
 
     async processPayment() {
+        if (this.state.isProcessingPayment || this.state.paymentCompleted) {
+            this.notification.add(_t("Payment is already being processed"), {type: "warning"});
+            return;
+        }
+
         if (!this.state.selectedPaymentMethod) {
             this.notification.add(_t("Please select a payment method"), {type: "warning"});
             return;
@@ -476,9 +542,16 @@ class VetPosClientAction extends Component {
             return;
         }
 
+        this.state.isProcessingPayment = true;
+
         try {
             console.log("Starting payment process...");
+            console.log("Expected payment amount:", this.state.cartTotal);
 
+            // First sync global discount to encounter
+            await this.updateEncounterGlobalDiscount();
+
+            // Add new items to encounter
             const newItems = this.state.cartItems.filter(item => !item.isExisting);
             for (const item of newItems) {
                 const patientIds = item.patient_ids?.length ? item.patient_ids : [];
@@ -493,7 +566,11 @@ class VetPosClientAction extends Component {
                 });
             }
 
-            console.log("Processing payment...");
+            console.log("Processing payment with global discount:", {
+                type: this.state.globalDiscountType,
+                rate: this.state.globalDiscount,
+                expectedTotal: this.state.cartTotal
+            });
 
             const result = await this.orm.call("vet.encounter.header", "process_payment_kanban_ui", [this.state.encounter.id], {
                 payment_method_id: this.state.selectedPaymentMethod.id,
@@ -501,37 +578,63 @@ class VetPosClientAction extends Component {
 
             console.log("Payment result:", result);
 
-            // FIX #6: Handle result properly without throwing
             if (result && result.success === true) {
+                this.state.paymentCompleted = true;
                 this.notification.add(result.message || _t("Payment processed successfully!"), {type: "success"});
-                setTimeout(() => {
-                    window.close();
-                }, 1500);
+
+                // Clear cart and reset state
+                this.clearCartAndClose();
             } else {
-                // Don't throw, just show notification
                 const errorMsg = result?.message || result?.error || "Payment processing failed - unknown error";
                 this.notification.add(_t("Error: ") + errorMsg, {type: "danger"});
+                this.state.isProcessingPayment = false;
             }
         } catch (error) {
             console.error("Payment processing error:", error);
             this.notification.add(_t("Error processing payment: ") + error.message, {type: "danger"});
+            this.state.isProcessingPayment = false;
         }
     }
 
-    getGlobalDiscountAmount() {
-        let subtotal = this.state.cartItems.reduce((total, item) => {
-            return total + this.getLineTotal(item);
-        }, 0);
+    clearCartAndClose() {
+        // Clear all cart data
+        this.state.cartItems = [];
+        this.state.globalDiscount = 0;
+        this.state.globalDiscountAmount = 0;
+        this.state.cartTotal = 0;
+        this.state.selectedPaymentMethod = null;
+        this.state.isProcessingPayment = false;
+        this.state.paymentCompleted = true;
 
-        if (this.state.globalDiscount > 0) {
-            if (this.state.globalDiscountType === 'percent') {
-                return subtotal * (this.state.globalDiscount / 100);
+        // Close the window after a short delay
+        setTimeout(() => {
+            window.close();
+        }, 2000);
+    }
+
+    async scanBarcode(barcode) {
+        if (!barcode) return;
+
+        try {
+            // Search for product by barcode
+            const products = await this.orm.call("product.product", "search_read", [
+                [['barcode', '=', barcode], ['sale_ok', '=', true], ['active', '=', true]],
+                ['id', 'name', 'lst_price', 'barcode', 'image_128', 'default_code']
+            ]);
+
+            if (products.length > 0) {
+                const product = products[0];
+                this.addToCart(product);
+                this.notification.add(_t("Product added: ") + product.name, {type: "success"});
             } else {
-                return this.state.globalDiscount;
+                this.notification.add(_t("Product not found with barcode: ") + barcode, {type: "warning"});
             }
+        } catch (error) {
+            console.error("Barcode scan error:", error);
+            this.notification.add(_t("Error scanning barcode"), {type: "danger"});
         }
-        return 0;
     }
+
 }
 
 registry.category("actions").add("vet_pos_interface_action", VetPosClientAction);

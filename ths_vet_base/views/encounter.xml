@@ -121,6 +121,8 @@
                                 <field name="total_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/>
                                 <field name="returned_amount" widget="monetary" invisible="not returned_amount" options="{'currency_field': 'company_currency'}"/>
                                 <field name="pending_payments" readonly="1" widget="boolean_toggle" string="Has Pending Payments"/>
+                                <field name="global_discount_type" invisible="total_amount == 0"/>
+                                <field name="global_discount_rate" invisible="total_amount == 0"/>
                                 <field name="invoice_count" invisible="1"/>
                                 <field name="sale_order_count" invisible="1"/>
                                 <field name="company_currency" invisible="1"/>
@@ -1987,90 +1989,5 @@
             </graph>
         </field>
     </record>
-
-<!--    <template id="report_invoice_document_vet" inherit_id="account.report_invoice_document">-->
-
-<!--        &lt;!&ndash; Replace entire address row with vet info for out_invoice/out_refund &ndash;&gt;-->
-<!--        <xpath expr="//div[hasclass('row')][1]" position="replace">-->
-<!--            <t t-if="o.move_type in ['out_invoice', 'out_refund']">-->
-<!--                &lt;!&ndash; VET INFO SECTION &ndash;&gt;-->
-<!--                <div class="row">-->
-<!--                    <div class="offset-col-6 col-6">-->
-<!--                        &lt;!&ndash; Pet Owner &ndash;&gt;-->
-<!--                        <div class="mb-2">-->
-<!--                            <strong>Pet Owner: </strong><span t-field="o.partner_id.name"/>-->
-<!--                        </div>-->
-
-<!--                        &lt;!&ndash; Patients - just names with commas &ndash;&gt;-->
-<!--                        <div t-if="o.patient_ids" class="mb-2">-->
-<!--                            <strong>Patient(s): </strong>-->
-<!--                            <span t-foreach="o.patient_ids" t-as="patient">-->
-<!--                                <span t-field="patient.name"/>-->
-<!--                                <t t-if="not patient_last">, </t>-->
-<!--                            </span>-->
-<!--                        </div>-->
-
-<!--                        &lt;!&ndash; Practitioner &ndash;&gt;-->
-<!--                        <div t-if="o.practitioner_id" class="mb-1">-->
-<!--                            <strong>Practitioner: </strong><span t-field="o.practitioner_id.name"/>-->
-<!--                        </div>-->
-
-<!--                        &lt;!&ndash; Room &ndash;&gt;-->
-<!--                        <div t-if="o.room_id" class="mb-1">-->
-<!--                            <strong>Treatment Room: </strong><span t-field="o.room_id.name"/>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </t>-->
-
-<!--            &lt;!&ndash; Keep original for non-vet invoices &ndash;&gt;-->
-<!--            <t t-else="">-->
-<!--                <div class="row">-->
-<!--                    <t t-if="o.partner_shipping_id and (o.partner_shipping_id != o.partner_id)">-->
-<!--                        <div class="col-6">-->
-<!--                            <t t-set="information_block">-->
-<!--                                <div groups="account.group_delivery_invoice_address" name="shipping_address_block">-->
-<!--                                    <strong>Shipping Address</strong>-->
-<!--                                    <div t-field="o.partner_shipping_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>-->
-<!--                                </div>-->
-<!--                            </t>-->
-<!--                        </div>-->
-<!--                        <div class="col-6" name="address_not_same_as_shipping">-->
-<!--                            <t t-set="address">-->
-<!--                                <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>-->
-<!--                                <div t-if="o.partner_id.vat" id="partner_vat_address_not_same_as_shipping">-->
-<!--                                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>-->
-<!--                                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>-->
-<!--                                </div>-->
-<!--                            </t>-->
-<!--                        </div>-->
-<!--                    </t>-->
-<!--                    <t t-elif="o.partner_shipping_id and (o.partner_shipping_id == o.partner_id)">-->
-<!--                        <div class="offset-col-6 col-6" name="address_same_as_shipping">-->
-<!--                            <t t-set="address">-->
-<!--                                <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>-->
-<!--                                <div t-if="o.partner_id.vat" id="partner_vat_address_same_as_shipping">-->
-<!--                                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>-->
-<!--                                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>-->
-<!--                                </div>-->
-<!--                            </t>-->
-<!--                        </div>-->
-<!--                    </t>-->
-<!--                    <t t-else="">-->
-<!--                        <div class="offset-col-6 col-6" name="no_shipping">-->
-<!--                            <t t-set="address">-->
-<!--                                <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>-->
-<!--                                <div t-if="o.partner_id.vat" id="partner_vat_no_shipping">-->
-<!--                                    <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-out="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>-->
-<!--                                    <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>-->
-<!--                                </div>-->
-<!--                            </t>-->
-<!--                        </div>-->
-<!--                    </t>-->
-<!--                </div>-->
-<!--            </t>-->
-<!--        </xpath>-->
-
-<!--    </template>-->
 
 </odoo>
