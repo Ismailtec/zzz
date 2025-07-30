@@ -137,7 +137,10 @@
                             <group string="Encounter Lines">
                                 <field name="encounter_line_ids" context="{'default_encounter_id': id}" nolabel="1"/>
                             </group>
-                            <group string="Direct Invoices">
+                            <group string="Sales Order">
+                                <field name="sale_order_ids" context="{'default_encounter_id': id}" nolabel="1" can_write="1" can_create="true"/>
+                            </group>
+                            <group string="Invoices">
                                 <field name="direct_invoice_ids" nolabel="1" readonly="1" context="{'default_encounter_id': id}" view_mode="list,form">
                                 </field>
                             </group>
@@ -146,12 +149,9 @@
                             <!--                                       decoration-danger="name">-->
                             <!--                                </field>-->
                             <!--                            </group>-->
-                            <group string="Sales Order">
-                                <field name="sale_order_ids" context="{'default_encounter_id': id}" nolabel="1" can_write="1" can_create="true"/>
-                            </group>
                         </page>
                         <page string="Services/Products" name="vet_encounter_line">
-                            <field name="encounter_line_ids" nolabel="1">
+                            <field name="encounter_line_ids" nolabel="1" context="{'default_encounter_id': id, 'default_partner_id': partner_id}">
                                 <list editable="top">
                                     <field name="product_id" required="1"/>
                                     <field name="product_description" optional="hide"/>
@@ -160,21 +160,17 @@
                                     <field name="unit_price" widget="monetary" options="{'currency_field': 'company_currency'}"/>
                                     <field name="discount" widget="percentage" optional="show"/>
                                     <field name="sub_total" readonly="1" widget="monetary" sum="Total" options="{'currency_field': 'company_currency'}" optional="show"/>
-                                    <!--                                    <field name="commission_pct" optional="hide"/>-->
                                     <field name="partner_id" optional="hide" readonly="0"/>
                                     <field name="patient_ids" optional="show" widget="many2many_tags"/>
-                                    <field name="practitioner_id" options="{'no_open': True}" required="0"/>
+                                    <field name="practitioner_id" options="{'no_open': True}" required="0" optional="show"/>
                                     <field name="room_id" optional="show" domain="room_id_domain"/>
-                                    <field name="payment_status" widget="badge"
-                                           decoration-success="payment_status == 'paid'"
-                                           decoration-info="payment_status == 'pending'"
-                                           decoration-warning="payment_status in ('cancelled', 'refunded')"
-                                           optional="show"/>
+                                    <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-info="payment_status == 'pending'"
+                                           decoration-warning="payment_status in ('cancelled', 'refunded')" optional="show"/>
                                     <field name="source_model" optional="show" widget="selection" decoration-info="source_model in ('calendar.event', 'manual')"
-                                           decoration-primary="source_model in ('vet.boarding.stay', 'vet.vaccination')"
-                                           decoration-warning="source_model == 'vet.pet.membership'"/>
+                                           decoration-primary="source_model in ('vet.boarding.stay', 'vet.vaccination')" decoration-warning="source_model == 'vet.pet.membership'"/>
                                     <field name="encounter_id" optional="hide" required="1"/>
                                     <field name="notes" optional="hide"/>
+                                    <field name="practitioner_department" optional="hide"/>
                                     <field name="company_currency" column_invisible="1"/>
                                 </list>
                             </field>
@@ -513,6 +509,7 @@
                        decoration-warning="payment_status in ('partial', 'cancelled', 'refunded')"/>
                 <field name="refunded_amount" sum="Refunded" widget="monetary" options="{'currency_field': 'company_currency'}" optional="show"/>
                 <field name="is_refunded" widget="boolean_toggle" optional="show"/>
+                <field name="practitioner_department" optional="hide"/>
                 <field name="company_currency" column_invisible="1"/>
                 <button name="action_cancel" string="Cancel" type="object" icon="fa-times-circle" invisible="payment_status != 'pending'"
                         groups="account.group_account_invoice,ths_vet_base.group_vet_user,ths_vet_base.group_vet_manager"/>
@@ -561,6 +558,7 @@
                             <field name="patient_ids" string="Pets" widget="many2many_tags"/>
                             <field name="practitioner_id"/>
                             <field name="room_id"/>
+                            <field name="practitioner_department"/>
                         </group>
                         <group name="payment_info" string="Payment Information">
                             <field name="payment_status" widget="badge"/>

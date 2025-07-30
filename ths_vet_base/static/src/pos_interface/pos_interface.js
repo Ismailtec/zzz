@@ -3,8 +3,9 @@
 import {registry} from "@web/core/registry";
 import {Component, onWillStart, useState} from "@odoo/owl";
 import {useService} from "@web/core/utils/hooks";
+import {scanBarcode} from "@web/core/barcode/barcode_dialog";
+import {isBarcodeScannerSupported} from "@web/core/barcode/barcode_video_scanner";
 import {_t} from "@web/core/l10n/translation";
-import {ConfirmationDialog} from "@web/core/confirmation_dialog/confirmation_dialog";
 
 class VetPosClientAction extends Component {
     static template = "ths_vet_base.PosInterface";
@@ -14,6 +15,7 @@ class VetPosClientAction extends Component {
         this.notification = useService("notification");
         this.action = useService("action");
         this.dialog = useService("dialog");
+        this.isBarcodeScannerSupported = isBarcodeScannerSupported;
 
         this.state = useState({
             encounter: {
@@ -23,6 +25,7 @@ class VetPosClientAction extends Component {
                 patient_ids: [],
                 practitioner_id: null,
                 room_id: null,
+                practitioner_department: null,
                 encounter_line_ids: [],
                 company_currency: 'KWD',
                 global_discount_type: 'percent',
@@ -41,8 +44,8 @@ class VetPosClientAction extends Component {
             availablePatients: [],
             availablePractitioners: [],
             availableRooms: [],
-            practitionerDepartments: {},
-            roomDepartments: {},
+            practitionerDepartment: {},
+            sourcePayment: 'POS',
             isProcessingPayment: false,
             paymentCompleted: false,
         });
@@ -60,7 +63,8 @@ class VetPosClientAction extends Component {
                 const data = await this.orm.read(
                     "vet.encounter.header",
                     [encounterId],
-                    ["id", "name", "partner_id", "patient_ids", "practitioner_id", "room_id", "encounter_line_ids", "company_currency", "global_discount_type", "global_discount_rate"]
+                    ["id", "name", "partner_id", "patient_ids", "practitioner_id", "room_id", "practitioner_department",
+                        "encounter_line_ids", "company_currency", "global_discount_type", "global_discount_rate"]
                 );
                 const encounter_data = data[0];
                 this.state.encounter = {...this.state.encounter, ...encounter_data};
@@ -111,30 +115,19 @@ class VetPosClientAction extends Component {
             this.state.availablePractitioners = await this.orm.call(
                 "appointment.resource",
                 "search_read",
-                [[['resource_category', '=', 'practitioner'], ['active', '=', true]]],
-                {fields: ["id", "name", "ths_department_id"]}
+                [[['resource_category', '=', 'practitioner'], ['active', '=', true]]]
             );
 
-            this.state.practitionerDepartments = {};
-            this.state.availablePractitioners.forEach(prac => {
-                if (prac.ths_department_id) {
-                    this.state.practitionerDepartments[prac.id] = Array.isArray(prac.ths_department_id) ? prac.ths_department_id[0] : prac.ths_department_id;
-                }
-            });
+            this.state.practitionerDepartment = this.state.encounter.practitioner_department;
 
             this.state.availableRooms = await this.orm.call(
                 "appointment.resource",
                 "search_read",
-                [[['resource_category', '=', 'location'], ['active', '=', true]]],
-                {fields: ["id", "name", "ths_department_id"]}
+                [[['resource_category', '=', 'location'], ['active', '=', true]]]
             );
 
-            this.state.roomDepartments = {};
-            this.state.availableRooms.forEach(room => {
-                if (room.ths_department_id) {
-                    this.state.roomDepartments[room.id] = Array.isArray(room.ths_department_id) ? room.ths_department_id[0] : room.ths_department_id;
-                }
-            });
+            this.state.roomDepartments = this.state.encounter.practitioner_department;
+
 
         } catch (error) {
             console.error("Error loading resources:", error);
@@ -151,7 +144,8 @@ class VetPosClientAction extends Component {
                         ['payment_status', 'in', ['pending', 'partial']],
                         ['remaining_amount', '>', 0]
                     ],
-                    ["product_id", "qty", "unit_price", "remaining_amount", "practitioner_id", "room_id", "patient_ids", "discount"]
+                    ["product_id", "qty", "unit_price", "remaining_amount", "practitioner_id", "room_id", "patient_ids",
+                        "discount", "payment_status", 'remaining_amount', 'practitioner_department']
                 ]);
 
                 for (const line of lines) {
@@ -198,16 +192,19 @@ class VetPosClientAction extends Component {
                         product_id: line.product_id[0],
                         name: product[0].name,
                         default_code: product[0].default_code,
-                        price: line.remaining_amount / line.qty,
+                        price: line.unit_price,
                         qty: line.qty,
                         discount: (line.discount || 0) * 100,
+                        remaining_amount: line.remaining_amount,
                         isExisting: true,
                         practitioner: practitionerName,
                         practitioner_id: line.practitioner_id ? line.practitioner_id[0] : null,
                         room: roomName,
                         room_id: line.room_id ? line.room_id[0] : null,
+                        practitioner_department: line.practitioner_department ? line.practitioner_department[0] : null,
                         patients: patientNames,
                         patient_ids: line.patient_ids || [],
+                        sourcePayment: 'POS',
                     });
                 }
                 this.updateCartTotal();
@@ -243,6 +240,7 @@ class VetPosClientAction extends Component {
                 room_id: this.state.encounter.room_id ? this.state.encounter.room_id[0] : null,
                 patients: this.state.encounter.patient_ids ? this.state.encounter.patient_ids.map(p => p[1]) : [],
                 patient_ids: this.state.encounter.patient_ids ? this.state.encounter.patient_ids.map(p => p[0]) : [],
+                source_payment: this.props.sourcePayment,
                 unsaved: true,
             });
         }
@@ -301,7 +299,7 @@ class VetPosClientAction extends Component {
             if (this.state.globalDiscountType === 'percent') {
                 globalDiscountAmount = subtotal * (this.state.globalDiscount / 100);
             } else {
-                globalDiscountAmount = this.state.globalDiscount;
+                globalDiscountAmount = Math.min(this.state.globalDiscount, subtotal); // Don't exceed subtotal
             }
         }
 
@@ -325,7 +323,7 @@ class VetPosClientAction extends Component {
             if (this.state.globalDiscountType === 'percent') {
                 return subtotal * (this.state.globalDiscount / 100);
             } else {
-                return this.state.globalDiscount;
+                return Math.min(this.state.globalDiscount, subtotal); // Don't exceed subtotal
             }
         }
         return 0;
@@ -338,7 +336,9 @@ class VetPosClientAction extends Component {
     }
 
     async updateGlobalDiscountType(type) {
+        // Clear the rate when type changes
         this.state.globalDiscountType = type;
+        this.state.globalDiscount = 0;
         this.updateCartTotal();
         await this.updateEncounterGlobalDiscount();
     }
@@ -394,7 +394,7 @@ class VetPosClientAction extends Component {
             return this.state.availableRooms;
         }
 
-        const practitionerDeptId = this.state.practitionerDepartments[practitionerId];
+        const practitionerDeptId = this.state.practitionerDepartment[practitionerId];
         if (!practitionerDeptId) {
             return this.state.availableRooms;
         }
@@ -498,25 +498,12 @@ class VetPosClientAction extends Component {
         if (!item) return;
 
         if (item.isExisting) {
-            const choice = await new Promise((resolve) => {
-                this.dialog.add(ConfirmationDialog, {
-                    title: _t("Remove Item"),
-                    body: _t("Do you want to remove this item from the current order only, or delete it from the encounter entirely?"),
-                    confirmLabel: _t("Remove from Order Only"),
-                    cancelLabel: _t("Delete from Encounter"),
-                    confirm: () => resolve("order"),
-                    cancel: () => resolve("encounter"),
-                });
-            });
-
-            if (choice === "encounter") {
-                try {
-                    await this.orm.unlink("vet.encounter.line", [item.encounter_line_id]);
-                    this.notification.add(_t("Item deleted from encounter"), {type: "success"});
-                } catch (error) {
-                    this.notification.add(_t("Error deleting item: ") + error.message, {type: "danger"});
-                    return;
-                }
+            try {
+                await this.orm.unlink("vet.encounter.line", [item.encounter_line_id]);
+                this.notification.add(_t("Item deleted from encounter"), {type: "success"});
+            } catch (error) {
+                this.notification.add(_t("Error deleting item: ") + error.message, {type: "danger"});
+                return;
             }
         }
 
@@ -611,30 +598,6 @@ class VetPosClientAction extends Component {
             window.close();
         }, 2000);
     }
-
-    async scanBarcode(barcode) {
-        if (!barcode) return;
-
-        try {
-            // Search for product by barcode
-            const products = await this.orm.call("product.product", "search_read", [
-                [['barcode', '=', barcode], ['sale_ok', '=', true], ['active', '=', true]],
-                ['id', 'name', 'lst_price', 'barcode', 'image_128', 'default_code']
-            ]);
-
-            if (products.length > 0) {
-                const product = products[0];
-                this.addToCart(product);
-                this.notification.add(_t("Product added: ") + product.name, {type: "success"});
-            } else {
-                this.notification.add(_t("Product not found with barcode: ") + barcode, {type: "warning"});
-            }
-        } catch (error) {
-            console.error("Barcode scan error:", error);
-            this.notification.add(_t("Error scanning barcode"), {type: "danger"});
-        }
-    }
-
 }
 
 registry.category("actions").add("vet_pos_interface_action", VetPosClientAction);

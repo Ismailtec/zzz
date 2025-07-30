@@ -27,6 +27,8 @@ class EncounterMixin(models.AbstractModel):
 									  help="Veterinarian responsible for this encounter or service.")
 	room_id = fields.Many2one('appointment.resource', string='Room', index=True, tracking=True, domain="[('resource_category', '=', 'location')]",
 							  help="Room where the encounter or service takes place.")
+	practitioner_department = fields.Many2one('hr.department', related='practitioner_id.ths_department_id', string='Department', store=True, readonly=True, index=True,
+											  copy=False)
 	partner_mobile = fields.Char(string="Partner Mobile", related='partner_id.mobile', store=False, readonly=True)
 	is_pet = fields.Boolean(string='Is Pet', compute='_compute_partner_flags', store=False, help="Computed field for view compatibility - indicates if partner is a pet")
 	is_pet_owner = fields.Boolean(string='Is Pet Owner', compute='_compute_partner_flags', store=False, help="Computed field - indicates if partner is a pet owner")
@@ -919,7 +921,7 @@ class VetEncounterHeader(models.Model):
 									ml.quantity = move.product_uom_qty
 
 					# Force validate the picking
-					picking.with_context(skip_backorder=True)._action_done()
+					picking.with_context(skip_backorder=True).button_validate()
 
 			except Exception as e:
 				_logger.error(f"Delivery error: {str(e)}")

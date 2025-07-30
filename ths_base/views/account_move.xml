@@ -47,14 +47,15 @@
                     <!-- Global Discount Controls -->
                     <div class="row" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']">
                         <div>
-                            <label for="global_discount_type" class="o_form_label">Global Discount Type:</label>
+                            <label for="global_discount_type" class="o_form_label">Global Discount Type: </label>
                             <field name="global_discount_type" readonly="state != 'draft'" nolabel="1"/>
                         </div>
                         <div>
-                            <label for="global_discount_rate" class="o_form_label">
-                                <span invisible="global_discount_type != 'percent'">Discount (%):</span>
-                                <span invisible="global_discount_type != 'amount'">Discount Amount:</span>
-                            </label>
+<!--                            <label for="global_discount_rate" class="o_form_label">-->
+<!--                                -->
+<!--                            </label>-->
+                            <span invisible="global_discount_type != 'percent'">Discount (%):</span>
+                            <span invisible="global_discount_type != 'amount'">Discount Amount:</span>
                             <field name="global_discount_rate" readonly="state != 'draft'" nolabel="1"/><span invisible="global_discount_type != 'amount'"> KWD</span>
                         </div>
                     </div>
@@ -68,35 +69,26 @@
                     <field name="global_discount_amount" widget="monetary" string="Global Discount" colspan="2" readonly="1" class="text-danger"
                            invisible="global_discount_amount == 0"/>
                 </field>
+                <!--                <field name="tax_totals" position="before">-->
+                <!--                    &lt;!&ndash; Only show if there are any discounts &ndash;&gt;-->
+                <!--                    <div t-if="line_discount_amount > 0 or global_discount_amount > 0" class="oe_subtotal_footer_separator"/>-->
 
-                <!-- Discount Breakdown Display -->
-                <!--                <xpath expr="//group[hasclass('oe_subtotal_footer')]" position="before">-->
-                <!--                    <div class="row mt-2" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund'] or (global_discount_amount == 0 and line_discount_amount == 0)">-->
-                <!--                        <div class="col-12">-->
-                <!--                            <table class="table table-sm">-->
-                <!--                                <tr invisible="subtotal_before_global_discount == 0">-->
-                <!--                                    <td class="text-right"><strong>Subtotal Before Discounts:</strong></td>-->
-                <!--                                    <td class="text-right">-->
-                <!--                                        <field name="subtotal_before_global_discount" string="Total W/o Disc." colspan="2" widget="monetary" nolabel="1" readonly="1"-->
-                <!--                                               class="text-right"/>-->
-                <!--                                    </td>-->
-                <!--                                </tr>-->
-                <!--                                <tr invisible="line_discount_amount == 0">-->
-                <!--                                    <td class="text-right">Line Discounts:</td>-->
-                <!--                                    <td class="text-right text-danger">-->
-                <!--                                        -<field name="line_discount_amount" widget="monetary" string="Line Discount" colspan="2" readonly="1" class="text-right text-danger"/>-->
-                <!--                                    </td>-->
-                <!--                                </tr>-->
-                <!--                                <tr invisible="global_discount_amount == 0">-->
-                <!--                                    <td class="text-right">Global Discount:</td>-->
-                <!--                                    <td class="text-right text-danger">-->
-                <!--                                        -<field name="global_discount_amount" widget="monetary" string="Global Discount" colspan="2" readonly="1" class="text-right text-danger"/>-->
-                <!--                                    </td>-->
-                <!--                                </tr>-->
-                <!--                            </table>-->
-                <!--                        </div>-->
-                <!--                    </div>-->
-                <!--                </xpath>-->
+                <!--                    &lt;!&ndash; Total before any discounts - only show if there are discounts &ndash;&gt;-->
+                <!--                    <field name="subtotal_before_global_discount" string="Total W/o Disc." colspan="2" widget="monetary" readonly="1"-->
+                <!--                           invisible="line_discount_amount == 0 and global_discount_amount == 0"/>-->
+
+                <!--                    &lt;!&ndash; Line discounts - only show if > 0 &ndash;&gt;-->
+                <!--                    <field name="line_discount_amount" widget="monetary" string="Line Discount" colspan="2" readonly="1" class="text-danger"-->
+                <!--                           invisible="line_discount_amount == 0"/>-->
+
+                <!--                    &lt;!&ndash; Global discount - only show if > 0 &ndash;&gt;-->
+                <!--                    <field name="global_discount_amount" widget="monetary" string="Global Discount" colspan="2" readonly="1" class="text-danger"-->
+                <!--                           invisible="global_discount_amount == 0"/>-->
+
+                <!--                    &lt;!&ndash; Separator line if discounts exist &ndash;&gt;-->
+                <!--                    <div t-if="line_discount_amount > 0 or global_discount_amount > 0" class="oe_subtotal_footer_separator"/>-->
+                <!--                </field>-->
+
                 <xpath expr="//field[@name='account_id']" position="attributes">
                     <attribute name="optional">hide</attribute>
                 </xpath>

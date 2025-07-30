@@ -68,42 +68,53 @@ class AccountMove(models.Model):
 	@api.depends('invoice_line_ids.price_subtotal', 'global_discount_type', 'global_discount_rate')
 	def _compute_global_discount_amount(self):
 		for move in self:
-			if move.global_discount_rate > 0:
-				# Get global discount product to exclude from calculation
-				discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
-
-				# Calculate based on lines excluding the global discount line itself
-				regular_lines = move.invoice_line_ids.filtered(
-					lambda l: not l.display_type and (not discount_product or l.product_id != discount_product)
-				)
-				subtotal_before_global_discount = sum(regular_lines.mapped('price_subtotal'))
-
-				if move.global_discount_type == 'percent':
-					move.global_discount_amount = subtotal_before_global_discount * (move.global_discount_rate / 100)
-				else:  # amount
-					move.global_discount_amount = move.global_discount_rate
-			else:
+			# Early exit if no discount rate
+			if not move.global_discount_rate or move.global_discount_rate <= 0:
 				move.global_discount_amount = 0.0
+				continue
+
+			# Get global discount product to exclude from calculation
+			discount_product = move.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+
+			# Calculate based on lines excluding the global discount line itself
+			regular_lines = move.invoice_line_ids.filtered(
+				lambda l: not l.display_type and (not discount_product or l.product_id != discount_product)
+			)
+
+			# Early exit if no regular lines
+			if not regular_lines:
+				move.global_discount_amount = 0.0
+				continue
+
+			subtotal_before_global_discount = sum(regular_lines.mapped('price_subtotal'))
+
+			if move.global_discount_type == 'percent':
+				move.global_discount_amount = subtotal_before_global_discount * (move.global_discount_rate / 100)
+			else:  # amount
+				move.global_discount_amount = min(move.global_discount_rate, subtotal_before_global_discount)
 
 	@api.depends('invoice_line_ids.price_subtotal', 'invoice_line_ids.price_unit', 'invoice_line_ids.quantity', 'invoice_line_ids.discount')
 	def _compute_discount_breakdown(self):
 		for move in self:
 			# Get global discount product to exclude from calculation
-			discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+			discount_product = move.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
 
 			regular_lines = move.invoice_line_ids.filtered(
 				lambda l: not l.display_type and (not discount_product or l.product_id != discount_product)
 			)
 
 			if regular_lines:
-				# Subtotal before any discounts (using price_unit * quantity)
+				# Subtotal before any discounts (using price_unit * quantity) - This is "Total W/o Disc"
 				subtotal_before_discounts = sum(line.price_unit * line.quantity for line in regular_lines)
 
 				# Current subtotal (after line discounts but before global discount)
-				move.subtotal_before_global_discount = sum(regular_lines.mapped('price_subtotal'))
+				subtotal_after_line_discounts = sum(regular_lines.mapped('price_subtotal'))
+
+				# Set the field that shows in "Total W/o Disc" to be before ALL discounts
+				move.subtotal_before_global_discount = subtotal_before_discounts
 
 				# Line discount amount (difference between before and after line discounts)
-				move.line_discount_amount = subtotal_before_discounts - move.subtotal_before_global_discount
+				move.line_discount_amount = subtotal_before_discounts - subtotal_after_line_discounts
 			else:
 				move.subtotal_before_global_discount = 0.0
 				move.line_discount_amount = 0.0
@@ -112,10 +123,57 @@ class AccountMove(models.Model):
 	def _onchange_global_discount(self):
 		"""Update global discount line when discount changes"""
 		if self.state == 'draft':
-			self._update_global_discount_line()
+			# Only update if there's actually a discount to apply
+			if self.global_discount_rate > 0:
+				self._update_global_discount_line()
+			else:
+				# Remove any existing global discount line if rate is 0
+				self._remove_global_discount_line()
+
+	@api.onchange('global_discount_type')
+	def _onchange_global_discount_type(self):
+		"""Clear the rate when discount type changes"""
+		if self.state == 'draft':
+			self.global_discount_rate = 0.0
+			# Remove any existing global discount line since rate is now 0
+			self._remove_global_discount_line()
+
+	@api.onchange('invoice_line_ids')
+	def _onchange_invoice_line_ids(self):
+		"""Clear global discount when all regular lines are deleted"""
+		if self.state == 'draft':
+			# Get global discount product to exclude from calculation
+			discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+
+			regular_lines = self.invoice_line_ids.filtered(
+				lambda l: not l.display_type and (not discount_product or l.product_id != discount_product)
+			)
+
+			# If no regular lines exist, clear global discount
+			if not regular_lines:
+				self.global_discount_type = 'percent'
+				self.global_discount_rate = 0.0
+				self._remove_global_discount_line()
+
+	def _remove_global_discount_line(self):
+		"""Remove global discount line if it exists"""
+		if self.state != 'draft':
+			return
+
+		discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+		if not discount_product:
+			return
+
+		existing_discount_line = self.invoice_line_ids.filtered(
+			lambda l: l.product_id == discount_product
+		)
+
+		if existing_discount_line:
+			# Use unlink instead of command to properly remove the line
+			existing_discount_line.unlink()
 
 	def _update_global_discount_line(self):
-		"""Add, update, or remove global discount line"""
+		"""Add, update, or remove global discount line - ONLY creates lines when amount > 0"""
 		self.ensure_one()
 
 		if self.state != 'draft':
@@ -134,7 +192,8 @@ class AccountMove(models.Model):
 		# Calculate discount amount
 		self._compute_global_discount_amount()
 
-		if self.global_discount_amount > 0:
+		# CRITICAL: Only create/update if amount is actually greater than 0
+		if self.global_discount_amount > 0.01:  # Use small threshold to avoid floating point issues
 			# Create or update discount line
 			discount_line_vals = {
 				'product_id': discount_product.id,
@@ -152,12 +211,15 @@ class AccountMove(models.Model):
 					'price_unit': discount_line_vals['price_unit'],
 				})
 			else:
-				# Create new line
-				self.invoice_line_ids = [(0, 0, discount_line_vals)]
+				# Create new line - but only if amount > 0
+				self.env['account.move.line'].create({
+					**discount_line_vals,
+					'move_id': self.id,
+				})
 		else:
-			# Remove existing discount line if amount is 0
+			# Remove existing discount line if amount is 0 or less
 			if existing_discount_line:
-				self.invoice_line_ids = [(3, existing_discount_line.id, 0)]
+				existing_discount_line.unlink()
 
 	@api.constrains('global_discount_rate', 'global_discount_type')
 	def _check_global_discount_rate(self):
@@ -301,7 +363,7 @@ class AccountMove(models.Model):
 		related_lc.write(update_vals)
 		related_lc.message_post(body=_("Cost lines updated based on posted Vendor Bill %s.", self.display_name))
 
-	# Get Default Date on Bill
+	# Get Default Date on Bill and partner type if passed through context
 	@api.model
 	def default_get(self, fields_list):
 		defaults = super(AccountMove, self).default_get(fields_list)
@@ -324,17 +386,48 @@ class AccountMove(models.Model):
 	def create(self, vals_list):
 		moves = super().create(vals_list)
 		for move in moves:
-			if move.move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and move.global_discount_rate > 0:
-				move._update_global_discount_line()
+			# Only create global discount line if there's actually a discount AND regular lines
+			if (move.move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and
+					move.global_discount_rate > 0.01 and
+					move.state == 'draft'):
+
+				# Check if there are regular lines (non-discount lines)
+				discount_product = move.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+				regular_lines = move.invoice_line_ids.filtered(
+					lambda l: not l.display_type and (not discount_product or l.product_id != discount_product)
+				)
+
+				# Only create discount line if there are regular lines to apply discount to
+				if regular_lines:
+					move._update_global_discount_line()
 		return moves
 
 	def write(self, vals):
 		result = super().write(vals)
 
-		# Update global discount line if relevant fields changed
-		if any(field in vals for field in ['global_discount_type', 'global_discount_rate']) and self.state == 'draft':
+		# Only update global discount line if relevant fields changed AND there's a discount rate
+		should_update_discount = (
+				any(field in vals for field in ['global_discount_type', 'global_discount_rate']) and
+				self.state == 'draft'
+		)
+
+		if should_update_discount:
 			for move in self:
-				move._update_global_discount_line()
+				if move.global_discount_rate > 0.01:
+					# Check if there are regular lines
+					discount_product = move.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+					regular_lines = move.invoice_line_ids.filtered(
+						lambda l: not l.display_type and (not discount_product or l.product_id != discount_product)
+					)
+
+					if regular_lines:
+						move._update_global_discount_line()
+					else:
+						# No regular lines, remove any discount line
+						move._remove_global_discount_line()
+				else:
+					# No discount rate, remove any discount line
+					move._remove_global_discount_line()
 
 		return result
 

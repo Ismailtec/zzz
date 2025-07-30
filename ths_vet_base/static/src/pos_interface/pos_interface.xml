@@ -255,45 +255,6 @@
                 </div>
             </div>
         </div>
-        <div class="barcode-footer-section"
-             style="position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 2px solid #e9ecef; padding: 0.5rem; z-index: 1000;">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-2">
-                        <button class="btn btn-secondary btn-sm" onclick="window.close();">
-                            <i class="fa fa-times"/> Close
-                        </button>
-                    </div>
-                    <div class="col-8">
-                        <div class="input-group">
-                            <span class="input-group-text" style="background: #f8f9fa; font-size: 0.8rem;">
-                                <i class="fa fa-barcode"/> Barcode Scanner Here
-                            </span>
-                            <input type="text"
-                                   class="form-control"
-                                   placeholder="Scan or type barcode and press Enter..."
-                                   t-ref="barcodeInput"
-                                   t-on-keydown="(ev) => {
-                               if (ev.key === 'Enter') {
-                                   this.scanBarcode(ev.target.value);
-                                   ev.target.value = '';
-                               }
-                           }"
-                                   style="font-size: 0.9rem;"/>
-                        </div>
-                    </div>
-                    <div class="col-2 text-end">
-                        <button class="btn btn-primary btn-sm"
-                                t-on-click="() => {
-                            const input = this.el.querySelector('input[t-ref=barcodeInput]');
-                            this.scanBarcode(input.value);
-                            input.value = '';
-                            }">
-                            <i class="fa fa-plus"/> Add
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+
     </t>
 </templates>
