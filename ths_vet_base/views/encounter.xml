@@ -519,13 +519,13 @@
                 <field name="sub_total" sum="Total Amount" widget="monetary" options="{'currency_field': 'company_currency'}"/>
                 <field name="practitioner_id" optional="show"/>
                 <field name="room_id" optional="show"/>
-                <field name="paid_amount" sum="Paid" widget="monetary" options="{'currency_field': 'company_currency'}"/>
-                <field name="remaining_amount" sum="Remaining" widget="monetary" options="{'currency_field': 'company_currency'}"/>
+                <field name="paid_amount" string="Paid" sum="Paid" widget="monetary" options="{'currency_field': 'company_currency'}"/>
+                <field name="remaining_amount" string="Remaining" sum="Remaining" widget="monetary" options="{'currency_field': 'company_currency'}"/>
                 <field name="source_model" widget="selection" optional="hide"/>
                 <field name="multiple_payment_sources" optional="hide"/>
                 <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-info="payment_status in ('pending', 'posted')"
                        decoration-warning="payment_status in ('partial', 'cancelled', 'refunded')"/>
-                <field name="refunded_amount" sum="Refunded" widget="monetary" options="{'currency_field': 'company_currency'}" optional="show"/>
+                <field name="refunded_amount" string="Refunded" sum="Refunded" widget="monetary" options="{'currency_field': 'company_currency'}" optional="show"/>
                 <field name="is_refunded" widget="boolean_toggle" optional="show"/>
                 <field name="practitioner_department" optional="hide"/>
                 <field name="company_currency" column_invisible="1"/>
