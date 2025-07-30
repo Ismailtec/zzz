@@ -152,6 +152,7 @@ and efficient business operations.""",
 		'calendar',
 		'documents',
 		'whatsapp',
+		'point_of_sale',
 	],
 	'data': [
 		# Security

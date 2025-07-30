@@ -115,18 +115,16 @@
                             <field name="partner_mobile" readonly="1" string="Mobile" help="Mobile number of the partner"/>
                         </group>
                         <group string="Payment Information" name="col_2">
-                            <group name="lines_payment_info" string="Lines Payments">
-                                <field name="pending_amount" readonly="1" widget="monetary" string="Pending Amount" options="{'currency_field': 'company_currency'}"/>
-                                <field name="paid_amount" readonly="1" widget="monetary" options="{'currency_field': 'company_currency'}"/>
-                                <field name="total_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/>
-                                <field name="returned_amount" widget="monetary" invisible="not returned_amount" options="{'currency_field': 'company_currency'}"/>
-                                <field name="pending_payments" readonly="1" widget="boolean_toggle" string="Has Pending Payments"/>
-                                <field name="global_discount_type" invisible="total_amount == 0"/>
-                                <field name="global_discount_rate" invisible="total_amount == 0"/>
-                                <field name="invoice_count" invisible="1"/>
-                                <field name="sale_order_count" invisible="1"/>
-                                <field name="company_currency" invisible="1"/>
-                            </group>
+                            <field name="pending_amount" readonly="1" widget="monetary" string="Pending Amount" options="{'currency_field': 'company_currency'}"/>
+                            <field name="paid_amount" readonly="1" widget="monetary" options="{'currency_field': 'company_currency'}"/>
+                            <field name="total_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/>
+                            <field name="returned_amount" widget="monetary" invisible="not returned_amount" options="{'currency_field': 'company_currency'}"/>
+                            <field name="pending_payments" readonly="1" widget="boolean_toggle" string="Has Pending Payments"/>
+                            <field name="global_discount_type" invisible="total_amount == 0"/>
+                            <field name="global_discount_rate" invisible="total_amount == 0"/>
+                            <field name="invoice_count" invisible="1"/>
+                            <field name="sale_order_count" invisible="1"/>
+                            <field name="company_currency" invisible="1"/>
                         </group>
                     </group>
                     <group string="Internal Notes" name="internal_notes">
@@ -141,7 +139,27 @@
                                 <field name="sale_order_ids" context="{'default_encounter_id': id}" nolabel="1" can_write="1" can_create="true"/>
                             </group>
                             <group string="Invoices">
-                                <field name="direct_invoice_ids" nolabel="1" readonly="1" context="{'default_encounter_id': id}" view_mode="list,form">
+                                <field name="direct_invoice_ids" nolabel="1" readonly="1" context="{'default_encounter_id': id, 'default_move_type': 'out_invoice'}"
+                                       view_mode="list,form">
+                                    <list edit="0" create="0" decoration-success="status_in_payment in ('paid','in_payment')" decoration-info="status_in_payment == 'draft'"
+                                          decoration-warning="status_in_payment in ('partial', 'not_paid')"
+                                          decoration-danger="status_in_payment in ('cancel', 'reversed', 'blocked')">
+                                        <field name="encounter_id" optional="hide"/>
+                                        <field name="name"/>
+                                        <field name="invoice_origin" string="Source" optional="show"/>
+                                        <field name="partner_id" string="Pet Owner" optional="show"/>
+                                        <field name="patient_ids" widget="many2many_tags" optional="hide"/>
+                                        <field name="practitioner_id" string="Practitioner" optional="hide"/>
+                                        <field name="room_id" string="Room" optional="hide"/>
+                                        <field name="date" widget="date"/>
+                                        <field name="invoice_date_due" widget="date" optional="hide"/>
+                                        <field name="amount_total_in_currency_signed" string="Total" widget="monetary" sum="Total" options="{'currency_field': 'company_currency'}"/>
+                                        <field name="amount_residual_signed" string="Due Amount" widget="monetary" sum="Total Due" options="{'currency_field': 'company_currency'}"/>
+                                        <field name="status_in_payment" string="Status"/>
+                                        <field name="payment_journal_name" string="Journal" optional="show"/>
+                                        <field name="payment_method_name" string="Payment Method" optional="hide"/>
+                                        <field name="user_id" string="Processed By" optional="hide"/>
+                                    </list>
                                 </field>
                             </group>
                             <!--                            <group string="Credit Notes/Refunds">-->

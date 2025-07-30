@@ -72,9 +72,9 @@ class EncounterMixin(models.AbstractModel):
 			else:
 				rec.patient_ids_domain = str([('is_pet', '=', True)])
 
-	@api.depends('practitioner_id')
+	@api.depends('practitioner_id', 'practitioner_id.ths_department_id')
 	def _compute_room_id_domain(self):
-		""" Compute domain for room_id based on practitioner_id """
+		""" Compute domain for room_id based on practitioner's department """
 		for record in self:
 			if record.practitioner_id and record.practitioner_id.ths_department_id:
 				record.room_id_domain = str([
@@ -106,6 +106,25 @@ class EncounterMixin(models.AbstractModel):
 					('department_ids', 'in', rec.room_id.ths_department_id.id)
 				], limit=1)
 				rec.default_appointment_type_id = appointment_type.id if appointment_type else False
+
+	@api.onchange('practitioner_id')
+	def _onchange_practitioner_filter_rooms(self):
+		"""Filter available rooms when practitioner changes"""
+		if self.practitioner_id and self.practitioner_id.ths_department_id:
+			# Clear room if it doesn't match the new practitioner's department
+			if self.room_id and self.room_id.ths_department_id != self.practitioner_id.ths_department_id:
+				self.room_id = False
+
+			return {
+				'domain': {
+					'room_id': [
+						('resource_category', '=', 'location'),
+						('ths_department_id', '=', self.practitioner_id.ths_department_id.id)
+					]
+				}
+			}
+		else:
+			return {'domain': {'room_id': [('resource_category', '=', 'location')]}}
 
 	def action_view_documents_model(self, folder_xmlid, title_prefix, tag_xmlid):
 		""" Generic method to view documents for service models
@@ -298,7 +317,7 @@ class VetEncounterHeader(models.Model):
 	sale_order_ids = fields.One2many('sale.order', 'encounter_id', string='Sale Orders', readonly=True, copy=False,
 									 context={'default_partner_id': 'partner_id', 'default_pet_owner_id': 'pet_owner_id', 'default_practitioner_id': 'practitioner_id',
 											  'default_room_id': 'room_id', })
-	direct_invoice_ids = fields.One2many('account.move', 'encounter_id', string='Direct Invoices', copy=False, domain="[('move_type', '=', 'out_invoice')]")
+	direct_invoice_ids = fields.One2many('account.move', 'encounter_id', string='Invoices', copy=False, domain="[('move_type', '=', 'out_invoice')]")
 	credit_note_ids = fields.One2many('account.move', 'encounter_id', string='Credit Notes', domain="[('move_type', '=', 'out_refund')]", copy=False)
 	credit_note_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
 	invoice_count = fields.Integer(compute='_compute_payment_document_counts', store=False)
@@ -437,55 +456,6 @@ class VetEncounterHeader(models.Model):
 					has_pending = any(line.payment_status in ['pending', 'partial', 'posted'] for line in lines_with_amount)
 					if has_pending:
 						encounter.state = 'in_progress'
-
-	@api.depends('encounter_line_ids.payment_status', 'encounter_line_ids.sub_total', 'boarding_stay_ids.state', 'appointment_ids.appointment_status', 'vaccination_ids',
-				 'park_checkin_ids.state')
-	def _compute_auto_state_from_content(self):
-		"""Auto-manage encounter state based on content and completion"""
-		for encounter in self:
-			# Check if encounter has any billable content
-			billable_lines = encounter.encounter_line_ids.filtered(lambda l: l.sub_total > 0)
-
-			# Check if encounter has any active services
-			active_boardings = encounter.boarding_stay_ids.filtered(lambda b: b.state not in ['cancelled', 'checked_out'])
-			pending_appointments = encounter.appointment_ids.filtered(lambda a: a.appointment_status in ['request', 'booked', 'attended'])
-			active_checkins = encounter.park_checkin_ids.filtered(lambda p: p.state in ['checked_in'])
-
-			# Determine if encounter should be done
-			should_be_done = True
-
-			# If-has billable lines, all must be paid
-			if billable_lines:
-				should_be_done = all(line.payment_status == 'paid' for line in billable_lines)
-
-			# If-has active services, they must be completed
-			if active_boardings:
-				should_be_done = False  # Still has active boardings
-
-			if pending_appointments:
-				should_be_done = False  # Still has pending appointments
-
-			if active_checkins:
-				should_be_done = False  # Still has active park visits
-
-			# Special case: Empty encounter with no content
-			if not billable_lines and not active_boardings and not pending_appointments and not active_checkins:
-				# Check if it only has draft/cancelled services
-				draft_boardings = encounter.boarding_stay_ids.filtered(lambda b: b.state == 'draft')
-				cancelled_appointments = encounter.appointment_ids.filtered(lambda a: a.appointment_status == 'cancelled')
-
-				# If only draft/cancelled services, should be done
-				if draft_boardings or cancelled_appointments or encounter.vaccination_ids:
-					should_be_done = True
-				# If completely empty, should be done
-				elif not encounter.boarding_stay_ids and not encounter.appointment_ids and not encounter.vaccination_ids:
-					should_be_done = True
-
-			# Update state if needed
-			if should_be_done and encounter.state == 'in_progress':
-				encounter.state = 'done'
-			elif not should_be_done and encounter.state == 'done':
-				encounter.state = 'in_progress'
 
 	@api.depends('encounter_line_ids.sub_total')
 	def _compute_total(self):
@@ -641,6 +611,9 @@ class VetEncounterHeader(models.Model):
 				raise UserError("No lines available for payment processing.")
 
 			lines_to_process = self.encounter_line_ids.filtered(lambda l: l.id in selected_line_ids)
+
+			# Update source_payment to POS for all lines being processed
+			lines_to_process.write({'source_payment': 'POS'})
 
 			# Check if we have recurring products to determine if this is a subscription
 			has_recurring_products = any(line.product_id.recurring_invoice for line in lines_to_process)
@@ -934,11 +907,12 @@ class VetEncounterHeader(models.Model):
 				# Log but don't fail the entire process for subscription updates
 				_logger.warning(f"Failed to update subscription dates: {str(e)}")
 
-			# STEP 10: Update Encounter Lines
+			# STEP 10: Update Encounter Lines with source_payment = POS
 			try:
 				for encounter_line in lines_to_process:
 					encounter_line.write({
 						'payment_status': 'paid',
+						'source_payment': 'POS',  # Ensure this is set
 					})
 					encounter_line._compute_payment_amounts()
 			except Exception as e:
@@ -1048,7 +1022,8 @@ class VetEncounterHeader(models.Model):
 			if existing_line:
 				existing_line.write({
 					'qty': existing_line.qty + qty,
-					'discount': discount / 100 if discount > 1 else discount,
+					'discount': discount,
+					'source_payment': 'POS',  # Always set to POS when added from POS UI
 				})
 				existing_line._compute_payment_amounts()
 				return existing_line.id
@@ -1059,10 +1034,11 @@ class VetEncounterHeader(models.Model):
 					'product_id': product_id,
 					'qty': qty,
 					'unit_price': product.lst_price,
-					'discount': discount / 100 if discount > 1 else discount,
+					'discount': discount,
 					'payment_status': 'pending',
 					'practitioner_id': practitioner_id or (self.practitioner_id.id if self.practitioner_id else False),
 					'room_id': room_id or (self.room_id.id if self.room_id else False),
+					'source_payment': 'POS',  # Always set to POS when added from POS UI
 				}
 
 				if patient_ids:
@@ -1611,7 +1587,7 @@ class VetEncounterHeader(models.Model):
 			'name': _('Related Invoices'),
 			'res_model': 'account.move',
 			'view_mode': 'list,form',
-			'domain': [('id', 'in', invoice_ids)],
+			'domain': [('id', 'in', invoice_ids),('move_type','=', 'out_invoice')],
 			'context': {'create': False}
 		}
 
@@ -1623,7 +1599,7 @@ class VetEncounterHeader(models.Model):
 			'name': _('Credit Notes'),
 			'res_model': 'account.move',
 			'view_mode': 'list,form',
-			'domain': [('id', 'in', self.credit_note_ids.ids)],
+			'domain': [('id', 'in', self.credit_note_ids.ids), ('move_type', '=', 'out_refund')],
 			'context': {'default_partner_id': self.partner_id.id}
 		}
 
@@ -2113,7 +2089,7 @@ class VetEncounterLine(models.Model):
 	multiple_payment_sources = fields.Char(string='Payment Sources', compute='_compute_payment_sources', store=True, help="Comma-separated list of payment document names",
 										   copy=False, readonly=True)
 	payment_document_ids = fields.One2many('vet.line.payment.track', 'encounter_line_id', string='Payment Documents')
-	source_payment = fields.Char(string='Source Payment', help='Payment method, e.g., SO, Invoice', copy=False, readonly=True)
+	source_payment = fields.Char(string='Source Payment', help='Payment method, e.g., SO, Invoice, POS', copy=False, default='Manual', tracking=True)
 	processed_date = fields.Datetime(string='Processed Date', readonly=True, copy=False, index=True)
 	processed_by = fields.Many2one('res.users', string='Processed By', readonly=True, copy=False, ondelete='set null')
 	sale_order_id = fields.Many2one('sale.order', string='Main Sale Order', ondelete='set null', copy=False, readonly=True, index=True)
@@ -2450,9 +2426,13 @@ class VetEncounterLine(models.Model):
 				self.product_description = self.product_id.description_sale
 
 	@api.onchange('practitioner_id')
-	def _onchange_practitioner_id(self):
-		"""Update room domain when practitioner changes"""
+	def _onchange_practitioner_id_filter_rooms(self):
+		"""Filter available rooms when practitioner changes"""
 		if self.practitioner_id and self.practitioner_id.ths_department_id:
+			# Clear room if it doesn't match the new practitioner's department
+			if self.room_id and self.room_id.ths_department_id != self.practitioner_id.ths_department_id:
+				self.room_id = False
+
 			return {
 				'domain': {
 					'room_id': [
@@ -2461,7 +2441,8 @@ class VetEncounterLine(models.Model):
 					]
 				}
 			}
-		return {'domain': {'room_id': [('resource_category', '=', 'location')]}}
+		else:
+			return {'domain': {'room_id': [('resource_category', '=', 'location')]}}
 
 	@api.constrains('discount', 'product_id')
 	def _check_discount_validity(self):
@@ -2574,6 +2555,10 @@ class VetEncounterLine(models.Model):
 
 			if 'source_model' not in vals:
 				vals['source_model'] = 'manual'
+
+			# Default source_payment to Manual if not set
+			if 'source_payment' not in vals:
+				vals['source_payment'] = 'Manual'
 
 			processed_vals_list.append(vals)
 
