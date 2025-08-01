@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_invoice_document_ths_base" inherit_id="account.report_invoice_document">
+
+        <xpath expr="//table[hasclass('o_main_table')]/thead/tr/th[@name='th_quantity']/span" position="replace">
+            <span class="text-center">Qty</span>
+        </xpath>
+
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//td[@name='td_quantity']" position="attributes">
+            <attribute name="style">width: 70px !important
+            ;</attribute>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//td[@name='td_price_unit']" position="attributes">
+            <attribute name="style">width: 80px !important
+            ;</attribute>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//td[@name='td_discount']" position="attributes">
+            <attribute name="style">width: 60px !important
+            ;</attribute>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//td[@name='td_subtotal']" position="attributes">
+            <attribute name="style">width: 120px !important
+            ;</attribute>
+        </xpath>
+
+        <xpath expr="//div[@id='right-elements']" position="replace">
+            <div t-if="o.move_type in ('out_invoice', 'out_refund', 'out_receipt', 'sale')" id="right-elements"
+                 t-attf-class="#{'col-4' if report_type != 'html' else 'col-12 col-md-5'} ms-5 d-inline-block float-end">
+                <div class="clearfix row mt-n3">
+                    <div id="discount_breakdown" class="ms-auto">
+                        <table class="o_total_table table table-borderless avoid-page-break-inside">
+                            <t t-if="o.total_discount_amount > 0">
+                                <tr>
+                                    <td class="text-left fw-bold o_amount_column"><strong>Total before Disc.:</strong></td>
+                                    <td class="text-end o_price_total">
+                                        <span t-field="o.total_before_discount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                </tr>
+                            </t>
+                            <t t-if="o.total_discount_amount > 0">
+                                <tr>
+                                    <td class="text-left fw-bold o_amount_column">Total Disc.:</td>
+                                    <td class="text-end o_price_total" style="color: #d9534f;">
+                                        -<span t-field="o.total_discount_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+                            <tr class="o_total o_amount_column" style="border-top: 1px solid #000;">
+                                <td class="text-left fw-bold"><strong>Total:</strong></td>
+                                <td class="text-end o_price_total" style="width: 120px !important;">
+                                    <strong><span t-field="o.amount_untaxed" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <p class="text-end lh-sm" t-if="o.company_id.display_invoice_amount_total_words">Total amount in words: <br/>
+                        <small class="text-muted lh-sm"><span t-field="o.amount_total_words">Thirty one dollar and Five cents</span></small>
+                    </p>
+                </div>
+
+                <!-- Tax totals summary (company currency) -->
+                <t t-if="o.tax_totals.get('display_in_company_currency')">
+                    <t t-set="tax_totals" t-value="o.tax_totals"/>
+                    <t t-call="account.document_tax_totals_company_currency_template"/>
+                </t>
+                <t t-else="">
+                    <div class="oe_structure"/>
+                </t>
+            </div>
+            <div t-if="o.move_type not in ('out_invoice', 'out_refund', 'out_receipt')" id="right-elements2"
+                 t-attf-class="#{'col-5' if report_type != 'html' else 'col-12 col-md-5'} ms-5 d-inline-block float-end">
+                <div id="total" class="clearfix row mt-n3">
+                    <div class="ms-auto">
+                        <table class="o_total_table table table-borderless avoid-page-break-inside">
+
+                            <!-- Tax totals summary (invoice currency) -->
+                            <t t-if="o.tax_totals" t-call="account.document_tax_totals">
+                                <t t-set="tax_totals" t-value="o.tax_totals"/>
+                                <t t-set="currency" t-value="o.currency_id"/>
+                            </t>
+
+                            <!--Payments-->
+                            <t t-if="print_with_payments">
+                                <t t-if="o.payment_state != 'invoicing_legacy'">
+                                    <t t-set="payments_vals" t-value="o.sudo().invoice_payments_widget and o.sudo().invoice_payments_widget['content'] or []"/>
+                                    <t t-foreach="payments_vals" t-as="payment_vals">
+                                        <tr t-if="payment_vals['is_exchange'] == 0">
+                                            <td>
+                                                <i class="oe_form_field text-end oe_payment_label">Paid on <t t-out="payment_vals['date']" t-options='{"widget": "date"}'>
+                                                    2021-09-19</t></i>
+                                            </td>
+                                            <td class="text-end">
+                                                <span t-out="payment_vals['amount']" t-options='{"widget": "monetary", "display_currency": o.currency_id}'>20.00</span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="len(payments_vals) > 0">
+                                        <tr class="fw-bold">
+                                            <td>Amount Due</td>
+                                            <td class="text-end">
+                                                <span t-field="o.amount_residual">11.05</span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </t>
+                        </table>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <p class="text-end lh-sm" t-if="o.company_id.display_invoice_amount_total_words">Total amount in words: <br/>
+                        <small class="text-muted lh-sm"><span t-field="o.amount_total_words">Thirty one dollar and Five cents</span></small>
+                    </p>
+                </div>
+
+                <!-- Tax totals summary (company currency) -->
+                <t t-if="o.tax_totals.get('display_in_company_currency')">
+                    <t t-set="tax_totals" t-value="o.tax_totals"/>
+                    <t t-call="account.document_tax_totals_company_currency_template"/>
+                </t>
+                <t t-else="">
+                    <div class="oe_structure"/>
+                </t>
+            </div>
+        </xpath>
+
+        <!-- 3. PAYMENT TABLE after payment terms -->
+        <xpath expr="//div[@id='payment_term']" position="after">
+            <br/><br/><br/>
+            <div t-if="print_with_payments" class="mb-3">
+                <t t-if="o.payment_state != 'invoicing_legacy'">
+                    <t t-set="payments_vals" t-value="o.sudo().invoice_payments_widget and o.sudo().invoice_payments_widget['content'] or []"/>
+                    <t t-if="payments_vals">
+                        <h5>Payment Information</h5>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Payment Date</th>
+                                    <th>Payment Method</th>
+                                    <th>Journal</th>
+                                    <th>Payment Reference</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="payments_vals" t-as="payment_vals">
+                                    <tr t-if="payment_vals['is_exchange'] == 0">
+                                        <td><span t-out="payment_vals['date']" t-options='{"widget": "date"}'/></td>
+                                        <td><span t-out="payment_vals.get('payment_method_name', '')"/></td>
+                                        <td><span t-out="payment_vals.get('journal_name', '')"/></td>
+                                        <td><span t-out="payment_vals.get('ref', payment_vals.get('name', ''))"/></td>
+                                        <td><span t-out="payment_vals['amount']" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    </tr>
+                                </t>
+                                <t t-if="print_with_payments">
+                                    <t t-if="o.payment_state != 'invoicing_legacy'">
+                                        <t t-set="payments_vals" t-value="o.sudo().invoice_payments_widget and o.sudo().invoice_payments_widget['content'] or []"/>
+                                        <t t-if="len(payments_vals) > 0">
+                                            <tr class="fw-bold">
+                                                <td>Amount Due</td>
+                                                <td class="text-center d-flex row">
+                                                    <span t-field="o.amount_residual">11.05</span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+                    </t>
+                </t>
+            </div>
+        </xpath>
+
+    </template>
+</odoo>

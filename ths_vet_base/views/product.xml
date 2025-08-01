@@ -67,12 +67,8 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='type']" position="after">
                 <field name="ths_sub_type_domain" invisible="1"/>
-                <field name="product_sub_type_id"
-                       options="{'no_create': True, 'no_quick_create': True}"
-                       domain="ths_sub_type_domain"/>
-                <field name="ths_membership_duration"
-                       invisible="not ths_membership_duration_visible"
-                       required="ths_membership_duration_required"/>
+                <field name="product_sub_type_id" options="{'no_create': True, 'no_quick_create': True}" domain="ths_sub_type_domain"/>
+                <field name="ths_membership_duration" invisible="not ths_membership_duration_visible" required="ths_membership_duration_required"/>
                 <field name="ths_membership_duration_visible" invisible="1"/>
                 <field name="ths_membership_duration_required" invisible="1"/>
             </xpath>
@@ -86,8 +82,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='type']" position="after">
                 <field name="product_sub_type_id" optional="show"/>
-                <field name="ths_membership_duration" column_invisible="not ths_membership_duration_visible"
-                       optional="hide"/>
+                <field name="ths_membership_duration" column_invisible="not ths_membership_duration_visible" optional="hide"/>
                 <field name="ths_sub_type_domain" column_invisible="1"/>
                 <field name="ths_membership_duration_visible" column_invisible="1"/>
                 <field name="ths_membership_duration_required" column_invisible="1"/>
@@ -104,9 +99,7 @@
                 <field name="product_sub_type_id"/>
             </xpath>
             <xpath expr="//filter[@name='type']" position="after">
-                <separator/>
-                <filter string="Product Sub Type" name="groupby_sub_type"
-                        context="{'group_by': 'product_sub_type_id'}"/>
+                <filter string="Product Sub Type" name="groupby_sub_type" context="{'group_by': 'product_sub_type_id'}"/>
             </xpath>
         </field>
     </record>

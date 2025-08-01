@@ -45,49 +45,28 @@
 
                 <xpath expr="//group[hasclass('oe_invoice_lines_tab')]" position="after">
                     <!-- Global Discount Controls -->
-                    <div class="row" invisible="move_type not in ['out_invoice', 'out_refund', 'in_invoice', 'in_refund']">
-                        <div>
-                            <label for="global_discount_type" class="o_form_label">Global Discount Type: </label>
-                            <field name="global_discount_type" readonly="state != 'draft'" nolabel="1"/>
-                        </div>
-                        <div>
-<!--                            <label for="global_discount_rate" class="o_form_label">-->
-<!--                                -->
-<!--                            </label>-->
-                            <span invisible="global_discount_type != 'percent'">Discount (%):</span>
-                            <span invisible="global_discount_type != 'amount'">Discount Amount:</span>
-                            <field name="global_discount_rate" readonly="state != 'draft'" nolabel="1"/><span invisible="global_discount_type != 'amount'"> KWD</span>
-                        </div>
+                    <div class="col-6">
+                        <label for="global_discount_type" class="o_form_label" style="display: inline-block; width: 120px;">Global Disc. Type: </label>
+                        <field name="global_discount_type" readonly="state != 'draft'" nolabel="1" class="oe_inline" style="display: inline-block; width: 150px;"/>
+                    </div>
+                    <div class="col-6">
+                        <label for="global_discount_rate" class="o_form_label" style="display: inline-block; width: 120px;" invisible="global_discount_type != 'amount'">
+                            Disc. Amount: </label>
+                        <label for="global_discount_rate" class="o_form_label" style="display: inline-block; width: 120px;" invisible="global_discount_type != 'percent'">
+                            Disc. (%): </label>
+                        <field name="global_discount_rate" readonly="state != 'draft'" nolabel="1" class="oe_inline" style="display: inline-block; width: 50px;"/>
+                        <span invisible="global_discount_type != 'amount'"> KWD</span>
                     </div>
                 </xpath>
 
                 <field name="tax_totals" position="before">
-                    <field name="subtotal_before_global_discount" string="Total W/o Disc." colspan="2" widget="monetary" readonly="1"
-                           invisible="line_discount_amount == 0 and global_discount_amount == 0"/>
-                    <field name="line_discount_amount" widget="monetary" string="Line Discount" colspan="2" readonly="1" class="text-danger"
-                           invisible="line_discount_amount == 0"/>
-                    <field name="global_discount_amount" widget="monetary" string="Global Discount" colspan="2" readonly="1" class="text-danger"
-                           invisible="global_discount_amount == 0"/>
+                    <field name="total_before_discount" string="Total W/o Disc." colspan="2" widget="monetary" readonly="1"
+                           invisible="total_discount_amount == 0"/>
+                    <field name="total_discount_amount" widget="monetary" string="Total Disc." colspan="2" readonly="1" class="text-danger"
+                           invisible="total_discount_amount == 0"/>
+                    <!--                    <field name="global_discount_amount" widget="monetary" string="Global Disc." colspan="2" readonly="1" class="text-danger"-->
+                    <!--                           invisible="global_discount_amount == 0"/>-->
                 </field>
-                <!--                <field name="tax_totals" position="before">-->
-                <!--                    &lt;!&ndash; Only show if there are any discounts &ndash;&gt;-->
-                <!--                    <div t-if="line_discount_amount > 0 or global_discount_amount > 0" class="oe_subtotal_footer_separator"/>-->
-
-                <!--                    &lt;!&ndash; Total before any discounts - only show if there are discounts &ndash;&gt;-->
-                <!--                    <field name="subtotal_before_global_discount" string="Total W/o Disc." colspan="2" widget="monetary" readonly="1"-->
-                <!--                           invisible="line_discount_amount == 0 and global_discount_amount == 0"/>-->
-
-                <!--                    &lt;!&ndash; Line discounts - only show if > 0 &ndash;&gt;-->
-                <!--                    <field name="line_discount_amount" widget="monetary" string="Line Discount" colspan="2" readonly="1" class="text-danger"-->
-                <!--                           invisible="line_discount_amount == 0"/>-->
-
-                <!--                    &lt;!&ndash; Global discount - only show if > 0 &ndash;&gt;-->
-                <!--                    <field name="global_discount_amount" widget="monetary" string="Global Discount" colspan="2" readonly="1" class="text-danger"-->
-                <!--                           invisible="global_discount_amount == 0"/>-->
-
-                <!--                    &lt;!&ndash; Separator line if discounts exist &ndash;&gt;-->
-                <!--                    <div t-if="line_discount_amount > 0 or global_discount_amount > 0" class="oe_subtotal_footer_separator"/>-->
-                <!--                </field>-->
 
                 <xpath expr="//field[@name='account_id']" position="attributes">
                     <attribute name="optional">hide</attribute>
@@ -211,91 +190,6 @@
                 </field>
             </field>
         </record>
-
-        <template id="report_invoice_document_ths_base" inherit_id="account.report_invoice_document">
-
-            <!-- Add discount breakdown before tax totals -->
-            <xpath expr="//t[@t-if='o.tax_totals'][@t-call='account.document_tax_totals']" position="before">
-                <div t-if="o.line_discount_amount > 0 or o.global_discount_amount > 0" class="clearfix">
-                    <div id="discount_breakdown">
-                        <table class="table table-sm" style="page-break-inside: avoid;">
-                            <t t-if="o.subtotal_before_global_discount > 0">
-                                <tr>
-                                    <td class="text-right"><strong>Subtotal Before Discounts:</strong></td>
-                                    <td class="text-right">
-                                        <span t-field="o.subtotal_before_global_discount + o.line_discount_amount"
-                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
-                                    </td>
-                                </tr>
-                            </t>
-                            <t t-if="o.line_discount_amount > 0">
-                                <tr>
-                                    <td class="text-right">Line Discounts:</td>
-                                    <td class="text-right" style="color: #d9534f;">
-                                        -<span t-field="o.line_discount_amount"
-                                               t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
-                                    </td>
-                                </tr>
-                            </t>
-                            <t t-if="o.global_discount_amount > 0">
-                                <tr>
-                                    <td class="text-right">Global Discount:</td>
-                                    <td class="text-right" style="color: #d9534f;">
-                                        -<span t-field="o.global_discount_amount"
-                                               t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
-                                    </td>
-                                </tr>
-                            </t>
-                            <tr style="border-top: 1px solid #000;">
-                                <td class="text-right"><strong>Subtotal After Discounts:</strong></td>
-                                <td class="text-right">
-                                    <strong>
-                                        <span t-field="o.amount_untaxed"
-                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
-                                    </strong>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-            </xpath>
-
-            <!-- 3. PAYMENT TABLE after payment terms -->
-            <xpath expr="//div[@id='payment_term']" position="after">
-                <br/><br/><br/>
-                <div t-if="print_with_payments" class="mb-3">
-                    <t t-if="o.payment_state != 'invoicing_legacy'">
-                        <t t-set="payments_vals" t-value="o.sudo().invoice_payments_widget and o.sudo().invoice_payments_widget['content'] or []"/>
-                        <t t-if="payments_vals">
-                            <h5>Payment Information</h5>
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Payment Date</th>
-                                        <th>Payment Method</th>
-                                        <th>Journal</th>
-                                        <th>Payment Reference</th>
-                                        <th>Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-foreach="payments_vals" t-as="payment_vals">
-                                        <tr t-if="payment_vals['is_exchange'] == 0">
-                                            <td><span t-out="payment_vals['date']" t-options='{"widget": "date"}'/></td>
-                                            <td><span t-out="payment_vals.get('payment_method_name', '')"/></td>
-                                            <td><span t-out="payment_vals.get('journal_name', '')"/></td>
-                                            <td><span t-out="payment_vals.get('ref', payment_vals.get('name', ''))"/></td>
-                                            <td><span t-out="payment_vals['amount']" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
-                                        </tr>
-                                    </t>
-                                </tbody>
-                            </table>
-                        </t>
-                    </t>
-                </div>
-            </xpath>
-
-        </template>
 
     </data>
 </odoo>

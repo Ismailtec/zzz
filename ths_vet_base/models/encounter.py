@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import uuid
 from datetime import timedelta, datetime, time
 from dateutil.relativedelta import relativedelta
 
@@ -72,14 +73,14 @@ class EncounterMixin(models.AbstractModel):
 			else:
 				rec.patient_ids_domain = str([('is_pet', '=', True)])
 
-	@api.depends('practitioner_id', 'practitioner_id.ths_department_id')
+	@api.depends('practitioner_department')
 	def _compute_room_id_domain(self):
 		""" Compute domain for room_id based on practitioner's department """
 		for record in self:
-			if record.practitioner_id and record.practitioner_id.ths_department_id:
+			if record.practitioner_department:
 				record.room_id_domain = str([
 					('resource_category', '=', 'location'),
-					('ths_department_id', '=', record.practitioner_id.ths_department_id.id)
+					('ths_department_id', '=', record.practitioner_department.id)
 				])
 			else:
 				record.room_id_domain = str([('resource_category', '=', 'location')])
@@ -110,16 +111,16 @@ class EncounterMixin(models.AbstractModel):
 	@api.onchange('practitioner_id')
 	def _onchange_practitioner_filter_rooms(self):
 		"""Filter available rooms when practitioner changes"""
-		if self.practitioner_id and self.practitioner_id.ths_department_id:
+		if self.practitioner_id and self.practitioner_department:
 			# Clear room if it doesn't match the new practitioner's department
-			if self.room_id and self.room_id.ths_department_id != self.practitioner_id.ths_department_id:
+			if self.room_id and self.room_id.ths_department_id != self.practitioner_department:
 				self.room_id = False
 
 			return {
 				'domain': {
 					'room_id': [
 						('resource_category', '=', 'location'),
-						('ths_department_id', '=', self.practitioner_id.ths_department_id.id)
+						('ths_department_id', '=', self.practitioner_department.id)
 					]
 				}
 			}
@@ -326,9 +327,6 @@ class VetEncounterHeader(models.Model):
 	kanban_payment_method_id = fields.Many2one('account.journal', string='Payment Method', domain="[('end_user_payment_method', '=', True), ('type', 'in', ['bank', 'cash'])]",
 											   help="Payment method for POS UI processing")
 
-	global_discount_type = fields.Selection([('percent', 'Percentage'), ('amount', 'Fixed Amount')], string='Global Discount Type', default='percent')
-	global_discount_rate = fields.Float(string='Global Discount Rate', digits=(16, 3), default=0.0)
-
 	# -------- EMR Fields (Base Text Fields) --------
 	chief_complaint = fields.Text(string="Chief Complaint")
 	history_illness = fields.Text(string="History of Present Illness")
@@ -462,16 +460,25 @@ class VetEncounterHeader(models.Model):
 		for encounter in self:
 			encounter.total_amount = sum(encounter.encounter_line_ids.mapped('sub_total'))
 
-	@api.depends('direct_invoice_ids', 'credit_note_ids', 'encounter_line_ids.invoice_ids', 'encounter_line_ids.sale_order_ids', 'treatment_plan_count')
+	@api.depends('direct_invoice_ids', 'credit_note_ids', 'encounter_line_ids.invoice_ids', 'encounter_line_ids.sale_order_ids', 'treatment_plan_ids')
 	def _compute_payment_document_counts(self):
 		for header in self:
-			# Count invoices from multiple sources
+			# Count invoices from multiple sources (exclude credit notes)
 			invoice_ids = set()
-			invoice_ids.update(header.direct_invoice_ids.ids)
-			invoice_ids.update(header.encounter_line_ids.mapped('invoice_ids').ids)
+			invoice_ids.update(header.direct_invoice_ids.filtered(lambda i: i.move_type == 'out_invoice').ids)
+			invoice_ids.update(header.encounter_line_ids.mapped('invoice_ids').filtered(lambda i: i.move_type == 'out_invoice').ids)
 			header.invoice_count = len(invoice_ids)
+
+			# Count credit notes separately
+			credit_note_ids = set()
+			credit_note_ids.update(header.credit_note_ids.ids)
+			credit_note_ids.update(header.encounter_line_ids.mapped('invoice_ids').filtered(lambda i: i.move_type == 'out_refund').ids)
+			header.credit_note_count = len(credit_note_ids)
+
+			# Count sale orders
 			header.sale_order_count = len(header.encounter_line_ids.mapped('sale_order_ids'))
-			header.credit_note_count = len(header.credit_note_ids)
+
+			# Count treatment plans
 			header.treatment_plan_count = len(header.treatment_plan_ids)
 
 	@api.model
@@ -613,7 +620,7 @@ class VetEncounterHeader(models.Model):
 			lines_to_process = self.encounter_line_ids.filtered(lambda l: l.id in selected_line_ids)
 
 			# Update source_payment to POS for all lines being processed
-			lines_to_process.write({'source_payment': 'POS'})
+			lines_to_process.write({'source_model': 'manual_pos'})
 
 			# Check if we have recurring products to determine if this is a subscription
 			has_recurring_products = any(line.product_id.recurring_invoice for line in lines_to_process)
@@ -647,10 +654,7 @@ class VetEncounterHeader(models.Model):
 						'patient_ids': self.patient_ids.ids if hasattr(self, 'patient_ids') and self.patient_ids else False,
 						'practitioner_id': self.practitioner_id.id if self.practitioner_id else False,
 						'room_id': self.room_id.id if self.room_id else False,
-						'global_discount_type': getattr(self, 'global_discount_type', 'percent'),
-						'global_discount_rate': getattr(self, 'global_discount_rate', 0.0),
 					}
-					_logger.info(f"Processing SO with global discount: {self.global_discount_type} {self.global_discount_rate}")
 
 					# Add subscription-related fields if we have recurring products
 					if has_recurring_products:
@@ -685,7 +689,7 @@ class VetEncounterHeader(models.Model):
 							'price_unit': encounter_line.unit_price,
 							'discount': encounter_line.discount * 100 if encounter_line.discount else 0.0,
 							'encounter_line_id': encounter_line.id,
-							'partner_id': self.partner_id.id,
+							'order_partner_id': self.partner_id.id,
 							'patient_ids': encounter_line.patient_ids.ids if hasattr(encounter_line, 'patient_ids') and encounter_line.patient_ids else False,
 							'practitioner_id': encounter_line.practitioner_id.id if hasattr(encounter_line, 'practitioner_id') and encounter_line.practitioner_id else False,
 							'room_id': encounter_line.room_id.id if hasattr(encounter_line, 'room_id') and encounter_line.room_id else False,
@@ -726,10 +730,7 @@ class VetEncounterHeader(models.Model):
 				# Update invoice header with encounter data
 				invoice_vals = {
 					'encounter_id': self.id,
-					'global_discount_type': getattr(self, 'global_discount_type', 'percent'),
-					'global_discount_rate': getattr(self, 'global_discount_rate', 0.0),
 				}
-				_logger.info(f"Processing payment with global discount: {self.global_discount_type} {self.global_discount_rate}")
 
 				if hasattr(self, 'patient_ids') and self.patient_ids:
 					invoice_vals['patient_ids'] = self.patient_ids.ids
@@ -741,7 +742,6 @@ class VetEncounterHeader(models.Model):
 					invoice_vals['partner_type_id'] = self.partner_id.partner_type_id.id
 
 				invoice.write(invoice_vals)
-				invoice._update_global_discount_line()
 
 				# Update invoice lines with encounter line data BEFORE posting
 				for encounter_line in lines_to_process:
@@ -907,12 +907,12 @@ class VetEncounterHeader(models.Model):
 				# Log but don't fail the entire process for subscription updates
 				_logger.warning(f"Failed to update subscription dates: {str(e)}")
 
-			# STEP 10: Update Encounter Lines with source_payment = POS
+			# STEP 10: Update Encounter Lines with source_model = manual_pos
 			try:
 				for encounter_line in lines_to_process:
 					encounter_line.write({
 						'payment_status': 'paid',
-						'source_payment': 'POS',  # Ensure this is set
+						'source_model': 'manual_pos',
 					})
 					encounter_line._compute_payment_amounts()
 			except Exception as e:
@@ -1023,8 +1023,9 @@ class VetEncounterHeader(models.Model):
 				existing_line.write({
 					'qty': existing_line.qty + qty,
 					'discount': discount,
-					'source_payment': 'POS',  # Always set to POS when added from POS UI
+					'source_model': 'manual_pos',
 				})
+				# Force recomputation
 				existing_line._compute_payment_amounts()
 				return existing_line.id
 			else:
@@ -1038,7 +1039,7 @@ class VetEncounterHeader(models.Model):
 					'payment_status': 'pending',
 					'practitioner_id': practitioner_id or (self.practitioner_id.id if self.practitioner_id else False),
 					'room_id': room_id or (self.room_id.id if self.room_id else False),
-					'source_payment': 'POS',  # Always set to POS when added from POS UI
+					'source_model': 'manual_pos',
 				}
 
 				if patient_ids:
@@ -1587,20 +1588,30 @@ class VetEncounterHeader(models.Model):
 			'name': _('Related Invoices'),
 			'res_model': 'account.move',
 			'view_mode': 'list,form',
-			'domain': [('id', 'in', invoice_ids),('move_type','=', 'out_invoice')],
+			'domain': [('id', 'in', invoice_ids), ('move_type', '=', 'out_invoice')],
 			'context': {'create': False}
 		}
 
 	def action_view_credit_notes(self):
 		"""View all credit notes related to this encounter"""
 		self.ensure_one()
+
+		credit_note_ids = list(set(
+			self.credit_note_ids.ids +
+			self.encounter_line_ids.mapped('invoice_ids').filtered(lambda i: i.move_type == 'out_refund').ids
+		))
+
 		return {
 			'type': 'ir.actions.act_window',
 			'name': _('Credit Notes'),
 			'res_model': 'account.move',
 			'view_mode': 'list,form',
-			'domain': [('id', 'in', self.credit_note_ids.ids), ('move_type', '=', 'out_refund')],
-			'context': {'default_partner_id': self.partner_id.id}
+			'domain': [('id', 'in', credit_note_ids)],
+			'context': {
+				'default_partner_id': self.partner_id.id,
+				'default_move_type': 'out_refund',
+				'default_encounter_id': self.id,
+			}
 		}
 
 	def action_view_sale_orders(self):
@@ -2075,7 +2086,7 @@ class VetEncounterLine(models.Model):
 		string='Payment Status', default='pending', required=True, index=True, copy=False, tracking=True)
 	source_model = fields.Selection(
 		[('calendar.event', 'Appointment'), ('vet.boarding.stay', 'Boarding Stay'), ('vet.park.checkin', 'Park Check-in'), ('vet.vaccination', 'Vaccination'),
-		 ('vet.pet.membership', 'Pet Membership'), ('sale.order', 'Sale Order'), ('account.move', 'Invoice'), ('manual', 'Manual Entry')],
+		 ('vet.pet.membership', 'Pet Membership'), ('sale.order', 'Sale Order'), ('account.move', 'Invoice'), ('manual_encounter', 'Encounter Entry'), ('manual_pos', 'POS Entry')],
 		string='Source Service', help='Service type that generated this billing line')
 
 	# Payment Tracking
@@ -2104,6 +2115,9 @@ class VetEncounterLine(models.Model):
 	is_refunded = fields.Boolean(string='Has Refunds', default=False, copy=False, readonly=True, tracking=True, help="True if this line has any refunds")
 	refunded_amount = fields.Monetary(string='Total Refunded', default=0.0, copy=False, tracking=True, currency_field='company_currency', help="Total amount refunded/line")
 	refund_history = fields.Json(string='Refund History', default=list, copy=False, readonly=True, help="JSON array of refund transactions")
+	tracking_reference = fields.Char(string='Tracking Reference', copy=False, readonly=True, index=True)
+	original_line_id = fields.Many2one('vet.encounter.line', string='Original Line (for refunds)', copy=False, readonly=True)
+	refund_line_ids = fields.One2many('vet.encounter.line', 'original_line_id', string='Refund Lines', readonly=True)
 
 	# Dashboard fields
 	encounter_month = fields.Char(string='Encounter Month', compute='_compute_encounter_month', store=True)
@@ -2560,6 +2574,9 @@ class VetEncounterLine(models.Model):
 			if 'source_payment' not in vals:
 				vals['source_payment'] = 'Manual'
 
+			if not vals.get('tracking_reference'):
+				vals['tracking_reference'] = self.env['ir.sequence'].next_by_code('encounter.line.tracking') or str(uuid.uuid4())
+
 			processed_vals_list.append(vals)
 
 		return super().create(processed_vals_list)
@@ -2865,6 +2882,42 @@ class AccountMove(models.Model):
 
 		return result
 
+	@api.model
+	def default_get(self, fields_list):
+		defaults = super(AccountMove, self).default_get(fields_list)
+
+		source_model = self.env.context.get('active_model')
+		source_id = self.env.context.get('active_id')
+
+		if 'partner_type_id' in fields_list:
+			move_type = self.env.context.get('default_move_type')
+			if move_type in ['out_invoice', 'out_refund']:
+				try:
+					pet_owner_type = self.env.ref('ths_vet_base.partner_type_pet_owner', raise_if_not_found=True)
+					defaults['partner_type_id'] = pet_owner_type.id
+				except ValueError:
+					# Fallback to name search if xmlid is not found
+					pet_owner_type = self.env['ths.partner.type'].search([('name', 'ilike', 'pet owner')], limit=1)
+					if pet_owner_type:
+						defaults['partner_type_id'] = pet_owner_type.id
+
+		if source_model == 'sale.order' and source_id:
+			so = self.env['sale.order'].browse(source_id)
+
+			if 'encounter_id' in fields_list:
+				defaults['encounter_id'] = so.encounter_id.id
+
+			if 'patient_ids' in fields_list:
+				defaults['patient_ids'] = so.mapped('patient_ids').ids
+
+			if 'practitioner_id' in fields_list:
+				defaults['practitioner_id'] = so.practitioner_id.id
+
+			if 'room_id' in fields_list:
+				defaults['room_id'] = so.room_id.id
+
+		return defaults
+
 	def write(self, vals):
 		"""Monitor payment_state changes more aggressively"""
 		result = super().write(vals)
@@ -3007,7 +3060,7 @@ class AccountMoveLine(models.Model):
 	def default_get(self, fields_list):
 		defaults = super(AccountMoveLine, self).default_get(fields_list)
 
-		if self.move_id.move_type == 'out_invoice':
+		if self.move_id.move_type in ('out_invoice', 'out_refund'):
 			if self.move_id.partner_id and 'patient_ids' not in fields_list and not self.patient_ids:
 				self.patient_ids = self.move_id.patient_ids.ids
 
@@ -3053,8 +3106,6 @@ class SaleOrder(models.Model):
 	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")
 	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]")
 	encounter_line_count = fields.Integer(compute='_compute_encounter_counts', store=False)
-	global_discount_type = fields.Selection([('percent', 'Percentage'), ('amount', 'Fixed Amount')], string='Global Discount Type', default='percent')
-	global_discount_rate = fields.Float(string='Global Discount Rate', digits=(16, 3), default=0.0)
 
 	@api.depends('encounter_line_ids')
 	def _compute_encounter_counts(self):
@@ -3081,6 +3132,7 @@ class SaleOrder(models.Model):
 			'context': {
 				'default_payment_type': 'sale_order',
 				'default_partner_id': self.partner_id.id,
+				'default_order_partner_id': self.partner_id.id,
 				'active_sale_order_id': self.id
 			}
 		}
@@ -3100,10 +3152,10 @@ class SaleOrderLine(models.Model):
 	_inherit = 'sale.order.line'
 
 	encounter_line_id = fields.Many2one('vet.encounter.line', string='Encounter Line', index=True, ondelete='set null', copy=False, readonly=True)
-	partner_id = fields.Many2one('res.partner', string='Pet Owner', context={'default_is_pet': False, 'default_is_pet_owner': True}, required=True, index=True,
-								 domain="[('is_pet_owner', '=', True)]", help="Pet owner.")
+	# partner_id = fields.Many2one('res.partner', string='Pet Owner', context={'default_is_pet': False, 'default_is_pet_owner': True}, required=True, index=True,
+	# 							 domain="[('is_pet_owner', '=', True)]", help="Pet owner.")
 	patient_ids = fields.Many2many('res.partner', 'sale_order_line_patient_rel', 'order_line_id', 'patient_id', string='Pets', store=True, copy=False, index=True,
-								   ondelete='cascade', domain="[('is_pet', '=', True),('pet_owner_id', '=?', partner_id)]", help="Pets this sale order line belongs to")
+								   ondelete='cascade', domain="[('is_pet', '=', True),('pet_owner_id', '=?', order_partner_id)]", help="Pets this sale order line belongs to")
 	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")
 	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]")
 

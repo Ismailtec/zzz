@@ -18,45 +18,17 @@ class ThsPartnerType(models.Model):
 	_order = 'parent_path asc, name asc'
 
 	name = fields.Char(string='Name', required=True)
-	parent_id = fields.Many2one(
-		'ths.partner.type',
-		string='Parent Partner Type',
-		index=True,
-		ondelete='cascade'  # If parent deleted, delete children
-	)
+	parent_id = fields.Many2one('ths.partner.type', string='Parent Partner Type', index=True, ondelete='cascade')
 	# Field for hierarchical path (computed automatically by _parent_store=True)
 	parent_path = fields.Char(index=True)  # , unaccent=False)
 	child_ids = fields.One2many('ths.partner.type', 'parent_id', string='Child Types')
 
-	sequence_id = fields.Many2one(
-		'ir.sequence',
-		string='Reference Sequence',
-		copy=False,
-		help="Sequence used to generate the Internal Reference for partners of this type."
-	)
-	is_company = fields.Boolean(
-		string="Company",
-		required=True,
-		default=False,
-		help="Check if partners of this type are typically companies/organizations."
-	)
-	is_individual = fields.Boolean(
-		string="Individual",
-		required=True,
-		default=True,
-		help="Check if partners of this type are typically individuals/persons."
-	)
-	is_customer = fields.Boolean(
-		string="Customer Type",
-		default=False,
-		help="Check if this partner type typically represents customers/clients."
-	)
+	sequence_id = fields.Many2one('ir.sequence', string='Reference Sequence', copy=False, help="Sequence used to generate the Internal Reference for partners of this type.")
+	is_company = fields.Boolean(string="Company", required=True, default=False, help="Check if partners of this type are typically companies/organizations.")
+	is_individual = fields.Boolean(string="Individual", required=True, default=True, help="Check if partners of this type are typically individuals/persons.")
+	is_customer = fields.Boolean(string="Customer Type", default=False, help="Check if this partner type typically represents customers/clients.")
 	# Note: is_employee flag is added by ths_hr module via inheritance
-	active = fields.Boolean(
-		string='Active',
-		default=True,
-		help="If unchecked, the type cannot be selected for new partners."
-	)
+	active = fields.Boolean(string='Active', default=True, help="If unchecked, the type cannot be selected for new partners.")
 
 	# --- Constraints ---
 	@api.constrains('is_company', 'is_individual')

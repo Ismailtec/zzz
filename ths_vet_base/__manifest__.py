@@ -152,7 +152,6 @@ and efficient business operations.""",
 		'calendar',
 		'documents',
 		'whatsapp',
-		'point_of_sale',
 	],
 	'data': [
 		# Security
@@ -175,7 +174,7 @@ and efficient business operations.""",
 		'views/product.xml',  # Product sub-types and medical products
 		'views/encounter.xml',  # Core encounter management
 		'views/service_models.xml',  # All service models (boarding, vaccination, etc.)
-		# 'views/invoice_report.xml',
+		'views/invoice_report.xml',
 		'views/vet_menus.xml',
 		'wizard/species_breed_import_view.xml',
 	],
@@ -203,6 +202,8 @@ and efficient business operations.""",
 			'ths_vet_base/static/src/pos_interface/pos_interface.scss',
 
 			# Custom JavaScript components
+			'ths_vet_base/static/src/pos_interface/completion_dialog.xml',
+			'ths_vet_base/static/src/pos_interface/completion_dialog.js',
 			'ths_vet_base/static/src/pos_interface/pos_interface.xml',
 			'ths_vet_base/static/src/pos_interface/pos_interface.js',
 			'ths_vet_base/static/src/js/encounter_dashboard.xml',

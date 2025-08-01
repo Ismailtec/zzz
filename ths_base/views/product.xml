@@ -33,8 +33,22 @@
             </field>
         </record>
 
-        <record id="view_product_supplierinfo_tree_inherit_ths_base" model="ir.ui.view">
-            <field name="name">product.supplierinfo.tree.inherit.ths.base</field>
+        <record id="view_product_template_search_inherit_ths_base" model="ir.ui.view">
+            <field name="name">product.template.search.inherit.ths.base</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_search_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='categ_id']" position="after">
+                    <field name="product_brand"/>
+                </xpath>
+                <xpath expr="//filter[@name='type']" position="after">
+                    <filter string="Brand" name="groupby_brand" context="{'group_by': 'product_brand'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_product_supplierinfo_list_inherit_ths_base" model="ir.ui.view">
+            <field name="name">product.supplierinfo.list.inherit.ths.base</field>
             <field name="model">product.supplierinfo</field>
             <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
             <field name="arch" type="xml">

@@ -2,6 +2,7 @@
 
 import {registry} from "@web/core/registry";
 import {Component, onWillStart, useState} from "@odoo/owl";
+import {CompletionDialog} from "@ths_vet_base/pos_interface/completion_dialog";
 import {useService} from "@web/core/utils/hooks";
 import {scanBarcode} from "@web/core/barcode/barcode_dialog";
 import {isBarcodeScannerSupported} from "@web/core/barcode/barcode_video_scanner";
@@ -45,9 +46,12 @@ class VetPosClientAction extends Component {
             availablePractitioners: [],
             availableRooms: [],
             practitionerDepartment: {},
-            sourcePayment: 'POS',
+            sourceModel: 'manual_pos',
             isProcessingPayment: false,
             paymentCompleted: false,
+            searchProductWord: '',
+            scanning: false,
+            searchResults: [],
         });
 
         onWillStart(async () => {
@@ -64,7 +68,7 @@ class VetPosClientAction extends Component {
                     "vet.encounter.header",
                     [encounterId],
                     ["id", "name", "partner_id", "patient_ids", "practitioner_id", "room_id", "practitioner_department",
-                        "encounter_line_ids", "company_currency", "global_discount_type", "global_discount_rate"]
+                        "encounter_line_ids", "company_currency"]
                 );
                 const encounter_data = data[0];
                 this.state.encounter = {...this.state.encounter, ...encounter_data};
@@ -112,22 +116,26 @@ class VetPosClientAction extends Component {
                 this.state.availablePatients = await this.orm.read("res.partner", patientIds, ["id", "name"]);
             }
 
+            // Load all practitioners - don't filter by department here
             this.state.availablePractitioners = await this.orm.call(
                 "appointment.resource",
                 "search_read",
-                [[['resource_category', '=', 'practitioner'], ['active', '=', true]]]
+                [[['resource_category', '=', 'practitioner'], ['active', '=', true]],
+                    ["id", "name"]]
             );
 
-            this.state.practitionerDepartment = this.state.encounter.practitioner_department;
+            // Load rooms - filter by practitioner_department if practitioner is selected
+            // let roomDomain = [['resource_category', '=', 'location'], ['active', '=', true]];
+            // if (this.state.encounter.practitioner_department) {
+            //     roomDomain.push(['ths_department_id', '=', this.state.encounter.practitioner_department[0]]);
+            // }
 
             this.state.availableRooms = await this.orm.call(
                 "appointment.resource",
                 "search_read",
-                [[['resource_category', '=', 'location'], ['active', '=', true]]]
+                [[['resource_category', '=', 'location'], ['active', '=', true]],
+                    ["id", "name"]]
             );
-
-            this.state.roomDepartments = this.state.encounter.practitioner_department;
-
 
         } catch (error) {
             console.error("Error loading resources:", error);
@@ -204,7 +212,7 @@ class VetPosClientAction extends Component {
                         practitioner_department: line.practitioner_department ? line.practitioner_department[0] : null,
                         patients: patientNames,
                         patient_ids: line.patient_ids || [],
-                        sourcePayment: 'POS',
+                        sourceModel: 'manual_pos',
                     });
                 }
                 this.updateCartTotal();
@@ -240,7 +248,7 @@ class VetPosClientAction extends Component {
                 room_id: this.state.encounter.room_id ? this.state.encounter.room_id[0] : null,
                 patients: this.state.encounter.patient_ids ? this.state.encounter.patient_ids.map(p => p[1]) : [],
                 patient_ids: this.state.encounter.patient_ids ? this.state.encounter.patient_ids.map(p => p[0]) : [],
-                source_payment: this.props.sourcePayment,
+                source_model: this.props.sourceModel,
                 unsaved: true,
             });
         }
@@ -283,76 +291,101 @@ class VetPosClientAction extends Component {
     }
 
     getLineTotal(item) {
+        if (item.isGlobalDiscount) {
+            return item.price; // Already negative
+        }
+
         const lineTotal = item.price * item.qty;
         const discountAmount = lineTotal * ((item.discount / 100) || 0);
         return lineTotal - discountAmount;
     }
 
     updateCartTotal() {
-        let subtotal = this.state.cartItems.reduce((total, item) => {
+        this.state.cartTotal = this.state.cartItems.reduce((total, item) => {
             return total + this.getLineTotal(item);
         }, 0);
-
-        // Calculate global discount amount
-        let globalDiscountAmount = 0;
-        if (this.state.globalDiscount > 0) {
-            if (this.state.globalDiscountType === 'percent') {
-                globalDiscountAmount = subtotal * (this.state.globalDiscount / 100);
-            } else {
-                globalDiscountAmount = Math.min(this.state.globalDiscount, subtotal); // Don't exceed subtotal
-            }
-        }
-
-        // Final total after global discount
-        this.state.cartTotal = Math.max(0, subtotal - globalDiscountAmount);
-        this.state.globalDiscountAmount = globalDiscountAmount;
-
-        console.log("Cart calculation:", {
-            subtotal: subtotal,
-            globalDiscountAmount: globalDiscountAmount,
-            finalTotal: this.state.cartTotal
-        });
-    }
-
-    getGlobalDiscountAmount() {
-        let subtotal = this.state.cartItems.reduce((total, item) => {
-            return total + this.getLineTotal(item);
-        }, 0);
-
-        if (this.state.globalDiscount > 0) {
-            if (this.state.globalDiscountType === 'percent') {
-                return subtotal * (this.state.globalDiscount / 100);
-            } else {
-                return Math.min(this.state.globalDiscount, subtotal); // Don't exceed subtotal
-            }
-        }
-        return 0;
+        this.state.cartTotal = Math.max(0, this.state.cartTotal);
     }
 
     async updateGlobalDiscount(discount) {
         this.state.globalDiscount = parseFloat(discount) || 0;
+
+        // Remove existing global discount line from cart
+        this.removeGlobalDiscountFromCart();
+
+        // Add new global discount line if discount > 0
+        if (this.state.globalDiscount > 0) {
+            await this.addGlobalDiscountToCart();
+        }
+
+        // Update cart total
         this.updateCartTotal();
-        await this.updateEncounterGlobalDiscount();
+
     }
 
     async updateGlobalDiscountType(type) {
-        // Clear the rate when type changes
         this.state.globalDiscountType = type;
         this.state.globalDiscount = 0;
+
+        // Remove any existing global discount line
+        this.removeGlobalDiscountFromCart();
         this.updateCartTotal();
-        await this.updateEncounterGlobalDiscount();
+
     }
 
-    async updateEncounterGlobalDiscount() {
-        if (!this.state.encounter.id) return;
+    removeGlobalDiscountFromCart() {
+        this.state.cartItems = this.state.cartItems.filter(item => !item.isGlobalDiscount);
+    }
 
+    async addGlobalDiscountToCart() {
+        // Get actual product ID from xmlid
         try {
-            await this.orm.write("vet.encounter.header", [this.state.encounter.id], {
-                'global_discount_type': this.state.globalDiscountType,
-                'global_discount_rate': this.state.globalDiscount,
-            });
+            const discountProducts = await this.orm.call("product.product", "search_read", [
+                [['default_code', '=', 'DISC']],
+                ['id', 'name', 'default_code']
+            ]);
+
+            if (!discountProducts.length) {
+                this.notification.add(_t("Global discount product not found"), {type: "warning"});
+                return;
+            }
+
+            const discountProduct = discountProducts[0];
+
+            // Calculate discount amount
+            const regularItems = this.state.cartItems.filter(item => !item.isGlobalDiscount);
+            const subtotal = regularItems.reduce((total, item) => total + this.getLineTotal(item), 0);
+
+            let discountAmount;
+            if (this.state.globalDiscountType === 'percent') {
+                discountAmount = subtotal * (this.state.globalDiscount / 100);
+            } else {
+                discountAmount = Math.min(this.state.globalDiscount, subtotal);
+            }
+
+            if (discountAmount > 0) {
+                this.state.cartItems.push({
+                    id: 'global_discount_line',
+                    product_id: discountProduct.id,
+                    name: `Global Discount (${this.state.globalDiscount.toFixed(3)}${this.state.globalDiscountType === 'percent' ? '%' : ' KWD'})`,
+                    default_code: 'DISC',
+                    price: -discountAmount,
+                    qty: 1,
+                    discount: 0,
+                    isExisting: false,
+                    isGlobalDiscount: true,
+                    practitioner: '',
+                    practitioner_id: null,
+                    room: '',
+                    room_id: null,
+                    patients: [],
+                    patient_ids: [],
+                    sourceModel: 'manual_pos',
+                });
+            }
         } catch (error) {
-            console.error("Error updating encounter global discount:", error);
+            console.error("Error adding global discount:", error);
+            this.notification.add(_t("Error adding global discount"), {type: "danger"});
         }
     }
 
@@ -362,7 +395,7 @@ class VetPosClientAction extends Component {
 
     formatCurrency(amount) {
         if (isNaN(amount) || amount === null || amount === undefined) {
-            return 'KWD 0.000';
+            return `${this.state.encounter.company_currency} 0.000`;
         }
 
         let currencyCode = 'KWD';
@@ -390,18 +423,18 @@ class VetPosClientAction extends Component {
     }
 
     getAvailableRoomsForPractitioner(practitionerId) {
+        // If no practitioner selected, return all rooms
         if (!practitionerId) {
             return this.state.availableRooms;
         }
 
-        const practitionerDeptId = this.state.practitionerDepartment[practitionerId];
-        if (!practitionerDeptId) {
+        // If practitioner is selected but no department info, return all rooms
+        if (!this.state.encounter.practitioner_department || !this.state.encounter.practitioner_department[0]) {
             return this.state.availableRooms;
         }
 
-        return this.state.availableRooms.filter(room => {
-            return this.state.roomDepartments[room.id] === practitionerDeptId;
-        });
+        // Return rooms filtered by the current practitioner's department
+        return this.state.availableRooms;
     }
 
     updateLinePractitioner(itemId, practitionerId) {
@@ -532,47 +565,35 @@ class VetPosClientAction extends Component {
         this.state.isProcessingPayment = true;
 
         try {
-            console.log("Starting payment process...");
-            console.log("Expected payment amount:", this.state.cartTotal);
+            // STEP 1: Sync all cart changes to encounter lines BEFORE payment
+            await this.syncCartToEncounterLines();
 
-            // First sync global discount to encounter
-            await this.updateEncounterGlobalDiscount();
+            // STEP 3: Get line IDs to process (including updated discount values)
+            const selectedLineIds = await this.getProcessableLineIds();
 
-            // Add new items to encounter
-            const newItems = this.state.cartItems.filter(item => !item.isExisting);
-            for (const item of newItems) {
-                const patientIds = item.patient_ids?.length ? item.patient_ids : [];
-
-                await this.orm.call("vet.encounter.header", "add_product_to_encounter_kanban", [this.state.encounter.id], {
-                    product_id: item.product_id,
-                    qty: item.qty,
-                    patient_ids: patientIds,
-                    discount: item.discount / 100 || 0.0,
-                    practitioner_id: item.practitioner_id,
-                    room_id: item.room_id,
+            // STEP 4: Process payment
+            const result = await this.orm.call("vet.encounter.header", "process_payment_kanban_ui",
+                [this.state.encounter.id], {
+                    payment_method_id: this.state.selectedPaymentMethod.id,
+                    selected_line_ids: selectedLineIds,
                 });
-            }
-
-            console.log("Processing payment with global discount:", {
-                type: this.state.globalDiscountType,
-                rate: this.state.globalDiscount,
-                expectedTotal: this.state.cartTotal
-            });
-
-            const result = await this.orm.call("vet.encounter.header", "process_payment_kanban_ui", [this.state.encounter.id], {
-                payment_method_id: this.state.selectedPaymentMethod.id,
-            });
-
-            console.log("Payment result:", result);
 
             if (result && result.success === true) {
                 this.state.paymentCompleted = true;
-                this.notification.add(result.message || _t("Payment processed successfully!"), {type: "success"});
 
-                // Clear cart and reset state
-                this.clearCartAndClose();
+                // Show completion dialog
+                this.dialog.add(CompletionDialog, {
+                    title: _t("Order Successfully Processed"),
+                    message: result.message || _t("Payment processed successfully!"),
+                    invoiceId: result.invoice_id,
+                    onPrintInvoice: () => this.printInvoice(result.invoice_id),
+                    onNewOrder: () => this.startNewOrder(),
+                    onClose: () => this.closeInterface(),
+                    close: () => {
+                    },  // Required by dialog
+                });
             } else {
-                const errorMsg = result?.message || result?.error || "Payment processing failed - unknown error";
+                const errorMsg = result?.message || result?.error || "Payment processing failed";
                 this.notification.add(_t("Error: ") + errorMsg, {type: "danger"});
                 this.state.isProcessingPayment = false;
             }
@@ -583,20 +604,202 @@ class VetPosClientAction extends Component {
         }
     }
 
-    clearCartAndClose() {
-        // Clear all cart data
-        this.state.cartItems = [];
-        this.state.globalDiscount = 0;
-        this.state.globalDiscountAmount = 0;
-        this.state.cartTotal = 0;
-        this.state.selectedPaymentMethod = null;
-        this.state.isProcessingPayment = false;
-        this.state.paymentCompleted = true;
+    async syncCartToEncounterLines() {
+        // Sync all cart changes to encounter lines before payment"
+        try {
+            // Update existing lines with current cart values
+            for (const item of this.state.cartItems) {
+                if (item.isExisting && item.encounter_line_id) {
+                    await this.orm.write("vet.encounter.line", [item.encounter_line_id], {
+                        'qty': item.qty,
+                        'discount': (item.discount || 0) / 100,
+                        'practitioner_id': item.practitioner_id || false,
+                        'room_id': item.room_id || false,
+                        'patient_ids': [[6, 0, item.patient_ids || []]],
+                        'source_model': 'manual_pos',
+                    });
+                }
+            }
 
-        // Close the window after a short delay
-        setTimeout(() => {
-            window.close();
-        }, 2000);
+            // Add new items - source_model will be set in add_product_to_encounter_kanban
+            const newItems = this.state.cartItems.filter(item => !item.isExisting);
+            for (const item of newItems) {
+                await this.orm.call("vet.encounter.header", "add_product_to_encounter_kanban",
+                    [this.state.encounter.id], {
+                        product_id: item.product_id,
+                        qty: item.qty,
+                        patient_ids: item.patient_ids || [],
+                        discount: (item.discount || 0) / 100,
+                        practitioner_id: item.practitioner_id,
+                        room_id: item.room_id,
+                    });
+            }
+        } catch (error) {
+            throw new Error("Failed to sync cart to encounter lines: " + error.message);
+        }
+    }
+
+    async getProcessableLineIds() {
+        // Get line IDs that should be processed for payment
+        try {
+            const encounterLines = await this.orm.call("vet.encounter.line", "search_read", [
+                [
+                    ['encounter_id', '=', this.state.encounter.id],
+                    ['payment_status', 'in', ['pending', 'partial']],
+                    ['remaining_amount', '>', 0]
+                ],
+                ['id']
+            ]);
+
+            return encounterLines.map(line => line.id);
+        } catch (error) {
+            throw new Error("Failed to get processable lines: " + error.message);
+        }
+    }
+
+    async printInvoice(invoiceId) {
+        try {
+            await this.action.doAction({
+                type: 'ir.actions.report',
+                report_name: 'account.report_invoice',
+                report_type: 'qweb-pdf',
+                data: {'report_type': 'pdf'},
+                context: {
+                    'active_ids': [invoiceId],
+                    'active_model': 'account.move',
+                }
+            });
+            this.closeInterface();
+        } catch (error) {
+            console.error("Print error:", error);
+            this.notification.add(_t("Error printing invoice"), {type: "warning"});
+            this.closeInterface();
+        }
+    }
+
+    startNewOrder() {
+        // Reload the encounter form to start fresh
+        this.action.doAction({
+            type: 'ir.actions.act_window',
+            res_model: 'vet.encounter.header',
+            res_id: this.state.encounter.id,
+            view_mode: 'form',
+            target: 'current'
+        });
+    }
+
+    closeInterface() {
+        this.action.doAction({type: 'ir.actions.act_window_close'});
+    }
+
+    // clearCartAndClose() {
+    //     // Clear all cart data
+    //     this.state.cartItems = [];
+    //     this.state.globalDiscount = 0;
+    //     this.state.globalDiscountAmount = 0;
+    //     this.state.cartTotal = 0;
+    //     this.state.selectedPaymentMethod = null;
+    //     this.state.isProcessingPayment = false;
+    //     this.state.paymentCompleted = true;
+    //
+    //     // Close the window after a short delay
+    //     setTimeout(() => {
+    //         window.close();
+    //     }, 2000);
+    // }
+
+    async onClickScan() {
+        if (!this.isBarcodeScannerSupported()) {
+            this.notification.add(_t("Barcode scanner not supported"), {type: "warning"});
+            return;
+        }
+
+        try {
+            const result = await scanBarcode(this.env);
+            if (result) {
+                await this._barcodeProductAction(result);
+            }
+        } catch (error) {
+            if (error.message !== "BarcodeScanningCancelled") {
+                console.error("Barcode scan error:", error);
+                this.notification.add(_t("Barcode scanning failed"), {type: "danger"});
+            }
+        }
+    }
+
+    async _barcodeProductAction(barcode) {
+        try {
+            const product = await this._getProductByBarcode(barcode);
+            if (!product) {
+                this.notification.add(_t("Product not found for barcode: ") + barcode, {type: "warning"});
+                return;
+            }
+            this.addToCart(product);
+            this.notification.add(_t("Product added: ") + product.name, {type: "success"});
+        } catch (error) {
+            console.error("Barcode product action error:", error);
+            this.notification.add(_t("Error processing barcode"), {type: "danger"});
+        }
+    }
+
+    async _getProductByBarcode(barcode) {
+        try {
+            // Search in current loaded products first
+            for (const category of Object.values(this.state.productsByCategory)) {
+                const product = category.find(p => p.barcode === barcode);
+                if (product) {
+                    return product;
+                }
+            }
+
+            const products = await this.orm.call("product.product", "search_read", [
+                [['barcode', '=', barcode], ['sale_ok', '=', true], ['active', '=', true]],
+                ['id', 'name', 'default_code', 'lst_price', 'barcode', 'image_128']
+            ]);
+
+            return products.length > 0 ? products[0] : null;
+        } catch (error) {
+            if (error.name === 'RPCError') {
+                console.error("RPC Barcode search error:", error.message);
+            } else {
+                console.error("Unexpected barcode search error:", error);
+            }
+            return null;
+        }
+    }
+
+    async onSearchProducts(searchWord) {
+        if (!searchWord || searchWord.length < 2) {
+            this.state.searchResults = [];
+            return;
+        }
+
+        try {
+            this.state.searchResults = await this.orm.call("product.product", "search_read", [
+                ['|', ['name', 'ilike', searchWord], ['default_code', 'ilike', searchWord],
+                    ['sale_ok', '=', true], ['active', '=', true]],
+                ['id', 'name', 'default_code', 'lst_price', 'barcode', 'image_128'],
+                0, 10
+            ]);
+        } catch (error) {
+            if (error.name === 'RPCError') {
+                console.error("RPC Search error:", error.message);
+            } else {
+                console.error("Unexpected search error:", error);
+            }
+            this.state.searchResults = [];
+        }
+    }
+
+    onSearchInputChange(event) {
+        const searchWord = event.target.value;
+        this.state.searchProductWord = searchWord;
+        this.onSearchProducts(searchWord);
+    }
+
+    clearSearch() {
+        this.state.searchProductWord = '';
+        this.state.searchResults = [];
     }
 }
 

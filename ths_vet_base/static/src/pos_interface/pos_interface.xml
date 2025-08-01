@@ -61,6 +61,51 @@
                 </div>
 
                 <div class="categories-section-compact">
+                    <!-- Search Bar -->
+                    <div class="search-section me-3" style="min-width: 250px;">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">
+                                <i class="fa fa-search"/>
+                            </span>
+                            <input type="text"
+                                   class="form-control"
+                                   placeholder="Search products..."
+                                   t-att-value="state.searchProductWord"
+                                   t-on-input="onSearchInputChange"
+                                   t-on-keydown="(ev) => ev.key === 'Enter' &amp;&amp; this.onSearchProducts(state.searchProductWord)"/>
+                            <button class="btn btn-outline-secondary"
+                                    t-on-click="clearSearch"
+                                    t-if="state.searchProductWord">
+                                <i class="fa fa-times"/>
+                            </button>
+                        </div>
+
+                        <!-- Search Results Dropdown -->
+                        <div class="search-results position-absolute bg-white border rounded shadow-sm"
+                             style="z-index: 1000; width: 100%; max-height: 200px; overflow-y: auto;"
+                             t-if="state.searchResults.length > 0">
+                            <div t-foreach="state.searchResults" t-as="product" t-key="product.id"
+                                 class="search-result-item p-2 border-bottom cursor-pointer"
+                                 t-on-click="() => this.addToCart(product)"
+                                 style="cursor: pointer;">
+                                <div class="d-flex justify-content-between">
+                                    <span t-esc="product.name"/>
+                                    <span class="text-success" t-esc="this.formatCurrency(product.lst_price)"/>
+                                </div>
+                                <small class="text-muted" t-if="product.default_code" t-esc="product.default_code"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barcode Scanner Button -->
+                    <button class="btn btn-light btn-sm me-2"
+                            t-if="isBarcodeScannerSupported()"
+                            t-on-click="onClickScan">
+                        <i class="fa fa-barcode fa-lg"/>
+                        <span class="ms-1">Scan</span>
+                    </button>
+
+                    <!-- Categories -->
                     <div class="categories-wrap-compact">
                         <div t-foreach="Object.keys(state.productsByCategory)" t-as="category" t-key="category"
                              class="category-tab-compact"
@@ -208,7 +253,8 @@
                             <div class="global-discount-left">
                                 <label>Global Discount:</label>
                                 <div class="discount-controls-inline">
-                                    <input type="number" class="input-small-compact no-spinner" t-att-value="state.globalDiscount || 0"
+                                    <input type="number" class="input-small-compact no-spinner" step="0.001"
+                                           t-att-value="state.globalDiscount.toFixed(3)"
                                            t-on-change="(ev) => this.updateGlobalDiscount(ev.target.value)"/>
                                     <button class="toggle-btn-compact" t-att-class="state.globalDiscountType === 'percent' ? 'active' : ''"
                                             t-on-click="() => this.updateGlobalDiscountType('percent')">%</button>

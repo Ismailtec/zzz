@@ -207,5 +207,13 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_encounter_line_tracking" model="ir.sequence">
+        <field name="name">Encounter Line Tracking</field>
+        <field name="code">encounter.line.tracking</field>
+        <field name="prefix">TRK</field>
+        <field name="padding">8</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
 
 </odoo>

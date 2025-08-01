@@ -223,7 +223,6 @@ class ProductTemplate(models.Model):
 
 
 # TODO: Add membership pricing tiers based on duration
-# TODO: Add automatic membership product creation wizard
 
 
 class ProductProduct(models.Model):

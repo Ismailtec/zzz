@@ -28,8 +28,6 @@ access_account_move_encounter_manager,account.move.encounter.manager,account.mod
 access_account_move_encounter_user,account.move.encounter.user,account.model_account_move,ths_vet_base.group_vet_user,1,0,0,0
 access_sale_order_encounter_manager,sale.order.encounter.manager,sale.model_sale_order,ths_vet_base.group_vet_manager,1,1,0,0
 access_sale_order_encounter_user,sale.order.encounter.user,sale.model_sale_order,ths_vet_base.group_vet_user,1,0,0,0
-access_pos_order_encounter_manager,pos.order.encounter.manager,point_of_sale.model_pos_order,ths_vet_base.group_vet_manager,1,1,0,0
-access_pos_order_encounter_user,pos.order.encounter.user,point_of_sale.model_pos_order,ths_vet_base.group_vet_user,1,0,0,0
 
 access_vet_medical_history_summary_manager,vet.medical.history.summary.manager,model_vet_medical_history_summary,ths_vet_base.group_vet_manager,1,0,0,0
 access_vet_medical_history_summary_user,vet.medical.history.summary.user,model_vet_medical_history_summary,ths_vet_base.group_vet_user,1,0,0,0

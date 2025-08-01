@@ -120,8 +120,6 @@
                             <field name="total_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/>
                             <field name="returned_amount" widget="monetary" invisible="not returned_amount" options="{'currency_field': 'company_currency'}"/>
                             <field name="pending_payments" readonly="1" widget="boolean_toggle" string="Has Pending Payments"/>
-                            <field name="global_discount_type" invisible="total_amount == 0"/>
-                            <field name="global_discount_rate" invisible="total_amount == 0"/>
                             <field name="invoice_count" invisible="1"/>
                             <field name="sale_order_count" invisible="1"/>
                             <field name="company_currency" invisible="1"/>
@@ -184,7 +182,7 @@
                                     <field name="room_id" optional="show" domain="room_id_domain"/>
                                     <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-info="payment_status == 'pending'"
                                            decoration-warning="payment_status in ('cancelled', 'refunded')" optional="show"/>
-                                    <field name="source_model" optional="show" widget="selection" decoration-info="source_model in ('calendar.event', 'manual')"
+                                    <field name="source_model" optional="show" widget="selection" decoration-info="source_model in ('calendar.event', 'manual_encounter')"
                                            decoration-primary="source_model in ('vet.boarding.stay', 'vet.vaccination')" decoration-warning="source_model == 'vet.pet.membership'"/>
                                     <field name="encounter_id" optional="hide" required="1"/>
                                     <field name="notes" optional="hide"/>
@@ -638,7 +636,7 @@
                 <filter string="Vaccinations" name="filter_vaccinations" domain="[('source_model', '=', 'vet.vaccination')]"/>
                 <filter string="Park Visits" name="filter_park" domain="[('source_model', '=', 'vet.park.checkin')]"/>
                 <filter string="Memberships" name="filter_memberships" domain="[('source_model', '=', 'vet.pet.membership')]"/>
-                <filter string="Manual Entries" name="filter_manual" domain="[('source_model', '=', 'manual')]"/>
+                <filter string="Manual Entries" name="filter_manual" domain="[('source_model', '=', 'manual_encounter')]"/>
                 <separator/>
                 <separator/>
                 <group expand="0" string="Group By">

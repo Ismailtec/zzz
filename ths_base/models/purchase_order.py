@@ -21,6 +21,7 @@ class PurchaseOrder(models.Model):
 	ths_landed_cost_count = fields.Integer(compute='_compute_landed_cost_count', string="# Landed Costs")
 	ths_hide_taxes = fields.Boolean(related="company_id.ths_hide_taxes", readonly=False, string="Hide Taxes", help="Technical field to read the global config setting.")
 
+	# ---------------- Landed Cost ----------------
 	# --- Compute Methods ---
 	@api.depends('ths_stock_landed_cost_ids')
 	def _compute_landed_cost_count(self):
@@ -70,15 +71,6 @@ class PurchaseOrder(models.Model):
 			action['res_id'] = landed_costs.id
 		return action
 
-	# @api.onchange('partner_id')
-	# def _onchange_partner_id_set_vendor_type(self):
-	#     vendor_type = self.env.ref('ths_base.partner_type_vendor', raise_if_not_found=False)
-	#     if self.partner_id and vendor_type:
-	#         # only set if blank or wrong
-	#         if not self.partner_id.partner_type_id or \
-	#                 self.partner_id.partner_type_id != vendor_type:
-	#             self.partner_id.partner_type_id = vendor_type
-
 	# --- Override button_confirm ---
 	def button_confirm(self):
 		""" Override to trigger LC creation/update after confirmation """
@@ -92,13 +84,8 @@ class PurchaseOrder(models.Model):
 		return res
 
 	def _create_or_update_landed_cost_from_po(self):
-		"""
-		Finds/Creates ONE draft Landed Cost record linked to this PO
-		and populates its cost lines based on PO lines marked as landed costs.
-		Called from button_confirm.
-		"""
+		""" Finds/Creates ONE draft Landed Cost record linked to this PO and populates its cost lines based on PO lines marked as landed costs. """
 		self.ensure_one()
-		# _logger.info(f"PO {self.name}: Checking for landed cost lines upon confirmation...")
 
 		# Find PO lines with products marked as landed costs
 		po_lc_lines = self.order_line.filtered(
@@ -176,6 +163,8 @@ class PurchaseOrder(models.Model):
 			self.message_post(
 				body=_("Automatically created Landed Cost %(lc_link)s based on lines in %(po_link)s.", lc_link=lc_link,
 					   po_link=po_link))
+
+# ---------------- End of Landed Cost ----------------
 
 
 class PurchaseOrderLine(models.Model):

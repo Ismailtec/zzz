@@ -5,37 +5,8 @@
         <template id="report_invoice_document_vet" inherit_id="account.report_invoice_document">
 
             <!-- Replace entire address row with vet info for out_invoice/out_refund -->
-            <xpath expr="//div[hasclass('row')][1]" position="replace">
-                <t t-if="o.move_type in ['out_invoice', 'out_refund']">
-                    <!-- VET INFO SECTION -->
-                    <div class="row">
-                        <div class="offset-col-6 col-6">
-                            <!-- Pet Owner -->
-                            <div class="mb-2">
-                                <strong>Pet Owner: </strong><span t-field="o.partner_id.name"/>
-                            </div>
-
-                            <!-- Patients - just names with commas -->
-                            <div t-if="o.patient_ids" class="mb-2">
-                                <strong>Patient(s): </strong>
-                                <span t-foreach="o.patient_ids" t-as="patient">
-                                    <span t-field="patient.name"/>
-                                    <t t-if="not patient_last">, </t>
-                                </span>
-                            </div>
-
-                            <!-- Practitioner -->
-                            <div t-if="o.practitioner_id" class="mb-1">
-                                <strong>Practitioner: </strong><span t-field="o.practitioner_id.name"/>
-                            </div>
-
-                            <!-- Room -->
-                            <div t-if="o.room_id" class="mb-1">
-                                <strong>Treatment Room: </strong><span t-field="o.room_id.name"/>
-                            </div>
-                        </div>
-                    </div>
-                </t>
+            <xpath expr="//t[@t-elif='o.partner_shipping_id and (o.partner_shipping_id == o.partner_id)']//div[@name='address_same_as_shipping']" position="replace">
+                <t t-if="o.move_type in ['out_invoice', 'out_refund'] and o.partner_id.is_pet_owner"><div class="row"/></t>
 
                 <!-- Keep original for non-vet invoices -->
                 <t t-else="">
@@ -81,6 +52,22 @@
                                 </t>
                             </div>
                         </t>
+                    </div>
+                </t>
+            </xpath>
+
+            <xpath expr="//div[@name='invoice_date']" position="before">
+                <t t-if="o.move_type in ['out_invoice', 'out_refund'] and o.partner_id.is_pet_owner">
+                    <div class="col" name="pet_owner">
+                        <strong>Pet Owner</strong>
+                        <div t-field="o.partner_id">Ahmed</div>
+                    </div>
+                    <div class="col" t-if="o.patient_ids">
+                        <strong class="row">Pet(s): </strong>
+                        <span t-foreach="o.patient_ids" t-as="patient">
+                            <span t-field="patient.name"/>
+                            <t t-if="not patient_last">, </t>
+                        </span>
                     </div>
                 </t>
             </xpath>
