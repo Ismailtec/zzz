@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+
 from . import partner_type
+from . import discount_all
 from . import res_partner
 from . import res_config
 from . import account_payment

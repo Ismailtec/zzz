@@ -2,3 +2,5 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_partner_type_user,ths.partner.type.user.access,model_ths_partner_type,base.group_user,1,0,0,0
 access_partner_type_admin,ths.partner.type,model_ths_partner_type,base.group_system,1,1,1,1
 access_product_brand_user,product.brand.user,model_product_brand,base.group_user,1,1,1,1
+access_po_discount_wizard,po.discount.wizard.user,model_purchase_order_discount,base.group_user,1,1,1,1
+access_invoice_discount_wizard,invoice.discount.wizard.user,model_account_move_discount,base.group_user,1,1,1,1

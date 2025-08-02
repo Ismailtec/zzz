@@ -33,16 +33,37 @@
                 <xpath expr="//field[@name='partner_id']" position="after">
                     <field name="ths_hide_taxes" invisible="1"/>
                 </xpath>
-
                 <xpath expr="//page[@name='products']/field[@name='order_line']/list//field[@name='taxes_id']" position="attributes">
                     <attribute name="column_invisible">parent.ths_hide_taxes == True</attribute>
                 </xpath>
-
                 <xpath expr="//field[@name='product_packaging_id']" position="attributes">
                     <attribute name="optional">hide</attribute>
                 </xpath>
                 <xpath expr="//field[@name='product_packaging_qty']" position="attributes">
                     <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='tax_totals']" position="before">
+                    <div class="float-end d-flex gap-1 mb-2" name="po_button_below_po_lines">
+                        <button string="Discount" name="action_open_discount_wizard" type="object" class="btn btn-secondary" invisible="state in ('done','cancel')"/>
+                    </div>
+                    <div class="d-flex flex-column gap-1" invisible="total_discount_amount == 0">
+                        <div class="row mb-0">
+                            <div class="col-6 text-end fw-bold">
+                                <label for="total_before_discount" string="Total W/o Disc." class="fw-bolder"/>
+                            </div>
+                            <div class="col-6 fw-bold">
+                                <field name="total_before_discount" nolabel="1" widget="monetary" readonly="1" class="text-nowrap fw-bolder"/>
+                            </div>
+                        </div>
+                        <div class="row mb-0">
+                            <div class="col-6 text-end fw-bold">
+                                <label for="total_discount_amount" string="Total Disc." class="fw-bolder"/>
+                            </div>
+                            <div class="col-6 fw-bold">
+                                <field name="total_discount_amount" nolabel="1" widget="monetary" readonly="1" class="text-danger text-nowrap fw-bolder"/>
+                            </div>
+                        </div>
+                    </div>
                 </xpath>
 
             </field>

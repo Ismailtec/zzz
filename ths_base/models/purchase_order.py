@@ -20,6 +20,49 @@ class PurchaseOrder(models.Model):
 												help="Landed Cost record(s) generated or linked from this PO.")
 	ths_landed_cost_count = fields.Integer(compute='_compute_landed_cost_count', string="# Landed Costs")
 	ths_hide_taxes = fields.Boolean(related="company_id.ths_hide_taxes", readonly=False, string="Hide Taxes", help="Technical field to read the global config setting.")
+	total_before_discount = fields.Monetary(string='Total before Discount', compute='_compute_discount_totals')
+	total_discount_amount = fields.Monetary(string='Total Discount', compute='_compute_discount_totals')
+
+	# ---------------- Global Discount ----------------
+	@api.depends('order_line.price_subtotal', 'order_line.price_unit', 'order_line.product_qty', 'order_line.discount')
+	def _compute_discount_totals(self):
+		for order in self:
+			discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+
+			regular_lines = order.order_line.filtered(lambda l: not discount_product or l.product_id != discount_product)
+
+			if not regular_lines:
+				order.total_before_discount = 0.0
+				order.total_discount_amount = 0.0
+				continue
+
+			# Total before any discounts (price_unit * qty)
+			order.total_before_discount = sum(line.price_unit * line.product_qty for line in regular_lines)
+
+			# Current subtotal (after line discounts)
+			subtotal_after_line_discounts = sum(regular_lines.mapped('price_subtotal'))
+
+			# Line discount amount
+			line_discount_amount = order.total_before_discount - subtotal_after_line_discounts
+
+			# Global discount amount (from discount lines)
+			global_discount_lines = order.order_line.filtered(lambda l: discount_product and l.product_id == discount_product)
+			global_discount_amount = abs(sum(global_discount_lines.mapped('price_subtotal')))
+
+			# Total discount = line discounts + global discount
+			order.total_discount_amount = line_discount_amount + global_discount_amount
+
+	def action_open_discount_wizard(self):
+		self.ensure_one()
+		return {
+			'name': _("Discount"),
+			'type': 'ir.actions.act_window',
+			'res_model': 'purchase.order.discount',
+			'view_mode': 'form',
+			'target': 'new',
+		}
+
+	# ---------------- End of Global Discount ----------------
 
 	# ---------------- Landed Cost ----------------
 	# --- Compute Methods ---
@@ -163,6 +206,7 @@ class PurchaseOrder(models.Model):
 			self.message_post(
 				body=_("Automatically created Landed Cost %(lc_link)s based on lines in %(po_link)s.", lc_link=lc_link,
 					   po_link=po_link))
+
 
 # ---------------- End of Landed Cost ----------------
 

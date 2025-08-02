@@ -1853,16 +1853,18 @@
             <xpath expr="//header" position="inside">
                 <button name="action_select_encounter_lines" type="object" string="Add Encounter Lines" class="btn-secondary" invisible="state != 'draft'"/>
             </xpath>
+            <label for="partner_id" position="replace"/>
             <xpath expr="//div[field[@name='partner_id']]" position="replace">
                 <group colspan="2">
-                    <field name="partner_type_id" options="{'no_open': True, 'no_create': True}" readonly="state == 'posted'"
-                           placeholder="Select Partner Type first to see partners..."/>
-                    <field name="partner_id" string="Pet Owner" domain="[('partner_type_id', '=?', partner_type_id)]" context="{'show_address': False, 'show_email': False}"
+                    <field name="partner_type_id" options="{'no_open': True, 'no_create': True}" readonly="state == 'posted'" placeholder="Select Partner Type first to see partners..."/>
+                    <label for="partner_id" string="Pet Owner" style="font-weight:bold;" invisible="move_type not in ('out_invoice', 'out_refund', 'out_receipt')"/>
+                    <label for="partner_id" string="Vendor" style="font-weight:bold;" invisible="move_type not in ('in_invoice', 'in_refund', 'in_receipt')"/>
+                    <field name="partner_id" nolabel="1" string="Pet Owner" domain="[('partner_type_id', '=?', partner_type_id)]" context="{'show_address': False, 'show_email': False}"
                            readonly="state == 'posted'" options="{'no_open': True, 'no_create': True}" placeholder="Select Pet Owner..."/>
                     <field name="patient_ids" widget="many2many_tags" readonly="state == 'posted'" invisible="move_type not in ('out_invoice', 'out_refund')"/>
-                    <field name="practitioner_id" readonly="state == 'posted'"/>
-                    <field name="room_id" readonly="state == 'posted'"/>
-                    <field name="encounter_id" readonly="state == 'posted'"/>
+                    <field name="practitioner_id" readonly="state == 'posted'" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                    <field name="room_id" readonly="state == 'posted'" invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                    <field name="encounter_id" readonly="state == 'posted'" invisible="move_type not in ('out_invoice', 'out_refund')"/>
                     <!--                    <field name="quick_edit_total_amount" string="Total Amount" class="w-50" invisible="move_type == 'entry' or not quick_edit_mode" readonly="state != 'draft'"/>-->
                 </group>
                 <field name="encounter_line_count" invisible="1"/>

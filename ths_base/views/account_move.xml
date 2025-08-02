@@ -42,30 +42,12 @@
                     <field name="payment_method_name" string="Payment Method" invisible="payment_state != 'paid'" readonly="1"/>
                     <field name="amount_paid" string="Amount Paid" widget="monetary" invisible="payment_state != 'paid'" readonly="1"/>
                 </xpath>
-
-                <xpath expr="//group[hasclass('oe_invoice_lines_tab')]" position="after">
-                    <!-- Global Discount Controls -->
-                    <div class="col-6">
-                        <label for="global_discount_type" class="o_form_label" style="display: inline-block; width: 120px;">Global Disc. Type: </label>
-                        <field name="global_discount_type" readonly="state != 'draft'" nolabel="1" class="oe_inline" style="display: inline-block; width: 150px;"/>
-                    </div>
-                    <div class="col-6">
-                        <label for="global_discount_rate" class="o_form_label" style="display: inline-block; width: 120px;" invisible="global_discount_type != 'amount'">
-                            Disc. Amount: </label>
-                        <label for="global_discount_rate" class="o_form_label" style="display: inline-block; width: 120px;" invisible="global_discount_type != 'percent'">
-                            Disc. (%): </label>
-                        <field name="global_discount_rate" readonly="state != 'draft'" nolabel="1" class="oe_inline" style="display: inline-block; width: 50px;"/>
-                        <span invisible="global_discount_type != 'amount'"> KWD</span>
-                    </div>
-                </xpath>
-
                 <field name="tax_totals" position="before">
-                    <field name="total_before_discount" string="Total W/o Disc." colspan="2" widget="monetary" readonly="1"
-                           invisible="total_discount_amount == 0"/>
-                    <field name="total_discount_amount" widget="monetary" string="Total Disc." colspan="2" readonly="1" class="text-danger"
-                           invisible="total_discount_amount == 0"/>
-                    <!--                    <field name="global_discount_amount" widget="monetary" string="Global Disc." colspan="2" readonly="1" class="text-danger"-->
-                    <!--                           invisible="global_discount_amount == 0"/>-->
+                    <div class="float-end d-flex gap-1 mb-2" name="invoice_button_below_invoice_lines">
+                        <button string="Discount" name="action_open_discount_wizard"  type="object" class="btn btn-secondary" invisible="state != 'draft'"/>
+                    </div>
+                    <field name="total_before_discount" string="Total W/o Disc." colspan="2" widget="monetary" readonly="1" invisible="total_discount_amount == 0"/>
+                    <field name="total_discount_amount" widget="monetary" string="Total Disc." colspan="2" readonly="1" class="text-danger" invisible="total_discount_amount == 0"/>
                 </field>
 
                 <xpath expr="//field[@name='account_id']" position="attributes">

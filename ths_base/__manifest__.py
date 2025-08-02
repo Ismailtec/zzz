@@ -77,6 +77,7 @@ Detailed Feature List (User-Friendly)
 		'data/global_discount_data.xml',
 		# Views
 		'views/partner_type.xml',
+		'views/discount_all.xml',
 		'views/account_payment.xml',
 		'views/purchase_order.xml',
 		'views/sales_order.xml',
@@ -90,7 +91,7 @@ Detailed Feature List (User-Friendly)
 		'views/product_category.xml',
 		'views/product_service.xml',
 		'views/res_config.xml',
-		'views/reports.xml',
+		'views/hide_tax_reports.xml',
 		'views/invoice_report.xml',
 		'views/res_partner.xml',
 		'views/menus.xml',

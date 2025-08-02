@@ -2507,7 +2507,7 @@ class VetEncounterLine(models.Model):
 	@api.constrains('source_model')
 	def _check_source_model(self):
 		allowed = ['calendar.event', 'vet.boarding.stay', 'vet.park.checkin', 'vet.vaccination', 'vet.pet.membership', 'vet.encounter.header', 'sale.order', 'account.move',
-				   'manual']
+				   'manual_encounter', 'manual_pos']
 		for record in self:
 			if record.source_model and record.source_model not in allowed:
 				selection_dict = dict(record._fields['source_model'].selection)
@@ -2530,7 +2530,7 @@ class VetEncounterLine(models.Model):
 				res['room_id'] = encounter.room_id.id
 
 		if 'source_model' not in res:
-			res['source_model'] = 'manual'
+			res['source_model'] = 'manual_encounter'
 
 		return res
 
@@ -2568,7 +2568,7 @@ class VetEncounterLine(models.Model):
 				vals['encounter_id'] = encounter.id
 
 			if 'source_model' not in vals:
-				vals['source_model'] = 'manual'
+				vals['source_model'] = 'manual_encounter'
 
 			# Default source_payment to Manual if not set
 			if 'source_payment' not in vals:
@@ -3049,8 +3049,8 @@ class AccountMoveLine(models.Model):
 
 	encounter_line_id = fields.Many2one('vet.encounter.line', string='Encounter Line', help="Encounter line this invoice line represents", index=True, ondelete='set null',
 										copy=False, readonly=True)
-	partner_id = fields.Many2one('res.partner', string='Pet Owner', context={'default_is_pet': False, 'default_is_pet_owner': True}, required=True, index=True,
-								 domain="[('is_pet_owner', '=', True)]", help="Pet owner.")
+	# partner_id = fields.Many2one('res.partner', string='Pet Owner', context={'default_is_pet': False, 'default_is_pet_owner': True}, required=True, index=True,
+	# 							 domain="[('is_pet_owner', '=', True)]", help="Pet owner.")
 	patient_ids = fields.Many2many('res.partner', 'account_move_line_patient_rel', 'move_id', 'patient_id', string='Pets', store=True, copy=False, index=True, ondelete='cascade',
 								   domain="[('is_pet', '=', True),('pet_owner_id', '=?', partner_id)]", help="Pets this invoice belongs to")
 	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="[('resource_category', '=', 'practitioner')]")

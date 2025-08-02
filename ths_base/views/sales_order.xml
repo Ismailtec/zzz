@@ -50,6 +50,31 @@
                 <xpath expr="//page[@name='order_lines']//field[@name='order_line']//form//field[@name='product_packaging_qty']" position="attributes">
                     <attribute name="optional">hide</attribute>
                 </xpath>
+                <xpath expr="//field[@name='tax_totals']" position="before">
+                    <!-- Wrapper to control vertical spacing between custom discount fields independently, using smaller gap for closeness -->
+                    <div class="d-flex flex-column gap-1" invisible="total_discount_amount == 0">
+                        <div class="row mb-0">
+                            <div class="col-6 text-end fw-bold">
+                                <label for="total_before_discount" string="Total W/o Disc." class="fw-bold"/>
+                            </div>
+                            <div class="col-6 fw-bold">
+                                <field name="total_before_discount" nolabel="1" widget="monetary" readonly="1" class="text-nowrap fw-bolder"/>
+                            </div>
+                        </div>
+                        <div class="row mb-0">
+                            <div class="col-6 text-end fw-bold">
+                                <label for="total_discount_amount" string="Total Disc." class="fw-bold"/>
+                            </div>
+                            <div class="col-6 fw-bold">
+                                <field name="total_discount_amount" nolabel="1" widget="monetary" readonly="1" class="text-danger text-nowrap fw-bolder"/>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+<!--                <field name="tax_totals" position="before">-->
+<!--                    <field name="total_before_discount" string="Total W/o Disc." widget="monetary" readonly="1" invisible="total_discount_amount == 0"/>-->
+<!--                    <field name="total_discount_amount" widget="monetary" string="Total Disc." readonly="1" class="text-danger" invisible="total_discount_amount == 0"/>-->
+<!--                </field>-->
             </field>
         </record>
     </data>

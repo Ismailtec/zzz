@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <template id="report_invoice_document_ths_base" inherit_id="account.report_invoice_document">
-
         <xpath expr="//table[hasclass('o_main_table')]/thead/tr/th[@name='th_quantity']/span" position="replace">
             <span class="text-center">Qty</span>
         </xpath>
@@ -23,36 +22,45 @@
             ;</attribute>
         </xpath>
 
+        <!-- Enhanced discount breakdown section -->
         <xpath expr="//div[@id='right-elements']" position="replace">
             <div t-if="o.move_type in ('out_invoice', 'out_refund', 'out_receipt', 'sale')" id="right-elements"
                  t-attf-class="#{'col-4' if report_type != 'html' else 'col-12 col-md-5'} ms-5 d-inline-block float-end">
                 <div class="clearfix row mt-n3">
                     <div id="discount_breakdown" class="ms-auto">
-                        <table class="o_total_table table table-borderless avoid-page-break-inside">
+                        <table class="o_total_table table table-borderless avoid-page-break-inside" style="min-width: 250px;">
                             <t t-if="o.total_discount_amount > 0">
                                 <tr>
                                     <td class="text-left fw-bold o_amount_column"><strong>Total before Disc.:</strong></td>
-                                    <td class="text-end o_price_total">
-                                        <span t-field="o.total_before_discount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></td>
+                                    <td class="text-end o_price_total" style="width: 120px !important;">
+                                        <span t-field="o.total_before_discount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
                                 </tr>
-                            </t>
-                            <t t-if="o.total_discount_amount > 0">
                                 <tr>
                                     <td class="text-left fw-bold o_amount_column">Total Disc.:</td>
-                                    <td class="text-end o_price_total" style="color: #d9534f;">
+                                    <td class="text-end o_price_total" style="color: #d9534f; width: 120px !important;">
                                         -<span t-field="o.total_discount_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
                                     </td>
                                 </tr>
                             </t>
+
+                            <!-- Tax totals -->
+                            <t t-if="o.tax_totals" t-call="account.document_tax_totals">
+                                <t t-set="tax_totals" t-value="o.tax_totals"/>
+                                <t t-set="currency" t-value="o.currency_id"/>
+                            </t>
+
                             <tr class="o_total o_amount_column" style="border-top: 1px solid #000;">
                                 <td class="text-left fw-bold"><strong>Total:</strong></td>
                                 <td class="text-end o_price_total" style="width: 120px !important;">
-                                    <strong><span t-field="o.amount_untaxed" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></strong>
+                                    <strong><span t-field="o.amount_total" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></strong>
                                 </td>
                             </tr>
                         </table>
                     </div>
                 </div>
+
+                <!-- Keep your existing amount in words section -->
                 <div class="mb-2">
                     <p class="text-end lh-sm" t-if="o.company_id.display_invoice_amount_total_words">Total amount in words: <br/>
                         <small class="text-muted lh-sm"><span t-field="o.amount_total_words">Thirty one dollar and Five cents</span></small>
@@ -68,11 +76,27 @@
                     <div class="oe_structure"/>
                 </t>
             </div>
+
+            <!-- Vendor bill section -->
             <div t-if="o.move_type not in ('out_invoice', 'out_refund', 'out_receipt')" id="right-elements2"
                  t-attf-class="#{'col-5' if report_type != 'html' else 'col-12 col-md-5'} ms-5 d-inline-block float-end">
                 <div id="total" class="clearfix row mt-n3">
                     <div class="ms-auto">
-                        <table class="o_total_table table table-borderless avoid-page-break-inside">
+                        <table class="o_total_table table table-borderless avoid-page-break-inside" style="min-width: 250px;">
+                            <t t-if="o.total_discount_amount > 0">
+                                <tr>
+                                    <td class="text-left fw-bold o_amount_column"><strong>Total before Disc.:</strong></td>
+                                    <td class="text-end o_price_total" style="width: 120px !important;">
+                                        <span t-field="o.total_before_discount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-left fw-bold o_amount_column">Total Disc.:</td>
+                                    <td class="text-end o_price_total" style="color: #d9534f; width: 120px !important;">
+                                        -<span t-field="o.total_discount_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
 
                             <!-- Tax totals summary (invoice currency) -->
                             <t t-if="o.tax_totals" t-call="account.document_tax_totals">
@@ -80,7 +104,7 @@
                                 <t t-set="currency" t-value="o.currency_id"/>
                             </t>
 
-                            <!--Payments-->
+                            <!-- Existing payments section -->
                             <t t-if="print_with_payments">
                                 <t t-if="o.payment_state != 'invoicing_legacy'">
                                     <t t-set="payments_vals" t-value="o.sudo().invoice_payments_widget and o.sudo().invoice_payments_widget['content'] or []"/>
@@ -108,13 +132,14 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- Existing sections -->
                 <div class="mb-2">
                     <p class="text-end lh-sm" t-if="o.company_id.display_invoice_amount_total_words">Total amount in words: <br/>
                         <small class="text-muted lh-sm"><span t-field="o.amount_total_words">Thirty one dollar and Five cents</span></small>
                     </p>
                 </div>
 
-                <!-- Tax totals summary (company currency) -->
                 <t t-if="o.tax_totals.get('display_in_company_currency')">
                     <t t-set="tax_totals" t-value="o.tax_totals"/>
                     <t t-call="account.document_tax_totals_company_currency_template"/>
@@ -172,6 +197,160 @@
                 </t>
             </div>
         </xpath>
-
     </template>
+
+    <template id="ths_sale_order_report_discount" inherit_id="sale.report_saleorder_document">
+        <!-- Fixed column widths for consistency -->
+        <xpath expr="//table[hasclass('o_main_table')]/thead/tr/th[@name='th_quantity']" position="replace">
+            <th name="th_quantity" class="text-end text-nowrap" style="width: 70px !important">Qty</th>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//td[@name='td_priceunit']" position="attributes">
+            <attribute name="style">width: 80px !important
+            ;</attribute>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//td[@t-if='display_discount']" position="attributes">
+            <attribute name="style">width: 60px !important
+            ;</attribute>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//td[@name='td_subtotal']" position="attributes">
+            <attribute name="style">width: 120px !important
+            ;</attribute>
+        </xpath>
+
+        <!-- Replace tax totals section with discount breakdown -->
+        <xpath expr="//div[@id='total']" position="replace">
+            <div id="total" t-attf-class="#{'col-4' if report_type != 'html' else 'col-12 col-md-5'} ms-5 d-inline-block float-end">
+                <div class="clearfix row mt-n3">
+                    <div id="discount_breakdown" class="ms-auto">
+                        <table class="o_total_table table table-borderless avoid-page-break-inside">
+                            <t t-if="doc.total_discount_amount > 0">
+                                <tr>
+                                    <td class="text-left fw-bold o_amount_column"><strong>Total before Disc.:</strong></td>
+                                    <td class="text-end o_price_total">
+                                        <span t-field="doc.total_before_discount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-left fw-bold o_amount_column">Total Disc.:</td>
+                                    <td class="text-end o_price_total" style="color: #d9534f;">
+                                        -<span t-field="doc.total_discount_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+
+<!--                            &lt;!&ndash; Tax totals &ndash;&gt;-->
+<!--                            <t t-if="doc.tax_totals" t-call="account.document_tax_totals">-->
+<!--                                <t t-set="tax_totals" t-value="doc.tax_totals"/>-->
+<!--                                <t t-set="currency" t-value="doc.currency_id"/>-->
+<!--                            </t>-->
+
+                            <tr class="o_total o_amount_column" style="border-top: 1px solid #000;">
+                                <td class="text-left fw-bold"><strong>Total:</strong></td>
+                                <td class="text-end o_price_total" style="width: 120px !important;">
+                                    <strong><span t-field="doc.amount_total" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+
+        <!-- Hide taxes column conditionally -->
+        <xpath expr="//th[@name='th_taxes']" position="attributes">
+            <attribute name="t-if">not doc.ths_hide_taxes</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_taxes']" position="attributes">
+            <attribute name="t-if">not doc.ths_hide_taxes</attribute>
+        </xpath>
+    </template>
+
+    <!-- Purchase Order Report -->
+    <template id="ths_purchase_order_report_discount" inherit_id="purchase.report_purchaseorder_document">
+        <!-- Fixed column widths for consistency -->
+        <xpath expr="//table[hasclass('o_main_table')]//thead//tr//th[@name='th_price_unit']" position="attributes">
+            <attribute name="class">text-end text-nowrap</attribute>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//tr//td[2]" position="attributes">
+            <attribute name="style">width: 100px !important
+            ;</attribute>
+            <attribute name="class">text-end text-nowrap</attribute>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//tr//td[3]" position="attributes">
+            <attribute name="style">width: 100px !important;</attribute>
+            <attribute name="class">text-end text-nowrap</attribute>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//tr//td[4]" position="attributes">
+            <attribute name="style">width: 60px !important
+            ;</attribute>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//tr//td[6]" position="attributes">
+            <attribute name="style">width: 120px !important
+            ;</attribute>
+        </xpath>
+
+        <!-- Replace tax totals section with discount breakdown -->
+<!--        <xpath expr="//div[hasclass('row')][2]" position="replace">-->
+<!--            <div class="row justify-content-end">-->
+<!--                <div t-attf-class="#{'col-4' if report_type != 'html' else 'col-12 col-md-5'} ms-5">-->
+<!--                    <div class="clearfix">-->
+<!--                        <div id="discount_breakdown" class="ms-auto">-->
+<!--                            <table class="o_total_table table table-borderless avoid-page-break-inside">-->
+<!--                                <t t-if="doc.total_discount_amount > 0">-->
+<!--                                    <tr>-->
+<!--                                        <td class="text-left fw-bold o_amount_column"><strong>Total before Disc.:</strong></td>-->
+<!--                                        <td class="text-end o_price_total">-->
+<!--                                            <span t-field="o.total_before_discount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>-->
+<!--                                        </td>-->
+<!--                                    </tr>-->
+<!--                                    <tr>-->
+<!--                                        <td class="text-left fw-bold o_amount_column">Total Disc.:</td>-->
+<!--                                        <td class="text-end o_price_total" style="color: #d9534f;">-->
+<!--                                            -<span t-field="o.total_discount_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>-->
+<!--                                        </td>-->
+<!--                                    </tr>-->
+<!--                                </t>-->
+
+<!--                                &lt;!&ndash; Tax totals &ndash;&gt;-->
+<!--                                <t t-if="o.tax_totals" t-call="account.document_tax_totals">-->
+<!--                                    <t t-set="tax_totals" t-value="o.tax_totals"/>-->
+<!--                                    <t t-set="currency" t-value="o.currency_id"/>-->
+<!--                                </t>-->
+
+<!--                                <tr class="o_total o_amount_column" style="border-top: 1px solid #000;">-->
+<!--                                    <td class="text-left fw-bold"><strong>Total:</strong></td>-->
+<!--                                    <td class="text-end o_price_total" style="width: 120px !important;">-->
+<!--                                        <strong><span t-field="doc.amount_total" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></strong>-->
+<!--                                    </td>-->
+<!--                                </tr>-->
+<!--                            </table>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </xpath>-->
+
+        <!-- Hide taxes column conditionally -->
+        <xpath expr="//th[@name='th_taxes']" position="attributes">
+            <attribute name="t-if">not o.ths_hide_taxes</attribute>
+        </xpath>
+        <xpath expr="//table[hasclass('o_main_table')]//tbody//tr//td[5]" position="attributes">
+            <attribute name="t-if">not o.ths_hide_taxes</attribute>
+        </xpath>
+    </template>
+
+    <!-- Update existing Invoice Report (ensure consistency) -->
+    <!--    <template id="ths_invoice_report_discount_update" inherit_id="ths_base.report_invoice_document_ths_base">-->
+    <!--        &lt;!&ndash; Ensure discount breakdown table has consistent styling &ndash;&gt;-->
+    <!--        <xpath expr="//table[hasclass('o_total_table table table-borderless avoid-page-break-inside')]" position="attributes">-->
+    <!--            <attribute name="class">o_total_table table table-borderless avoid-page-break-inside</attribute>-->
+    <!--            <attribute name="style">min-width: 250px-->
+    <!--            ;</attribute>-->
+    <!--        </xpath>-->
+
+    <!--        &lt;!&ndash; Ensure amount column has consistent width &ndash;&gt;-->
+    <!--        <xpath expr="//td[hasclass('text-end o_price_total')]" position="attributes">-->
+    <!--            <attribute name="style" add="width: 120px !important;" separator=" "/>-->
+    <!--        </xpath>-->
+    <!--    </template>-->
 </odoo>

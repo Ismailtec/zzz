@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
 from odoo.osv import expression
 from markupsafe import Markup
 
@@ -26,12 +25,8 @@ class AccountMove(models.Model):
 	payment_method_name = fields.Char(string='Payment Method', compute='_compute_payment_info', store=True)
 	amount_paid = fields.Monetary(string='Amount Paid', compute='_compute_payment_info', store=True)
 
-	global_discount_type = fields.Selection([('percent', 'Percentage'), ('amount', 'Fixed Amount')], string='Global Disc. Type', default='percent', tracking=True)
-	global_discount_rate = fields.Float(string='Global Disc. Rate', default=0.0, digits=(16, 3), tracking=True, help="Discount rate as percentage (0-100) or fixed amount")
-	global_discount_amount = fields.Monetary(string='Global Disc. Amount', currency_field='currency_id', compute='_compute_global_discount_amount',
-											 help="Calculated global discount amount")
-	total_before_discount = fields.Monetary(string='Total before any discount', compute='_compute_discount_breakdown', currency_field='currency_id')
-	total_discount_amount = fields.Monetary(string='Total Disc.', compute='_compute_discount_breakdown', currency_field='currency_id')
+	total_before_discount = fields.Monetary(string='Total before any discount', compute='_compute_discount_totals', currency_field='currency_id')
+	total_discount_amount = fields.Monetary(string='Total Disc.', compute='_compute_discount_totals', currency_field='currency_id')
 
 	@api.onchange('partner_type_id')
 	def _onchange_partner_type_clear_partner(self):
@@ -68,6 +63,94 @@ class AccountMove(models.Model):
 				move.payment_method_name = ''
 				move.amount_paid = 0.0
 
+
+
+	# ----------------- Global Discount Section -----------------
+	@api.depends('invoice_line_ids.price_subtotal', 'invoice_line_ids.price_unit', 'invoice_line_ids.quantity', 'invoice_line_ids.discount')
+	def _compute_discount_totals(self):
+		for move in self:
+			discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
+			if not discount_product:
+				discount_product = self.company_id.sale_discount_product_id
+
+			regular_lines = move.invoice_line_ids.filtered(lambda l: l.display_type == 'product' and (not discount_product or l.product_id != discount_product))
+
+			if not regular_lines:
+				move.total_before_discount = 0.0
+				move.total_discount_amount = 0.0
+				continue
+
+			# Total before any discounts (price_unit * qty)
+			move.total_before_discount = sum(line.price_unit * line.quantity for line in regular_lines)
+
+			# Current subtotal (after line discounts)
+			subtotal_after_line_discounts = sum(regular_lines.mapped('price_subtotal'))
+
+			# Line discount amount
+			line_discount_amount = move.total_before_discount - subtotal_after_line_discounts
+
+			# Global discount amount (from discount lines)
+			global_discount_lines = move.invoice_line_ids.filtered(lambda l: discount_product and l.product_id == discount_product)
+			global_discount_amount = abs(sum(global_discount_lines.mapped('price_subtotal')))
+
+			# Total discount = line discounts + global discount
+			move.total_discount_amount = line_discount_amount + global_discount_amount
+
+	def action_open_discount_wizard(self):
+		self.ensure_one()
+		return {
+			'name': _("Discount"),
+			'type': 'ir.actions.act_window',
+			'res_model': 'account.move.discount',
+			'view_mode': 'form',
+			'target': 'new',
+		}
+	# ----------------- End of Global Discount Section -----------------
+
+	# Get Default Date on Bill and partner type if passed through context
+	@api.model
+	def default_get(self, fields_list):
+		defaults = super(AccountMove, self).default_get(fields_list)
+
+		# Check if creating a Vendor Bill and invoice_date default is needed
+		if 'invoice_date' in fields_list and not defaults.get('invoice_date'):
+			# Check context for move type (more reliable than checking defaults['move_type'])
+			if self.env.context.get('default_move_type') == 'in_invoice':
+				defaults['invoice_date'] = fields.Date.context_today(self)
+
+		if 'partner_type_id' in fields_list:
+			partner_id = defaults.get('partner_id')
+			if partner_id:
+				partner = self.env['res.partner'].browse(partner_id)
+				if partner.partner_type_id:
+					defaults['partner_type_id'] = partner.partner_type_id.id
+
+			if not defaults.get('partner_type_id'):
+				move_type = self.env.context.get('default_move_type')
+
+				if move_type in ['out_invoice', 'out_refund']:
+					try:
+						customer_type = self.env.ref('ths_base.partner_type_customer', raise_if_not_found=True)
+						defaults['partner_type_id'] = customer_type.id
+					except ValueError:
+						# Fallback to name search if xmlid is not found
+						customer_type = self.env['ths.partner.type'].search([('name', 'ilike', 'Customer')], limit=1)
+						if customer_type:
+							defaults['partner_type_id'] = customer_type.id
+
+				elif move_type in ['in_invoice', 'in_refund']:
+					try:
+						vendor_type = self.env.ref('ths_base.partner_type_vendor', raise_if_not_found=True)
+						defaults['partner_type_id'] = vendor_type.id
+					except ValueError:
+						# Fallback to name search if xmlid is not found
+						vendor_type = self.env['ths.partner.type'].search([('name', 'ilike', 'vendor')], limit=1)
+						if vendor_type:
+							defaults['partner_type_id'] = vendor_type.id
+
+		return defaults
+
+	# ----------------- Landed Cost Section -----------------
 	def _compute_landed_costs(self):
 		""" Find landed costs linked via PO (if bill from PO) or directly """
 		LandedCost = self.env['stock.landed.cost']
@@ -202,209 +285,7 @@ class AccountMove(models.Model):
 		related_lc.write(update_vals)
 		related_lc.message_post(body=_("Cost lines updated based on posted Vendor Bill %s.", self.display_name))
 
-	# ----------------- End of Landed Cost Section -----------------
-
-	# ----------------- Global Discount Section -----------------
-	@api.onchange('global_discount_type')
-	def _onchange_global_discount_type(self):
-		"""Clear rate and remove line when type changes"""
-		if self.state == 'draft':
-			self.global_discount_rate = False
-
-	@api.depends('invoice_line_ids.price_subtotal', 'global_discount_type', 'global_discount_rate')
-	def _compute_global_discount_amount(self):
-		for move in self:
-			if move.global_discount_rate > 0:
-				# Get global discount product to exclude from calculation
-				discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
-
-				# Calculate based on lines excluding the global discount line itself
-				regular_lines = move.invoice_line_ids.filtered(lambda l: l.display_type == 'product' and (not discount_product or l.product_id != discount_product))
-				total_before_discount = sum(line.price_unit * line.quantity for line in regular_lines)
-
-				if move.global_discount_type == 'percent':
-					move.global_discount_amount = total_before_discount * (move.global_discount_rate / 100)
-				else:  # amount
-					move.global_discount_amount = move.global_discount_rate
-			else:
-				move.global_discount_amount = 0.0
-
-	@api.depends('invoice_line_ids.price_subtotal', 'invoice_line_ids.price_unit', 'invoice_line_ids.quantity', 'invoice_line_ids.discount')
-	def _compute_discount_breakdown(self):
-		for move in self:
-			# Get global discount product to exclude from calculation
-			discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
-
-			regular_lines = move.invoice_line_ids.filtered(lambda l: l.display_type == 'product' and (not discount_product or l.product_id != discount_product))
-
-			if regular_lines:
-				# Subtotal before any discounts (using price_unit * quantity)
-				move.total_before_discount = sum(line.price_unit * line.quantity for line in regular_lines)
-
-				# Current subtotal (after line discounts but before global discount)
-				subtotal_before_global_discount = sum(regular_lines.mapped('price_subtotal'))
-
-				# Line discount amount (difference between before and after line discounts)
-				line_discount_amount = move.total_before_discount - subtotal_before_global_discount
-
-				# Total discount amount (Line discount amount + global discount)
-				move.total_discount_amount = line_discount_amount + move.global_discount_amount
-			else:
-				# line_discount_amount = 0.0
-				move.total_before_discount = 0.0
-				move.total_discount_amount = 0.0
-
-	@api.onchange('global_discount_type', 'global_discount_rate')
-	def _onchange_global_discount(self):
-		"""Update global discount line when discount changes"""
-		if self.state == 'draft':
-			if self.move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund'):
-				self._update_global_discount_line()
-
-	def _update_global_discount_line(self):
-		"""Add, update, or remove global discount line"""
-		self.ensure_one()
-
-		if self.state != 'draft':
-			return
-
-		# Get global discount product
-		discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
-		if not discount_product:
-			return
-
-		# Find existing global discount line
-		existing_discount_line = self.invoice_line_ids.filtered(lambda l: l.product_id == discount_product)
-
-		commands = []
-
-		if self.global_discount_rate <= 0:
-			if existing_discount_line:
-				# Remove existing discount line if no discount
-				commands.append((2, existing_discount_line.id, 0))  # Explicit delete for clarity
-			self.invoice_line_ids = commands
-			return
-
-		# if existing_discount_line:
-		# 	self.invoice_line_ids = [(3, existing_discount_line.id, 0)]
-		#
-		# if not self.global_discount_rate or self.global_discount_rate <= 0:
-		# 	return
-
-		# Calculate discount amount
-		self._compute_global_discount_amount()
-
-		if self.global_discount_amount > 0:
-			# Create or update discount line
-			discount_line_vals = {
-				'product_id': discount_product.id,
-				'name': f"Global Discount ({self.global_discount_rate}{'%' if self.global_discount_type == 'percent' else ' ' + self.currency_id.symbol})",
-				'quantity': 1,
-				'price_unit': -self.global_discount_amount,  # Negative for discount
-				'account_id': discount_product.property_account_income_id.id or discount_product.categ_id.property_account_income_categ_id.id,
-			}
-
-			# if existing_discount_line and existing_discount_line.product_id == discount_product:
-			# 	# Update existing line
-			# 	existing_discount_line.write({
-			# 		'name': discount_line_vals['name'],
-			# 		'price_unit': discount_line_vals['price_unit'],
-			# 	})
-			# else:
-			# 	# Create new line
-			# 	self.invoice_line_ids = [(0, 0, discount_line_vals)]
-
-			if existing_discount_line:
-				# Update existing line
-				commands.append((1, existing_discount_line.id, discount_line_vals))
-			else:
-				# Create new line
-				commands.append((0, 0, discount_line_vals))
-
-		empty_lines = self.invoice_line_ids.filtered(lambda l: not l.product_id and not l.product_uom_id and l.price_unit == 0)
-		for empty_line in empty_lines:
-			commands.append((2, empty_line.id, 0))
-
-		# Apply all commands
-		if commands:
-			self.invoice_line_ids = commands
-
-	@api.constrains('global_discount_rate', 'global_discount_type')
-	def _check_global_discount_rate(self):
-		for move in self:
-			if move.global_discount_type == 'percent' and (move.global_discount_rate < 0 or move.global_discount_rate > 100):
-				raise ValidationError("Discount percentage must be between 0 and 100.")
-			elif move.global_discount_type == 'amount' and move.global_discount_rate < 0:
-				raise ValidationError("Discount amount cannot be negative.")
-
-	# ----------------- End of Global Discount Section -----------------
-
-	# Get Default Date on Bill and partner type if passed through context
-	@api.model
-	def default_get(self, fields_list):
-		defaults = super(AccountMove, self).default_get(fields_list)
-
-		# Check if creating a Vendor Bill and invoice_date default is needed
-		if 'invoice_date' in fields_list and not defaults.get('invoice_date'):
-			# Check context for move type (more reliable than checking defaults['move_type'])
-			if self.env.context.get('default_move_type') == 'in_invoice':
-				defaults['invoice_date'] = fields.Date.context_today(self)
-
-		if 'partner_type_id' in fields_list:
-			partner_id = defaults.get('partner_id')
-			if partner_id:
-				partner = self.env['res.partner'].browse(partner_id)
-				if partner.partner_type_id:
-					defaults['partner_type_id'] = partner.partner_type_id.id
-
-
-			if not defaults.get('partner_type_id'):
-				move_type = self.env.context.get('default_move_type')
-
-				if move_type in ['out_invoice', 'out_refund']:
-					try:
-						customer_type = self.env.ref('ths_base.partner_type_customer', raise_if_not_found=True)
-						defaults['partner_type_id'] = customer_type.id
-					except ValueError:
-						# Fallback to name search if xmlid is not found
-						customer_type = self.env['ths.partner.type'].search([('name', 'ilike', 'Customer')], limit=1)
-						if customer_type:
-							defaults['partner_type_id'] = customer_type.id
-
-				elif move_type in ['in_invoice', 'in_refund']:
-					try:
-						vendor_type = self.env.ref('ths_base.partner_type_vendor', raise_if_not_found=True)
-						defaults['partner_type_id'] = vendor_type.id
-					except ValueError:
-						# Fallback to name search if xmlid is not found
-						vendor_type = self.env['ths.partner.type'].search([('name', 'ilike', 'vendor')], limit=1)
-						if vendor_type:
-							defaults['partner_type_id'] = vendor_type.id
-
-		return defaults
-
-	def write(self, vals):
-		res = super().write(vals)
-
-		for move in self:
-			commands_to_delete = []
-
-			# Find zero-amount global discount lines to delete
-			discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
-			if discount_product:
-				zero_discount_lines = move.invoice_line_ids.filtered(lambda l: l.product_id and l.product_id.id == discount_product.id and l.price_unit == 0)
-				for line in zero_discount_lines:
-					commands_to_delete.append((2, line.id, 0))
-
-			# Find Odoo's default empty lines to delete
-			empty_lines = move.invoice_line_ids.filtered(lambda l: l.display_type == 'product' and not l.product_id and not l.product_uom_id and l.price_unit == 0)
-			for line in empty_lines:
-				commands_to_delete.append((2, line.id, 0))
-
-			if commands_to_delete:
-				move.write({'invoice_line_ids': commands_to_delete})
-
-		return res
+# ----------------- End of Landed Cost Section -----------------
 
 
 class AccountInvoiceLine(models.Model):
