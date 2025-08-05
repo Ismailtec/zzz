@@ -3002,7 +3002,7 @@ class VetEncounterLine(models.Model):
 			'context': {'search_default_groupby_date': 1, 'create': False},
 		}
 
-
+# ---------------- Encounter Analytics Report ----------------
 class EncounterAnalyticsWizard(models.TransientModel):
 	_name = 'encounter.analytics.wizard'
 	_description = 'Encounter Analytics Wizard'
@@ -3020,25 +3020,25 @@ class EncounterAnalyticsWizard(models.TransientModel):
 
 		if self.date_filter == 'today':
 			domain = [('encounter_date', '=', today)]
-			period_name = f"Today ({today.strftime('%Y-%m-%d')})"
+			period_name = f"Today ({today.strftime('%d-%m-%Y')})"
 		elif self.date_filter == 'yesterday':
 			yesterday = today - timedelta(days=1)
 			domain = [('encounter_date', '=', yesterday)]
-			period_name = f"Yesterday ({yesterday.strftime('%Y-%m-%d')})"
+			period_name = f"Yesterday ({yesterday.strftime('%d-%m-%Y')})"
 		elif self.date_filter == 'last_week':
 			start = today - timedelta(days=today.weekday() + 7)
 			end = start + timedelta(days=6)
 			domain = [('encounter_date', '>=', start), ('encounter_date', '<=', end)]
-			period_name = f"Last Week ({start.strftime('%Y-%m-%d')} to {end.strftime('%Y-%m-%d')})"
+			period_name = f"Last Week ({start.strftime('%d-%m-%Y')} to {end.strftime('%d-%m-%Y')})"
 		elif self.date_filter == 'last_month':
 			start = today - relativedelta(months=1)
 			domain = [('encounter_date', '>=', start), ('encounter_date', '<=', today)]
-			period_name = f"Last Month ({start.strftime('%Y-%m-%d')} to {today.strftime('%Y-%m-%d')})"
+			period_name = f"Last Month ({start.strftime('%d-%m-%Y')} to {today.strftime('%d-%m-%Y')})"
 		elif self.date_filter == 'custom':
 			if not self.date_from or not self.date_to:
 				raise UserError(_("Please specify both From and To dates for custom period."))
 			domain = [('encounter_date', '>=', self.date_from), ('encounter_date', '<=', self.date_to)]
-			period_name = f"Custom Period ({self.date_from.strftime('%Y-%m-%d')} to {self.date_to.strftime('%Y-%m-%d')})"
+			period_name = f"Custom Period ({self.date_from.strftime('%d-%m-%Y')} to {self.date_to.strftime('%d-%m-%Y')})"
 
 		encounters = self.env['vet.encounter.header'].search(domain)
 
@@ -3047,8 +3047,8 @@ class EncounterAnalyticsWizard(models.TransientModel):
 		self.analytics_data = {
 			'period_name': period_name,
 			'date_filter': self.date_filter,
-			'date_from': self.date_from.strftime('%Y-%m-%d') if self.date_from else '',
-			'date_to': self.date_to.strftime('%Y-%m-%d') if self.date_to else '',
+			'date_from': self.date_from.strftime('%d-%m-%Y') if self.date_from else '',
+			'date_to': self.date_to.strftime('%d-%m-%Y%') if self.date_to else '',
 			'total_encounters': len(encounters),
 			'total_revenue': sum(encounters.mapped('total_amount')) or 0.0,
 			'pending_amount': sum(encounters.mapped('pending_amount')) or 0.0,

@@ -155,6 +155,21 @@ class ResPartner(models.Model):
 			rec.is_pet = rec.partner_type_id == pet_type if pet_type else False
 			rec.is_pet_owner = rec.partner_type_id == owner_type if owner_type else False
 
+	@api.depends('payment_ids.amount_remaining', 'payment_ids.state')
+	def _compute_available_credit(self):
+		super()._compute_available_credit()
+		for partner in self:
+			if partner.is_pet_owner:
+				credit_payments = self.env['account.payment'].search([
+					('partner_id', '=', partner.id),
+					('amount_remaining', '>', 0),
+					('state', '=', 'paid'),
+					('payment_type', '=', 'inbound'),
+				])
+
+				partner.available_credit = sum(credit_payments.mapped('amount_remaining'))
+				partner.available_credit_count = len(credit_payments)
+
 	@api.depends('phone', 'mobile')
 	def _compute_number_normalized(self):
 		"""Compute the normalized version of the phone/mobile number (digits only)."""

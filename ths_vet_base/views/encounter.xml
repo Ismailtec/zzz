@@ -1539,9 +1539,9 @@
 
                         <div class="row">
                             <div class="col-12 text-center">
-                                <h2>Veterinary Encounter Analytics Report</h2>
+                                <h2>Encounter Analytics Report</h2>
                                 <h4>Period: <t t-esc="analytics_data.get('period_name', 'Custom Period')"/></h4>
-                                <p>Generated on: <t t-esc="datetime.datetime.now().strftime('%Y-%m-%d %H:%M')"/> by <t t-esc="user.name"/></p>
+                                <p>Generated on: <t t-esc="datetime.datetime.now().strftime('%d-%m-%Y')"/> by <t t-esc="user.name"/></p>
                             </div>
                         </div>
 

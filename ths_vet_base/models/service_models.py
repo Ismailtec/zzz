@@ -1189,19 +1189,18 @@ class VetParkReportWizard(models.TransientModel):
 	pet_owner_id = fields.Many2one('res.partner', string='Pet Owner', domain="[('is_pet_owner', '=', True)]")
 
 	def generate_report(self):
-		# domain = [
-		# 	('checkin_time', '>=', self.date_from),
-		# 	('checkin_time', '<=', self.date_to + timedelta(days=1)),
-		# 	('state', '=', 'checked_out')
-		# ]
-		# if self.patient_ids:
-		# 	domain.append(('patient_ids', 'in', self.patient_ids.ids))
-		# if self.pet_owner_id:
-		# 	domain.append(('partner_id', '=', self.pet_owner_id.id))
-		# checkins = self.env['vet.park.checkin'].search(domain)
-		# data = {'date_from': self.date_from, 'date_to': self.date_to}
-		# return self.env.ref('ths_vet_base.action_report_park_usage').report_action(checkins, data=data)
-		return self.env.ref('ths_vet_base.action_report_park_usage').report_action(self)
+		domain = [
+			('checkin_time', '>=', self.date_from),
+			('checkin_time', '<=', self.date_to + timedelta(days=1)),
+			('state', '=', 'checked_out')
+		]
+		if self.patient_ids:
+			domain.append(('patient_ids', 'in', self.patient_ids.ids))
+		if self.pet_owner_id:
+			domain.append(('partner_id', '=', self.pet_owner_id.id))
+		checkins = self.env['vet.park.checkin'].search(domain)
+		data = {'date_from': self.date_from, 'date_to': self.date_to}
+		return self.env.ref('ths_vet_base.action_report_park_usage').report_action(checkins, data=data)
 
 
 class VetVaccination(models.Model):

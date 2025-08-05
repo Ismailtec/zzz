@@ -693,7 +693,7 @@
 
     <record id="action_report_park_usage" model="ir.actions.report">
         <field name="name">Park Usage Report</field>
-        <field name="model">vet.park.report.wizard</field>
+        <field name="model">vet.park.checkin</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">ths_vet_base.report_park_usage_template</field>
         <field name="report_file">ths_vet_base.report_park_usage_template</field>
@@ -701,21 +701,16 @@
 
     <template id="report_park_usage_template">
         <t t-call="web.external_layout">
-            <t t-foreach="docs" t-as="wizard">
+            <t t-set="date_from" t-value="data and data.get('date_from') or ''"/>
+            <t t-set="date_to" t-value="data and data.get('date_to') or ''"/>
+            <main> <!-- Add main tag to wrap content for proper PDF rendering and avoid xpath error -->
                 <div class="page">
-                    <!-- Report header with dates from wizard fields -->
+                    <!-- Report header with dates from passed data -->
                     <h2>Park Usage Report:
-                        <span t-field="wizard.date_from"/>
+                        <span t-esc="date_from"/>
                         to
-                        <span t-field="wizard.date_to"/>
+                        <span t-esc="date_to"/>
                     </h2>
-                    <!-- Compute domain based on wizard fields -->
-                    <t t-set="domain"
-                       t-value="[('checkin_time', '&gt;=', wizard.date_from), ('checkin_time', '&lt;=', wizard.date_to + datetime.timedelta(days=1)), ('state', '=', 'checked_out')]"/>
-                    <t t-if="wizard.patient_ids" t-set="domain" t-value="domain + [('patient_ids', 'in', wizard.patient_ids.ids)]"/>
-                    <t t-if="wizard.pet_owner_id" t-set="domain" t-value="domain + [('partner_id', '=', wizard.pet_owner_id.id)]"/>
-                    <!-- Search for checkins using the domain -->
-                    <t t-set="checkins" t-value="env['vet.park.checkin'].search(domain)"/>
                     <table class="table table-sm">
                         <thead>
                             <tr>
@@ -728,7 +723,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <t t-foreach="checkins" t-as="checkin">
+                            <t t-foreach="docs" t-as="checkin">
                                 <tr>
                                     <td>
                                         <span t-field="checkin.name"/>
@@ -753,20 +748,89 @@
                         </tbody>
                     </table>
                     <p>Total Visits:
-                        <span t-esc="len(checkins)"/>
+                        <span t-esc="len(docs)"/>
                     </p>
                     <p>Total Duration:
                         <t t-set="total_duration" t-value="0.0"/>
-                        <t t-foreach="checkins" t-as="checkin">
+                        <t t-foreach="docs" t-as="checkin">
                             <t t-set="total_duration" t-value="total_duration + checkin.duration_hours"/>
                         </t>
                         <span t-esc="total_duration"/>
                         hours
                     </p>
                 </div>
-            </t>
+            </main>
         </t>
     </template>
+
+    <!--    <template id="report_park_usage_template">-->
+    <!--        <t t-call="web.external_layout">-->
+    <!--            <t t-foreach="docs" t-as="wizard">-->
+    <!--                <div class="page">-->
+    <!--                    &lt;!&ndash; Report header with dates from wizard fields &ndash;&gt;-->
+    <!--                    <h2>Park Usage Report:-->
+    <!--                        <span t-field="wizard.date_from"/>-->
+    <!--                        to-->
+    <!--                        <span t-field="wizard.date_to"/>-->
+    <!--                    </h2>-->
+    <!--                    &lt;!&ndash; Compute domain based on wizard fields &ndash;&gt;-->
+    <!--                    <t t-set="domain"-->
+    <!--                       t-value="[('checkin_time', '&gt;=', wizard.date_from), ('checkin_time', '&lt;=', wizard.date_to + datetime.timedelta(days=1)), ('state', '=', 'checked_out')]"/>-->
+    <!--                    <t t-if="wizard.patient_ids" t-set="domain" t-value="domain + [('patient_ids', 'in', wizard.patient_ids.ids)]"/>-->
+    <!--                    <t t-if="wizard.pet_owner_id" t-set="domain" t-value="domain + [('partner_id', '=', wizard.pet_owner_id.id)]"/>-->
+    <!--                    &lt;!&ndash; Search for checkins using the domain &ndash;&gt;-->
+    <!--                    <t t-set="checkins" t-value="env['vet.park.checkin'].search(domain)"/>-->
+    <!--                    <table class="table table-sm">-->
+    <!--                        <thead>-->
+    <!--                            <tr>-->
+    <!--                                <th>Check-in Ref</th>-->
+    <!--                                <th>Pet Owner</th>-->
+    <!--                                <th>Pets</th>-->
+    <!--                                <th>Check-in Time</th>-->
+    <!--                                <th>Check-out Time</th>-->
+    <!--                                <th>Duration (Hours)</th>-->
+    <!--                            </tr>-->
+    <!--                        </thead>-->
+    <!--                        <tbody>-->
+    <!--                            <t t-foreach="checkins" t-as="checkin">-->
+    <!--                                <tr>-->
+    <!--                                    <td>-->
+    <!--                                        <span t-field="checkin.name"/>-->
+    <!--                                    </td>-->
+    <!--                                    <td>-->
+    <!--                                        <span t-field="checkin.partner_id.name"/>-->
+    <!--                                    </td>-->
+    <!--                                    <td>-->
+    <!--                                        <span t-esc="', '.join(checkin.patient_ids.mapped('name'))"/>-->
+    <!--                                    </td>-->
+    <!--                                    <td>-->
+    <!--                                        <span t-field="checkin.checkin_time"/>-->
+    <!--                                    </td>-->
+    <!--                                    <td>-->
+    <!--                                        <span t-field="checkin.checkout_time"/>-->
+    <!--                                    </td>-->
+    <!--                                    <td>-->
+    <!--                                        <span t-field="checkin.duration_hours"/>-->
+    <!--                                    </td>-->
+    <!--                                </tr>-->
+    <!--                            </t>-->
+    <!--                        </tbody>-->
+    <!--                    </table>-->
+    <!--                    <p>Total Visits:-->
+    <!--                        <span t-esc="len(checkins)"/>-->
+    <!--                    </p>-->
+    <!--                    <p>Total Duration:-->
+    <!--                        <t t-set="total_duration" t-value="0.0"/>-->
+    <!--                        <t t-foreach="checkins" t-as="checkin">-->
+    <!--                            <t t-set="total_duration" t-value="total_duration + checkin.duration_hours"/>-->
+    <!--                        </t>-->
+    <!--                        <span t-esc="total_duration"/>-->
+    <!--                        hours-->
+    <!--                    </p>-->
+    <!--                </div>-->
+    <!--            </t>-->
+    <!--        </t>-->
+    <!--    </template>-->
 
     <!-- vet.vaccination -->
     <record id="view_vet_vaccine_type_list" model="ir.ui.view">
