@@ -23,7 +23,6 @@
                 <field name="all_pets_species" optional="hide" string="Species"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'" decoration-info="state == 'in_progress'"/>
                 <field name="company_currency" column_invisible="1"/>
-                <!-- Quick Action Buttons -->
                 <button name="action_view_appointments" string="Appointments" type="object" icon="fa-calendar" invisible="not appointment_ids"/>
             </list>
         </field>
@@ -43,22 +42,16 @@
                     <button name="action_auto_close_empty_encounters" type="object" string="Auto-Close if Empty" class="btn-warning" invisible="state != 'in_progress'"/>
                 </header>
                 <div class="alert alert-success" role="alert" invisible="pending_amount != 0 or total_amount == 0">
-                    <strong>✅ Fully Paid:</strong>
-                    Paid: <field name="paid_amount" readonly="1"/> |
-                    Total: <field name="total_amount" readonly="1"/>
+                    <strong>✅ Fully Paid:</strong>Paid: <field name="paid_amount" readonly="1"/> | Total: <field name="total_amount" readonly="1"/>
                 </div>
 
                 <div class="alert alert-warning" role="alert" invisible="pending_amount == 0 or paid_amount == 0 or total_amount == 0">
                     <strong>⚠️ Partial Payment:</strong>
-                    Pending: <field name="pending_amount" readonly="1"/> |
-                    Paid: <field name="paid_amount" readonly="1"/> |
-                    Total: <field name="total_amount" readonly="1"/>
+                    Pending: <field name="pending_amount" readonly="1"/> | Paid: <field name="paid_amount" readonly="1"/> | Total: <field name="total_amount" readonly="1"/>
                 </div>
 
                 <div class="alert alert-info" role="alert" invisible="pending_amount == 0 or paid_amount != 0 or total_amount == 0">
-                    <strong>💰 Payment Pending:</strong>
-                    Pending: <field name="pending_amount" readonly="1"/> |
-                    Total: <field name="total_amount" readonly="1"/>
+                    <strong>💰 Payment Pending:</strong>Pending: <field name="pending_amount" readonly="1"/> | Total: <field name="total_amount" readonly="1"/>
                 </div>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -67,8 +60,7 @@
                         </button>
                         <button class="oe_stat_button" type="object" name="action_view_pet_medical_histories" icon="fa-paw" invisible="not patient_ids">
                             <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_text">Pet Medical</span>
-                                <span class="o_stat_text">History</span>
+                                <span class="o_stat_text">Pet Medical</span><span class="o_stat_text">History</span>
                             </div>
                         </button>
                         <button name="action_view_boarding_stays" type="object" icon="fa-bed" class="oe_stat_button" invisible="not boarding_stay_ids">
@@ -82,8 +74,7 @@
                         </button>
                         <button name="action_schedule_follow_up_for_pets" type="object" icon="fa-calendar" class="oe_stat_button">
                             <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_text">Schedule</span>
-                                <span class="o_stat_text">Follow-up</span>
+                                <span class="o_stat_text">Schedule</span><span class="o_stat_text">Follow-up</span>
                             </div>
                         </button>
                         <button name="action_create_treatment_plan" type="object" icon="oi-smile-add" class="oe_stat_button">
@@ -98,6 +89,7 @@
                         <button name="action_view_credit_notes" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="credit_note_count == 0">
                             <field name="credit_note_count" widget="statinfo" string="Refunds"/>
                         </button>
+                        <button name="action_view_partner_credit_payments" type="object" string="Partner Credit" class="btn-link" invisible="partner_credit_count == 0"/>
                     </div>
 
                     <div class="oe_title">
@@ -120,6 +112,7 @@
                             <field name="total_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/>
                             <field name="returned_amount" widget="monetary" invisible="not returned_amount" options="{'currency_field': 'company_currency'}"/>
                             <field name="pending_payments" readonly="1" widget="boolean_toggle" string="Has Pending Payments"/>
+                            <field name="partner_available_credit" widget="monetary" decoration-success="partner_available_credit > 0"/>
                             <field name="invoice_count" invisible="1"/>
                             <field name="sale_order_count" invisible="1"/>
                             <field name="company_currency" invisible="1"/>
@@ -137,34 +130,32 @@
                                 <field name="sale_order_ids" context="{'default_encounter_id': id}" nolabel="1" can_write="1" can_create="true"/>
                             </group>
                             <group string="Invoices">
-                                <field name="direct_invoice_ids" nolabel="1" readonly="1" context="{'default_encounter_id': id, 'default_move_type': 'out_invoice'}"
-                                       view_mode="list,form">
+                                <field name="direct_invoice_ids" nolabel="1" readonly="1"
+                                       context="{'default_encounter_id': id, 'default_move_type': 'out_invoice', 'currency_field': 'company_currency'}" view_mode="list,form">
                                     <list edit="0" create="0" decoration-success="status_in_payment in ('paid','in_payment')" decoration-info="status_in_payment == 'draft'"
                                           decoration-warning="status_in_payment in ('partial', 'not_paid')"
-                                          decoration-danger="status_in_payment in ('cancel', 'reversed', 'blocked')">
+                                          decoration-danger="status_in_payment in ('cancel', 'reversed', 'blocked') or move_type == 'out_refund'">
                                         <field name="encounter_id" optional="hide"/>
                                         <field name="name"/>
+                                        <field name="date" widget="date"/>
+                                        <field name="move_type" optional="show"/>
                                         <field name="invoice_origin" string="Source" optional="show"/>
                                         <field name="partner_id" string="Pet Owner" optional="show"/>
                                         <field name="patient_ids" widget="many2many_tags" optional="hide"/>
                                         <field name="practitioner_id" string="Practitioner" optional="hide"/>
                                         <field name="room_id" string="Room" optional="hide"/>
-                                        <field name="date" widget="date"/>
                                         <field name="invoice_date_due" widget="date" optional="hide"/>
-                                        <field name="amount_total_in_currency_signed" string="Total" widget="monetary" sum="Total" options="{'currency_field': 'company_currency'}"/>
-                                        <field name="amount_residual_signed" string="Due Amount" widget="monetary" sum="Total Due" options="{'currency_field': 'company_currency'}"/>
+                                        <field name="amount_total_in_currency_signed" string="Total" widget="monetary" sum="Total" options="{'currency_field': 'currency_id'}"/>
+                                        <field name="amount_residual_signed" string="Due Amount" widget="monetary" sum="Total Due" options="{'currency_field': 'currency_id'}"/>
+                                        <field name="amount_paid" widget="monetary" options="{'currency_field': 'currency_id'}" readonly="1" optional="show"/>
                                         <field name="status_in_payment" string="Status"/>
-                                        <field name="payment_journal_name" string="Journal" optional="show"/>
-                                        <field name="payment_method_name" string="Payment Method" optional="hide"/>
+                                        <field name="payment_journal_ids" widget="many2many_tags"/>
+                                        <field name="payment_details" string="Payment Details" optional="show"/>
                                         <field name="user_id" string="Processed By" optional="hide"/>
+                                        <field name="currency_id" column_invisible="1"/>
                                     </list>
                                 </field>
                             </group>
-                            <!--                            <group string="Credit Notes/Refunds">-->
-                            <!--                                <field name="credit_note_ids" nolabel="1" readonly="1" context="{'default_move_type': 'out_refund', 'default_encounter_id': id}"-->
-                            <!--                                       decoration-danger="name">-->
-                            <!--                                </field>-->
-                            <!--                            </group>-->
                         </page>
                         <page string="Services/Products" name="vet_encounter_line">
                             <field name="encounter_line_ids" nolabel="1" context="{'default_encounter_id': id, 'default_partner_id': partner_id}">
@@ -186,19 +177,15 @@
                                            decoration-primary="source_model in ('vet.boarding.stay', 'vet.vaccination')" decoration-warning="source_model == 'vet.pet.membership'"/>
                                     <field name="encounter_id" optional="hide" required="1"/>
                                     <field name="notes" optional="hide"/>
-                                    <field name="practitioner_department" optional="hide"/>
                                     <field name="company_currency" column_invisible="1"/>
                                 </list>
                             </field>
                         </page>
                         <page string="Appointments" name="appointments">
                             <field name="appointment_ids" nolabel="1" readonly="0"
-                                   context="{'default_appointment_type_id': default_appointment_type_id if default_appointment_type_id else False,
-                                             'default_pet_owner_id': partner_id or pet_owner_id or False}">
-                                <list create="true" edit="true" editable="bottom"
-                                      decoration-success="appointment_status in ('paid','completed')"
-                                      decoration-info="appointment_status in ('request', 'booked')"
-                                      decoration-warning="appointment_status == 'attended'"
+                                   context="{'default_appointment_type_id': default_appointment_type_id if default_appointment_type_id else False, 'default_pet_owner_id': partner_id or pet_owner_id or False}">
+                                <list create="true" edit="true" editable="bottom" decoration-success="appointment_status in ('paid','completed')"
+                                      decoration-info="appointment_status in ('request', 'booked')" decoration-warning="appointment_status == 'attended'"
                                       decoration-danger="appointment_status in ('cancelled', 'no_show')">
                                     <field name="name" readonly="1" optional="hide"/>
                                     <field name="appointment_type_id" string="Type"/>
@@ -217,32 +204,13 @@
                         </page>
                         <page string="Boarding Stays" name="boarding_stays">
                             <field name="boarding_stay_ids" nolabel="1" readonly="0" context="{'default_encounter_id': id}" mode="list,form" widget="one2many"/>
-                            <!--                            <field name="boarding_stay_ids" nolabel="1" readonly="0" mode="list,form"-->
-                            <!--                                   options="{'no_quick_create': True,'no_create_edit': False, 'no_open': False}">-->
-                            <!--                                <list string="Boarding Stays"> &lt;!&ndash; create="true" edit="true" editable="top" &ndash;&gt;-->
-                            <!--                                    <field name="name"/>-->
-                            <!--                                    <field name="partner_id" optional="hide"/>-->
-                            <!--                                    <field name="pet_owner_id" optional="hide"/>-->
-                            <!--                                    <field name="patient_ids" widget="many2many_tags"/>-->
-                            <!--                                    <field name="cage_id" domain="cage_domain"/>-->
-                            <!--                                    <field name="check_in_datetime" widget="datetime"/>-->
-                            <!--                                    <field name="expected_check_out_datetime" widget="datetime"/>-->
-                            <!--                                    <field name="duration_days"/>-->
-                            <!--                                    <field name="state" widget="selection_badge"/>-->
-                            <!--                                    <button name="action_check_in" string="Check In" type="object" class="oe_highlight" invisible="state not in ('draft', 'scheduled')"/>-->
-                            <!--                                    <button name="action_check_out" string="Check Out" type="object" class="oe_highlight" invisible="state != 'checked_in'"/>-->
-                            <!--                                    <button name="action_cancel" string="Cancel Stay" type="object" invisible="state in ('checked_out', 'invoiced', 'cancelled')"/>-->
-                            <!--                                    <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state != 'cancelled'"/>-->
-                            <!--                                </list>-->
-                            <!--                            </field>-->
                         </page>
                         <page string="Park Visits" name="park_visits">
                             <field name="park_checkin_ids" nolabel="1" readonly="0" context="{'default_encounter_id': id}" mode="list,form" widget="one2many"/>
                         </page>
                         <page string="Vaccinations" name="vaccinations">
                             <field name="vaccination_ids" nolabel="1" readonly="0"
-                                   context="{'default_owner_id': partner_id or pet_owner_id or False, 'default_encounter_id': id,
-                                    'default_pet_id': patient_ids if patient_ids else False}">
+                                   context="{'default_owner_id': partner_id or pet_owner_id or False, 'default_encounter_id': id, 'default_pet_id': patient_ids if patient_ids else False}">
                                 <list create="true" edit="true" editable="top">
                                     <field name="partner_id" optional="hide"/>
                                     <field name="pet_owner_id" optional="hide"/>
@@ -380,53 +348,34 @@
                     <t t-name="card">
                         <div class="oe_kanban_card oe_kanban_global_click">
                             <div class="d-flex justify-content-between align-items-center">
-                                <strong class="o_kanban_record_title">
-                                    <t t-esc="record.name.value"/>
-                                </strong>
-                                <span t-att-class="'badge badge-' + (record.state.raw_value == 'done' ? 'success' : 'info')">
-                                    <t t-esc="record.state.value"/>
-                                </span>
+                                <strong class="o_kanban_record_title"><t t-esc="record.name.value"/></strong>
+                                <span t-att-class="'badge badge-' + (record.state.raw_value === 'done' ? 'success' : 'info')"><t t-esc="record.state.value"/></span>
                             </div>
 
                             <div class="o_kanban_record_body">
                                 <div>
-                                    <strong>Pet Owner: </strong>
-                                    <t t-esc="record.partner_id.value"/>
+                                    <strong>Pet Owner: </strong><t t-esc="record.partner_id.value"/>
                                 </div>
                                 <div>
                                     <strong>Pets: </strong>
                                     <!-- Use pets_summary instead of iterating -->
-                                    <span class="text-primary">
-                                        <t t-esc="record.pets_summary.value"/>
-                                    </span>
-                                    <t t-if="record.all_pets_species.value">
-                                        <br/>
-                                        <small class="text-muted">
-                                            <i class="fa fa-paw"/> <t t-esc="record.all_pets_species.value"/>
-                                        </small>
+                                    <span class="text-primary"><t t-esc="record.pets_summary.value"/></span>
+                                    <t t-if="record.all_pets_species.value"><br/><small class="text-muted"><i class="fa fa-paw"/> <t t-esc="record.all_pets_species.value"/></small>
                                     </t>
                                 </div>
                                 <div t-if="record.practitioner_id.value">
-                                    <strong>Practitioner: </strong>
-                                    <t t-esc="record.practitioner_id.value"/>
+                                    <strong>Practitioner: </strong><t t-esc="record.practitioner_id.value"/>
                                 </div>
                                 <div t-if="record.room_id.value">
-                                    <strong>Room: </strong>
-                                    <t t-esc="record.room_id.value"/>
+                                    <strong>Room: </strong><t t-esc="record.room_id.value"/>
                                 </div>
                                 <div class="mt-2">
-                                    <small class="text-muted">
-                                        <i class="fa fa-calendar me-1"/>
-                                        <t t-esc="record.encounter_date.value"/>
-                                    </small>
+                                    <small class="text-muted"><i class="fa fa-calendar me-1"/><t t-esc="record.encounter_date.value"/></small>
                                 </div>
                                 <div class="mt-1">
                                     <strong>Payment: </strong>
                                     <span t-att-class="'badge ' + (record.pending_payments.raw_value ? 'badge-warning' : 'badge-success')">
-                                        <t t-if="record.pending_payments.raw_value">
-                                            Pending: <t t-esc="record.pending_amount.value"/>
-                                        </t>
-                                        <t t-else="">Paid</t>
+                                        <t t-if="record.pending_payments.raw_value">Pending: <t t-esc="record.pending_amount.value"/></t><t t-else="">Paid</t>
                                     </span>
                                 </div>
                             </div>
@@ -505,27 +454,26 @@
         <field name="arch" type="xml">
             <list string="Encounter Line Items" create="false" decoration-success="payment_status == 'paid'" decoration-warning="payment_status == 'partial'"
                   decoration-info="payment_status == 'posted'" decoration-danger="payment_status == 'refunded'" decoration-muted="payment_status == 'cancelled'">
-                <field name="encounter_id" optional="show"/>
-                <field name="partner_id"/>
+                <field name="encounter_id" optional="hide"/>
+                <field name="partner_id" optional="hide"/>
                 <field name="pet_owner_id" optional="hide"/>
+                <field name="product_id" readonly="fields_readonly" width="150px" text="nowrap"/>
+                <field name="qty" string="Qty" readonly="fields_readonly" width="40px"/>
+                <field name="remaining_qty" string="Unpaid Qty" width="70px"/>
+                <field name="product_uom" readonly="fields_readonly" optional="show" width="40px"/>
+                <field name="unit_price" widget="monetary" options="{'currency_field': 'company_currency'}" readonly="fields_readonly" width="60px"/>
+                <field name="discount" string="Disc." widget="percentage" optional="show" readonly="fields_readonly" width="40px"/>
+                <field name="sub_total" sum="Total Amount" widget="monetary" options="{'currency_field': 'company_currency'}" width="80px"/>
                 <field name="patient_ids" widget="many2many_tags"/>
-                <field name="product_id" readonly="fields_readonly"/>
-                <field name="qty" readonly="fields_readonly"/>
-                <field name="product_uom" readonly="fields_readonly" optional="show"/>
-                <field name="unit_price" widget="monetary" options="{'currency_field': 'company_currency'}" readonly="fields_readonly"/>
-                <field name="discount" widget="percentage" optional="show" readonly="fields_readonly"/>
-                <field name="sub_total" sum="Total Amount" widget="monetary" options="{'currency_field': 'company_currency'}"/>
                 <field name="practitioner_id" optional="show"/>
                 <field name="room_id" optional="show"/>
-                <field name="paid_amount" string="Paid" sum="Paid" widget="monetary" options="{'currency_field': 'company_currency'}"/>
-                <field name="remaining_amount" string="Remaining" sum="Remaining" widget="monetary" options="{'currency_field': 'company_currency'}"/>
-                <field name="source_model" widget="selection" optional="hide"/>
-                <field name="multiple_payment_sources" optional="hide"/>
+                <field name="paid_amount" string="Paid" sum="Paid" widget="monetary" options="{'currency_field': 'company_currency'}" width="80px"/>
+                <field name="source_model" widget="selection" optional="hide" width="80px"/>
+                <field name="multiple_payment_sources" optional="hide" width="80px"/>
                 <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-info="payment_status in ('pending', 'posted')"
-                       decoration-warning="payment_status in ('partial', 'cancelled', 'refunded')"/>
-                <field name="refunded_amount" string="Refunded" sum="Refunded" widget="monetary" options="{'currency_field': 'company_currency'}" optional="show"/>
+                       decoration-warning="payment_status in ('partial', 'cancelled', 'refunded')" width="80px"/>
+                <field name="refunded_amount" string="Refunded" sum="Refunded" widget="monetary" options="{'currency_field': 'company_currency'}" optional="hide" width="80px"/>
                 <field name="is_refunded" widget="boolean_toggle" optional="show"/>
-                <field name="practitioner_department" optional="hide"/>
                 <field name="company_currency" column_invisible="1"/>
                 <button name="action_cancel" string="Cancel" type="object" icon="fa-times-circle" invisible="payment_status != 'pending'"
                         groups="account.group_account_invoice,ths_vet_base.group_vet_user,ths_vet_base.group_vet_manager"/>
@@ -564,6 +512,7 @@
                             <field name="product_id"/>
                             <field name="product_description" placeholder="Optional description override..."/>
                             <field name="qty" readonly="payment_status !='pending'"/>
+                            <field name="remaining_qty" readonly="payment_status !='pending'"/>
                             <field name="product_uom" readonly="payment_status !='pending'"/>
                             <field name="unit_price" widget="monetary"/>
                             <field name="discount" widget="percentage" readonly="payment_status !='pending'"/>
@@ -574,13 +523,12 @@
                             <field name="patient_ids" string="Pets" widget="many2many_tags"/>
                             <field name="practitioner_id"/>
                             <field name="room_id"/>
-                            <field name="practitioner_department"/>
                         </group>
                         <group name="payment_info" string="Payment Information">
                             <field name="payment_status" widget="badge"/>
                             <field name="sub_total" widget="monetary"/>
                             <field name="paid_amount" widget="monetary"/>
-                            <field name="remaining_amount" widget="monetary"/>
+
                             <field name="posted_amount" widget="monetary"/>
                             <field name="is_refunded" widget="boolean_toggle" readonly="1"/>
                             <field name="refunded_amount" widget="monetary" invisible="not is_refunded"/>
@@ -637,8 +585,7 @@
                 <filter string="Park Visits" name="filter_park" domain="[('source_model', '=', 'vet.park.checkin')]"/>
                 <filter string="Memberships" name="filter_memberships" domain="[('source_model', '=', 'vet.pet.membership')]"/>
                 <filter string="Manual Entries" name="filter_manual" domain="[('source_model', '=', 'manual_encounter')]"/>
-                <separator/>
-                <separator/>
+                <separator/><separator/>
                 <group expand="0" string="Group By">
                     <filter string="Payment Status" name="groupby_payment_status" context="{'group_by': 'payment_status'}"/>
                     <filter string="Pet Owners" name="groupby_partner" context="{'group_by': 'partner_id'}"/>
@@ -661,9 +608,7 @@
         <field name="search_view_id" ref="view_vet_encounter_line_search"/>
         <field name="context">{'search_default_filter_pending': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_info">
-                No encounter line items found. Items appear here when an encounter is marked 'Processing'.
-            </p>
+            <p class="o_view_nocontent_info">No encounter line items found. Items appear here when an encounter is marked 'Processing'.</p>
         </field>
     </record>
 
@@ -703,7 +648,7 @@
                                     <field name="encounter_id"/>
                                     <field name="product_id"/>
                                     <field name="qty"/>
-                                    <field name="remaining_amount"/>
+                                    <field name="remaining_qty"/>
                                     <field name="payment_status"/>
                                 </list>
                             </field>
@@ -742,12 +687,10 @@
             <t t-foreach="docs" t-as="encounter">
                 <div class="page">
                     <div class="oe_structure"/>
-
                     <!-- Header -->
                     <div class="row">
                         <div class="col-12">
-                            <h2>Encounter Summary</h2>
-                            <h3><t t-esc="encounter.name"/></h3>
+                            <h2>Encounter Summary</h2><h3><t t-esc="encounter.name"/></h3>
                         </div>
                     </div>
 
@@ -760,9 +703,7 @@
                         </div>
                         <div class="col-6">
                             <strong>Pets:</strong><br/>
-                            <t t-foreach="encounter.patient_ids" t-as="pet">
-                                - <t t-esc="pet.name"/> (<t t-esc="pet.species_id.name"/>)<br/>
-                            </t>
+                            <t t-foreach="encounter.patient_ids" t-as="pet"> - <t t-esc="pet.name"/> (<t t-esc="pet.species_id.name"/>)<br/></t>
                             <strong>Total Amount:</strong>
                             <t t-esc="encounter.total_paid_amount + encounter.total_pending_amount"/>
                             <t t-esc="encounter.company_id.company_currency.symbol"/>
@@ -790,10 +731,8 @@
                                             <tr>
                                                 <td><t t-esc="boarding.pet_id.name"/></td>
                                                 <td><t t-esc="boarding.cage_id.name"/></td>
-                                                <td><t t-esc="boarding.check_in_datetime"
-                                                       t-options="{'widget': 'datetime'}"/></td>
-                                                <td><t t-esc="boarding.actual_check_out_datetime"
-                                                       t-options="{'widget': 'datetime'}"/></td>
+                                                <td><t t-esc="boarding.check_in_datetime" t-options="{'widget': 'datetime'}"/></td>
+                                                <td><t t-esc="boarding.actual_check_out_datetime" t-options="{'widget': 'datetime'}"/></td>
                                                 <td><t t-esc="boarding.duration_days"/> days</td>
                                                 <td><t t-esc="boarding.state"/></td>
                                             </tr>
@@ -854,17 +793,10 @@
                                     <tbody>
                                         <t t-foreach="encounter.park_checkin_ids" t-as="park_visit">
                                             <tr>
-                                                <td>
-                                                    <t t-foreach="park_visit.patient_ids" t-as="pet">
-                                                        <t t-esc="pet.name"/><t t-if="not pet_last">, </t>
-                                                    </t>
-                                                </td>
-                                                <td><t t-esc="park_visit.checkin_time"
-                                                       t-options="{'widget': 'datetime'}"/></td>
-                                                <td><t t-esc="park_visit.checkout_time"
-                                                       t-options="{'widget': 'datetime'}"/></td>
-                                                <td><t t-esc="park_visit.duration_hours"
-                                                       t-options="{'widget': 'float_time'}"/></td>
+                                                <td><t t-foreach="park_visit.patient_ids" t-as="pet"><t t-esc="pet.name"/><t t-if="not pet_last">, </t></t></td>
+                                                <td><t t-esc="park_visit.checkin_time" t-options="{'widget': 'datetime'}"/></td>
+                                                <td><t t-esc="park_visit.checkout_time" t-options="{'widget': 'datetime'}"/></td>
+                                                <td><t t-esc="park_visit.duration_hours" t-options="{'widget': 'float_time'}"/></td>
                                             </tr>
                                         </t>
                                     </tbody>
@@ -872,7 +804,6 @@
                             </div>
                         </div>
                     </t>
-
                     <div class="oe_structure"/>
                 </div>
             </t>
@@ -1053,8 +984,7 @@
                                 <tfoot>
                                     <tr class="table-info">
                                         <td colspan="4"><strong>Total Amount</strong></td>
-                                        <td><strong><span t-field="doc.total_amount"/> <span t-field="doc.company_currency.symbol"/></strong></td>
-                                        <td></td>
+                                        <td><strong><span t-field="doc.total_amount"/> <span t-field="doc.company_currency.symbol"/></strong></td><td></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -1083,15 +1013,11 @@
             <t t-foreach="docs" t-as="encounter">
                 <div class="page">
                     <div class="oe_structure"/>
-                    <!-- Header -->
                     <div class="row">
                         <div class="col-12">
-                            <h2>Daily Encounter Summary</h2>
-                            <h3><t t-esc="encounter.name"/></h3>
+                            <h2>Daily Encounter Summary</h2><h3><t t-esc="encounter.name"/></h3>
                         </div>
                     </div>
-
-                    <!-- Patient/Customer Info -->
                     <div class="row mt-3">
                         <div class="col-6">
                             <strong>Customer:</strong> <t t-esc="encounter.partner_id.name"/><br/>
@@ -1099,13 +1025,8 @@
                             <strong>Status:</strong> <t t-esc="encounter.state"/>
                         </div>
                         <div class="col-6">
-                            <strong>Patients:</strong>
-                            <t t-foreach="encounter.patient_ids" t-as="patient">
-                                <t t-esc="patient.name"/><t t-if="not patient_last">, </t>
-                            </t><br/>
-                            <!-- Fixed field names -->
-                            <strong>Total Pending:</strong>
-                            <t t-esc="encounter.pending_amount"/> <t t-esc="encounter.company_currency.symbol"/><br/>
+                            <strong>Patients:</strong><t t-foreach="encounter.patient_ids" t-as="patient"><t t-esc="patient.name"/><t t-if="not patient_last">, </t></t><br/>
+                            <strong>Total Pending:</strong><t t-esc="encounter.pending_amount"/> <t t-esc="encounter.company_currency.symbol"/><br/>
                             <strong>Total Paid:</strong> <t t-esc="encounter.paid_amount"/> <t t-esc="encounter.company_currency.symbol"/>
                         </div>
                     </div>
@@ -1115,21 +1036,11 @@
                         <div class="row mt-4">
                             <div class="col-12">
                                 <h4>Clinical Documentation</h4>
-                                <t t-if="encounter.chief_complaint">
-                                    <p><strong>Chief Complaint:</strong> <t t-esc="encounter.chief_complaint"/></p>
-                                </t>
-                                <t t-if="encounter.soap_subjective">
-                                    <p><strong>Subjective:</strong> <t t-esc="encounter.soap_subjective"/></p>
-                                </t>
-                                <t t-if="encounter.soap_objective">
-                                    <p><strong>Objective:</strong> <t t-esc="encounter.soap_objective"/></p>
-                                </t>
-                                <t t-if="encounter.soap_assessment">
-                                    <p><strong>Assessment:</strong> <t t-esc="encounter.soap_assessment"/></p>
-                                </t>
-                                <t t-if="encounter.soap_plan">
-                                    <p><strong>Plan:</strong> <t t-esc="encounter.soap_plan"/></p>
-                                </t>
+                                <t t-if="encounter.chief_complaint"><p><strong>Chief Complaint:</strong> <t t-esc="encounter.chief_complaint"/></p></t>
+                                <t t-if="encounter.soap_subjective"><p><strong>Subjective:</strong> <t t-esc="encounter.soap_subjective"/></p></t>
+                                <t t-if="encounter.soap_objective"><p><strong>Objective:</strong> <t t-esc="encounter.soap_objective"/></p></t>
+                                <t t-if="encounter.soap_assessment"><p><strong>Assessment:</strong> <t t-esc="encounter.soap_assessment"/></p></t>
+                                <t t-if="encounter.soap_plan"><p><strong>Plan:</strong> <t t-esc="encounter.soap_plan"/></p></t>
                             </div>
                         </div>
                     </t>
@@ -1182,12 +1093,8 @@
                                     <t t-foreach="encounters" t-as="encounter">
                                         <tr>
                                             <td><t t-esc="encounter.encounter_date"/></td>
-                                            <td>
-                                                <t t-if="encounter.appointment_ids">Appointments: <t
-                                                        t-esc="len(encounter.appointment_ids)"/><br/></t>
-                                                <t t-if="encounter.pos_order_ids">POS Orders: <t
-                                                        t-esc="len(encounter.pos_order_ids)"/><br/></t>
-                                            </td>
+                                            <td><t t-if="encounter.appointment_ids">Appointments: <t t-esc="len(encounter.appointment_ids)"/><br/></t>
+                                                <t t-if="encounter.pos_order_ids">POS Orders: <t t-esc="len(encounter.pos_order_ids)"/><br/></t></td>
                                             <td><t t-esc="encounter.state"/></td>
                                             <td><t t-esc="encounter.total_paid_amount + encounter.total_pending_amount"/> <t
                                                     t-esc="encounter.company_id.company_currency.symbol"/></td>
@@ -1197,7 +1104,6 @@
                             </table>
                         </div>
                     </div>
-
                     <div class="oe_structure"/>
                 </div>
             </t>
@@ -1239,8 +1145,8 @@
                             <h4>Encounter Details</h4>
                             <table class="table table-sm table-borderless">
                                 <tr><td><strong>Date:</strong></td><td><t t-esc="encounter.encounter_date"/></td></tr>
-                                <tr><td><strong>Status:</strong></td><td><span t-att-class="'badge badge-success' if encounter.state == 'done' else 'badge badge-info'"><t
-                                        t-esc="encounter.state.title()"/></span></td></tr>
+                                <tr><td><strong>Status:</strong></td><td><span t-att-class="'badge badge-success' if encounter.state == 'done' else 'badge badge-info'">
+                                    <t t-esc="encounter.state.title()"/></span></td></tr>
                                 <tr><td><strong>Practitioner:</strong></td><td><t t-esc="encounter.practitioner_id.name or 'Not assigned'"/></td></tr>
                                 <tr><td><strong>Room:</strong></td><td><t t-esc="encounter.room_id.name or 'Not assigned'"/></td></tr>
                                 <tr><td><strong>Total Pets:</strong></td><td><t t-esc="encounter.total_pets_count"/></td></tr>
@@ -1376,11 +1282,7 @@
                                         <t t-foreach="encounter.encounter_line_ids" t-as="line">
                                             <tr>
                                                 <td><t t-esc="line.product_id.name"/></td>
-                                                <td>
-                                                    <t t-foreach="line.patient_ids" t-as="pet">
-                                                        <t t-esc="pet.name"/><t t-if="not pet_last">, </t>
-                                                    </t>
-                                                </td>
+                                                <td><t t-foreach="line.patient_ids" t-as="pet"><t t-esc="pet.name"/><t t-if="not pet_last">, </t></t></td>
                                                 <td><t t-esc="line.practitioner_id.name or 'N/A'"/></td>
                                                 <td><t t-esc="line.qty"/></td>
                                                 <td><t t-esc="line.unit_price"/> <t t-esc="encounter.company_currency.symbol"/></td>
@@ -1400,8 +1302,7 @@
                                         </tr>
                                         <tr class="table-warning" t-if="encounter.pending_amount > 0">
                                             <td colspan="6"><strong>Pending Amount</strong></td>
-                                            <td><strong><t t-esc="encounter.pending_amount"/> <t t-esc="encounter.company_currency.symbol"/></strong></td>
-                                            <td></td>
+                                            <td><strong><t t-esc="encounter.pending_amount"/> <t t-esc="encounter.company_currency.symbol"/></strong></td><td></td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -1435,8 +1336,8 @@
                                                 <td><t t-esc="vaccination.expiry_date"/></td>
                                                 <td><t t-esc="vaccination.batch_number or 'N/A'"/></td>
                                                 <td><t t-esc="vaccination.practitioner_id.name"/></td>
-                                                <td><span t-att-class="'badge badge-danger' if vaccination.is_expired else 'badge badge-success'"><t
-                                                        t-esc="'Expired' if vaccination.is_expired else 'Valid'"/></span></td>
+                                                <td><span t-att-class="'badge badge-danger' if vaccination.is_expired else 'badge badge-success'">
+                                                    <t t-esc="'Expired' if vaccination.is_expired else 'Valid'"/></span></td>
                                             </tr>
                                         </t>
                                     </tbody>
@@ -1518,15 +1419,10 @@
                     <div class="row mt-5">
                         <div class="col-6">
                             <p><strong>Practitioner Signature:</strong></p>
-                            <br/><br/>
-                            <p>_________________________</p>
-                            <p><t t-esc="encounter.practitioner_id.name if encounter.practitioner_id else 'N/A'"/></p>
+                            <br/><br/><p>_________________________</p><p><t t-esc="encounter.practitioner_id.name if encounter.practitioner_id else 'N/A'"/></p>
                         </div>
                         <div class="col-6">
-                            <p><strong>Date:</strong> ________________</p>
-                            <br/>
-                            <p><strong>Clinic Stamp:</strong></p>
-                            <br/><br/>
+                            <p><strong>Date:</strong> ________________</p><br/><p><strong>Clinic Stamp:</strong></p><br/><br/>
                         </div>
                     </div>
 
@@ -1843,8 +1739,7 @@
                 </button>
                 <button name="action_view_original_invoice" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="not reversed_entry_id">
                     <div class="o_stat_info">
-                        <span class="o_stat_text">Original</span>
-                        <span class="o_stat_text">Invoice</span>
+                        <span class="o_stat_text">Original</span><span class="o_stat_text">Invoice</span>
                     </div>
                 </button>
                 <field name="reversal_entry_ids" invisible="1"/>
@@ -1856,11 +1751,19 @@
             <label for="partner_id" position="replace"/>
             <xpath expr="//div[field[@name='partner_id']]" position="replace">
                 <group colspan="2">
-                    <field name="partner_type_id" options="{'no_open': True, 'no_create': True}" readonly="state == 'posted'" placeholder="Select Partner Type first to see partners..."/>
+                    <field name="partner_type_id" options="{'no_open': True, 'no_create': True}" readonly="state == 'posted'" placeholder="Select Type first to see partners..."/>
                     <label for="partner_id" string="Pet Owner" style="font-weight:bold;" invisible="move_type not in ('out_invoice', 'out_refund', 'out_receipt')"/>
                     <label for="partner_id" string="Vendor" style="font-weight:bold;" invisible="move_type not in ('in_invoice', 'in_refund', 'in_receipt')"/>
-                    <field name="partner_id" nolabel="1" string="Pet Owner" domain="[('partner_type_id', '=?', partner_type_id)]" context="{'show_address': False, 'show_email': False}"
-                           readonly="state == 'posted'" options="{'no_open': True, 'no_create': True}" placeholder="Select Pet Owner..."/>
+                    <label for="partner_id" string="Partner" style="font-weight:bold;" invisible="move_type != 'entry'"/>
+                    <field name="partner_id" nolabel="1" string="Pet Owner" domain="[('partner_type_id', '=?', partner_type_id)]"
+                           context="{'show_address': False, 'show_email': False}" readonly="state == 'posted'" options="{'no_open': True, 'no_create': True}"
+                           placeholder="Select Pet Owner..." invisible="move_type not in ('out_invoice', 'out_refund', 'out_receipt')"/>
+                    <field name="partner_id" string="Vendor" nolabel="1" domain="[('partner_type_id', '=?', partner_type_id)]"
+                           context="{'show_address': False, 'show_email': False}" readonly="state == 'posted'" options="{'no_open': True, 'no_create': True}"
+                           placeholder="Select Vendor..." invisible="move_type not in ('in_invoice', 'in_refund', 'in_receipt')"/>
+                    <field name="partner_id" string="Partner" nolabel="1" domain="[('partner_type_id', '=?', partner_type_id)]"
+                           context="{'show_address': False, 'show_email': False}" readonly="state == 'posted'" options="{'no_open': True, 'no_create': True}"
+                           placeholder="Select Partner..." invisible="move_type != 'entry'"/>
                     <field name="patient_ids" widget="many2many_tags" readonly="state == 'posted'" invisible="move_type not in ('out_invoice', 'out_refund')"/>
                     <field name="practitioner_id" readonly="state == 'posted'" invisible="move_type not in ('out_invoice', 'out_refund')"/>
                     <field name="room_id" readonly="state == 'posted'" invisible="move_type not in ('out_invoice', 'out_refund')"/>
@@ -1869,14 +1772,18 @@
                 </group>
                 <field name="encounter_line_count" invisible="1"/>
             </xpath>
-
+            <!--            <field name="partner_id" position="attributes">-->
+            <!--                <attribute name="placeholder">Select Pet Owner...</attribute>-->
+            <!--            </field>-->
             <xpath expr="//field[@name='invoice_line_ids']//field[@name='quantity']" position="before">
                 <xpath expr="//field[@name='invoice_line_ids']//field[@name='partner_id']" position="move"/>
                 <field name="patient_ids" widget="many2many_tags" optional="show"/>
                 <field name="practitioner_id" optional="show"/>
                 <field name="room_id" optional="hide"/>
             </xpath>
-
+            <xpath expr="//field[@name='invoice_line_ids']//field[@name='price_total']" position="after">
+                <field name="encounter_line_id" optional="hide"/>
+            </xpath>
         </field>
     </record>
 
@@ -1886,12 +1793,31 @@
         <field name="inherit_id" ref="account.view_out_invoice_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='amount_total_in_currency_signed']" position="after">
-                <field name="practitioner_id" optional="show"/>
-                <field name="room_id" optional="hide"/>
-            </xpath>
-            <xpath expr="//field[@name='invoice_partner_display_name']" position="after">
+                <field name="invoice_partner_display_name" position="move"/>
                 <field name="patient_ids" widget="many2many_tags" optional="show"/>
+                <field name="practitioner_id" string="Practitioner" optional="show"/>
+                <field name="room_id" string="Room" optional="show"/>
             </xpath>
+            <field name="date" position="attributes"><attribute name="optional">show</attribute></field>
+        </field>
+    </record>
+
+    <record id="view_move_search_inherit_ths_vet" model="ir.ui.view">
+        <field name="name">account.move.search.inherit.ths.vet</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="patient_ids"/>
+                <field name="practitioner_id"/>
+                <field name="room_id"/>
+            </field>
+            <xpath expr="//searchpanel//field[@name='partner_id']" position="before">
+                <field name="practitioner_id" string="Practitioner" select="multi" icon="fa-user" enable_counters="1"/>
+                <field name="room_id" string="Room" select="multi" icon="fa-bed" enable_counters="1"/>
+                <field name="patient_ids" select="multi" icon="fa-paw" enable_counters="1" expand="False"/>
+            </xpath>
+
         </field>
     </record>
 
@@ -1902,11 +1828,10 @@
         <field name="inherit_id" ref="account.view_move_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='amount_total_signed']" position="after">
-                <field name="practitioner_id" optional="show"/>
-                <field name="room_id" optional="hide"/>
-            </xpath>
-            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="partner_id" position="move"/>
                 <field name="patient_ids" widget="many2many_tags" optional="show"/>
+                <field name="practitioner_id" optional="show" string="Practitioner"/>
+                <field name="room_id" optional="show" string="Room"/>
             </xpath>
         </field>
     </record>
@@ -1922,7 +1847,6 @@
                     <field name="encounter_line_count" widget="statinfo" string="Encounter Lines"/>
                 </button>
             </xpath>
-
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="patient_ids" widget="many2many_tags" readonly="state == 'sale'"/>
                 <field name="practitioner_id" readonly="state == 'sale'"/>
@@ -1930,16 +1854,16 @@
                 <field name="encounter_id" readonly="state == 'sale'"/>
                 <field name="encounter_line_count" invisible="1"/>
             </xpath>
-
             <xpath expr="//field[@name='order_line']//list//field[@name='product_uom_qty']" position="before">
                 <field name="order_partner_id" optional="hide"/>
                 <field name="patient_ids" widget="many2many_tags" optional="show"/>
                 <field name="practitioner_id" optional="show"/>
                 <field name="room_id" optional="hide"/>
             </xpath>
-
+            <xpath expr="//field[@name='order_line']//list//field[@name='price_total']" position="after">
+                <field name="encounter_line_id" optional="hide"/>
+            </xpath>
             <field name="partner_invoice_id" position="replace"/>
-
             <xpath expr="//header" position="inside">
                 <button name="action_select_encounter_lines" type="object" string="Add Encounter Lines" class="btn-secondary" invisible="state not in ['draft', 'sent']"/>
             </xpath>
@@ -1951,9 +1875,7 @@
         <field name="name">vet.encounter.line.pivot.enhanced</field>
         <field name="model">vet.encounter.line</field>
         <field name="arch" type="xml">
-            <pivot string="Encounter Line Analysis"
-                   display_quantity="1"
-                   sample="1">
+            <pivot string="Encounter Line Analysis" display_quantity="1" sample="1">
                 <field name="encounter_month" type="row"/>
                 <field name="product_id" type="col"/>
                 <field name="sub_total" type="measure"/>
@@ -1969,10 +1891,7 @@
         <field name="name">vet.encounter.line.graph.enhanced</field>
         <field name="model">vet.encounter.line</field>
         <field name="arch" type="xml">
-            <graph string="Revenue Analysis"
-                   type="line"
-                   sample="1"
-                   stacked="0">
+            <graph string="Revenue Analysis" type="line" sample="1" stacked="0">
                 <field name="encounter_month"/>
                 <field name="sub_total" type="measure"/>
             </graph>
@@ -1984,9 +1903,7 @@
         <field name="name">res.partner.patient.pivot</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <pivot string="Patient Analysis"
-                   display_quantity="1"
-                   sample="1">
+            <pivot string="Patient Analysis" display_quantity="1" sample="1">
                 <field name="species_id" type="row"/>
                 <field name="pet_owner_id" type="col"/>
             </pivot>
@@ -1998,9 +1915,7 @@
         <field name="name">res.partner.patient.graph</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <graph string="Patient Distribution"
-                   type="pie"
-                   sample="1">
+            <graph string="Patient Distribution" type="pie" sample="1">
                 <field name="species_id"/>
             </graph>
         </field>

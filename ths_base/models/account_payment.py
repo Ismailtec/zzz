@@ -14,6 +14,18 @@ class AccountPayment(models.Model):
 	amount_remaining = fields.Monetary(string='Amount Remaining', currency_field='currency_id', readonly=True, compute='_compute_amount_remaining', store=True,
 									   help="Unused remaining amount")
 
+	@api.onchange('partner_type_id')
+	def _onchange_partner_type_clear_partner(self):
+		"""Clear partner when partner type changes"""
+		if self.partner_type_id and self.partner_id.partner_type_id.id != self.partner_type_id.id:
+			self.partner_id = False
+
+	@api.depends('partner_id')
+	def _compute_partner_type_id(self):
+		for record in self:
+			if record.partner_id and not record.partner_type_id:
+				record.partner_type_id = record.partner_id.partner_type_id.id
+
 	@api.depends('move_id.line_ids.matched_debit_ids', 'move_id.line_ids.matched_credit_ids', 'amount')
 	def _compute_amount_used(self):
 		"""Compute used amount based on reconciled invoices"""
@@ -58,14 +70,6 @@ class AccountPayment(models.Model):
 				defaults['partner_type_id'] = partner.partner_type_id.id
 
 		return defaults
-
-	@api.onchange('partner_id')
-	def _onchange_partner_id(self):
-		"""Update partner_type_id when partner changes"""
-		if self.partner_id and self.partner_id.partner_type_id:
-			self.partner_type_id = self.partner_id.partner_type_id
-		elif not self.partner_id:
-			self.partner_type_id = False
 
 	@api.constrains('amount_used', 'amount')
 	def _check_amount_used(self):

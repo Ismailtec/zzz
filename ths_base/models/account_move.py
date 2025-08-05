@@ -2,6 +2,8 @@
 
 from odoo import models, fields, api, _
 from odoo.osv import expression
+from odoo.tools import format_amount
+from collections import defaultdict
 from markupsafe import Markup
 
 import logging
@@ -20,53 +22,122 @@ class AccountMove(models.Model):
 	ths_hide_taxes = fields.Boolean(related="company_id.ths_hide_taxes", readonly=False, string="Hide Taxes", help="Technical field to read the global config setting.")
 	partner_type_id = fields.Many2one('ths.partner.type', string='Partner Type', readonly=False, copy=True, index=True, ondelete='cascade',
 									  help="Choose proper Partner Type to show related Partners")
-
-	payment_journal_name = fields.Char(string='Payment Journal', compute='_compute_payment_info', store=True)
-	payment_method_name = fields.Char(string='Payment Method', compute='_compute_payment_info', store=True)
 	amount_paid = fields.Monetary(string='Amount Paid', compute='_compute_payment_info', store=True)
+	payment_details = fields.Text(string='Payment Details', compute='_compute_payment_info', store=True, help="Summary of journals, methods and amounts used for payments.")
+	payment_journal_ids = fields.Many2many('account.journal', string='Payment Journals', compute='_compute_payment_info', store=True, help="Journals used in payments.")
 
-	total_before_discount = fields.Monetary(string='Total before any discount', compute='_compute_discount_totals', currency_field='currency_id')
-	total_discount_amount = fields.Monetary(string='Total Disc.', compute='_compute_discount_totals', currency_field='currency_id')
+	total_before_discount = fields.Monetary(string='Total before any discount', compute='_compute_discount_totals', currency_field='currency_id', store=True)
+	total_discount_amount = fields.Monetary(string='Total Disc.', compute='_compute_discount_totals', currency_field='currency_id', store=True)
 
 	@api.onchange('partner_type_id')
 	def _onchange_partner_type_clear_partner(self):
 		"""Clear partner when partner type changes"""
-		if self.partner_type_id:
+		if self.partner_type_id and self.partner_id.partner_type_id.id != self.partner_type_id.id:
 			self.partner_id = False
 
-	@api.onchange('partner_id')
-	def _onchange_partner_id(self):
-		super()._onchange_partner_id()
-		if self.partner_id and self.partner_id.partner_type_id:
-			self.partner_type_id = self.partner_id.partner_type_id
+	@api.depends('partner_id')
+	def _compute_partner_type_id(self):
+		for record in self:
+			if record.partner_id and not record.partner_type_id:
+				record.partner_type_id = record.partner_id.partner_type_id.id
 
-	@api.depends('payment_state', 'line_ids.matched_debit_ids', 'line_ids.matched_credit_ids')
+	# @api.onchange('partner_id')
+	# def _onchange_partner_id(self):
+	# 	super()._onchange_partner_id()
+	# 	if self.partner_id and self.partner_id.partner_type_id:
+	# 		self.partner_type_id = self.partner_id.partner_type_id
+
+	@api.depends('line_ids.matched_debit_ids.amount', 'line_ids.matched_debit_ids.debit_amount_currency', 'line_ids.matched_debit_ids.credit_amount_currency',
+				 'line_ids.matched_debit_ids.debit_move_id.payment_id.journal_id', 'line_ids.matched_debit_ids.debit_move_id.payment_id.payment_method_line_id', 'currency_id',
+				 'line_ids.matched_debit_ids.credit_move_id.payment_id.journal_id', 'line_ids.matched_debit_ids.credit_move_id.payment_id.payment_method_line_id',
+				 'line_ids.matched_credit_ids.amount', 'line_ids.matched_credit_ids.debit_amount_currency', 'line_ids.matched_credit_ids.credit_amount_currency', 'payment_state',
+				 'line_ids.matched_credit_ids.debit_move_id.payment_id.journal_id', 'line_ids.matched_credit_ids.debit_move_id.payment_id.payment_method_line_id',
+				 'line_ids.matched_credit_ids.credit_move_id.payment_id.journal_id', 'line_ids.matched_credit_ids.credit_move_id.payment_id.payment_method_line_id')
 	def _compute_payment_info(self):
-		"""Compute payment information when invoice is paid"""
+		""" Compute payment details from all reconciles, handling multiple/partial payments. """
 		for move in self:
-			if move.payment_state == 'paid':
-				# Find payment lines
-				payment_lines = move.line_ids.filtered(lambda l: l.account_id.account_type in ['asset_receivable', 'liability_payable'])
-				payments = payment_lines.mapped('matched_debit_ids.debit_move_id.payment_id') | payment_lines.mapped('matched_credit_ids.credit_move_id.payment_id')
+			total_paid = 0.0
+			details = []
+			journals = set()
+			payment_groups = defaultdict(float)  # Key: (journal_name, method_name), Value: summed amount
 
-				if payments:
-					payment = payments[0]  # Take first payment
-					move.payment_journal_name = payment.journal_id.name
-					move.payment_method_name = payment.payment_method_line_id.name
-					move.amount_paid = payment.amount
+			# Get receivable/payable lines
+			reconcilable_lines = move.line_ids.filtered(lambda l: l.account_id.account_type in ['asset_receivable', 'liability_payable'])
+
+			# Collect all partial reconciles (handle both directions)
+			partials = reconcilable_lines.mapped('matched_debit_ids') | reconcilable_lines.mapped('matched_credit_ids')
+
+			for partial in partials:
+				# Determine payment side (opposite to move's reconcilable line)
+				if partial.debit_move_id in reconcilable_lines:
+					payment_aml = partial.credit_move_id
+					matched_amount = partial.debit_amount_currency
+					matched_currency = partial.debit_currency_id
 				else:
-					move.payment_journal_name = ''
-					move.payment_method_name = ''
-					move.amount_paid = 0.0
-			else:
-				move.payment_journal_name = ''
-				move.payment_method_name = ''
-				move.amount_paid = 0.0
+					payment_aml = partial.debit_move_id
+					matched_amount = partial.credit_amount_currency
+					matched_currency = partial.credit_currency_id
 
+				# Fallback to company currency if no currency amount
+				if not matched_amount:
+					matched_amount = partial.amount
+					matched_currency = move.company_currency_id
 
+				if matched_currency != move.currency_id:
+					matched_amount = matched_currency._convert(matched_amount, move.currency_id, move.company_id, move.date)
+
+				total_paid += matched_amount
+
+				# Get journal and method
+				journal = payment_aml.journal_id
+				journal_name = journal.name if journal else _('Unknown Journal')
+				if journal:
+					journals.add(journal.id)
+
+				payment = payment_aml.payment_id
+				if payment:
+					method_name = payment.payment_method_line_id.name or _('Manual')
+				else:
+					# Fallback for non-payment reconciles (e.g., bank statements)
+					method_name = _('Manual')
+
+				# Group by journal-method
+				key = (journal_name, method_name)
+				payment_groups[key] += matched_amount
+
+			# Build details text
+			for (journal_name, method_name), amount in sorted(payment_groups.items()):
+				details.append(f"{journal_name} - {method_name}: {format_amount(self.env, amount, move.currency_id)}")
+
+			move.amount_paid = total_paid
+			move.payment_details = '\n'.join(details) if details else ''
+			move.payment_journal_ids = [(6, 0, list(journals))]
+
+	# @api.depends('payment_state', 'line_ids.matched_debit_ids', 'line_ids.matched_credit_ids')
+	# def _compute_payment_info(self):
+	# 	"""Compute payment information when invoice is paid"""
+	# 	for move in self:
+	# 		if move.payment_state == 'paid':
+	# 			# Find payment lines
+	# 			payment_lines = move.line_ids.filtered(lambda l: l.account_id.account_type in ['asset_receivable', 'liability_payable'])
+	# 			payments = payment_lines.mapped('matched_debit_ids.debit_move_id.payment_id') | payment_lines.mapped('matched_credit_ids.credit_move_id.payment_id')
+	#
+	# 			if payments:
+	# 				payment = payments[0]  # Take first payment
+	# 				move.payment_journal_name = payment.journal_id.name
+	# 				move.payment_method_name = payment.payment_method_line_id.name
+	# 				move.amount_paid = payment.amount
+	# 			else:
+	# 				move.payment_journal_name = ''
+	# 				move.payment_method_name = ''
+	# 				move.amount_paid = 0.0
+	# 		else:
+	# 			move.payment_journal_name = ''
+	# 			move.payment_method_name = ''
+	# 			move.amount_paid = 0.0
 
 	# ----------------- Global Discount Section -----------------
-	@api.depends('invoice_line_ids.price_subtotal', 'invoice_line_ids.price_unit', 'invoice_line_ids.quantity', 'invoice_line_ids.discount')
+	@api.depends('invoice_line_ids.price_subtotal', 'invoice_line_ids.price_unit', 'invoice_line_ids.quantity', 'invoice_line_ids.discount', 'invoice_line_ids.product_id')
 	def _compute_discount_totals(self):
 		for move in self:
 			discount_product = self.env.ref('ths_base.product_global_discount', raise_if_not_found=False)
@@ -105,6 +176,7 @@ class AccountMove(models.Model):
 			'view_mode': 'form',
 			'target': 'new',
 		}
+
 	# ----------------- End of Global Discount Section -----------------
 
 	# Get Default Date on Bill and partner type if passed through context
@@ -284,6 +356,7 @@ class AccountMove(models.Model):
 		}
 		related_lc.write(update_vals)
 		related_lc.message_post(body=_("Cost lines updated based on posted Vendor Bill %s.", self.display_name))
+
 
 # ----------------- End of Landed Cost Section -----------------
 

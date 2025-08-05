@@ -80,9 +80,11 @@ $enhanced-colors: /* Reds (12-14) */
 .o_column_60 {
   width: 60px !important;
 }
+
 .o_column_70 {
   width: 70px !important;
 }
+
 .o_column_80 {
   width: 80px !important;
 }
@@ -99,3 +101,32 @@ $enhanced-colors: /* Reds (12-14) */
   width: 120px !important;
 }
 
+
+.modal-dialog:has(.ths_full_screen) {
+  max-width: 95vw !important;
+  width: 95vw !important;
+  height: 95vh !important;
+  margin: 2.5vh auto !important;
+}
+
+.modal-content:has(.ths_full_screen) {
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.modal-body:has(.ths_full_screen) {
+  padding: 15px !important;
+  height: calc(100vh - 120px) !important;
+  overflow-y: auto !important;
+}
+
+/* Force the main groups to stay horizontal */
+.modal-body:has(.ths_full_screen) .o_form_sheet > .o_group:not([name="activity_summary"]) {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 20px !important;
+}
+
+.modal-body:has(.ths_full_screen) .o_form_sheet > .o_group:not([name="activity_summary"]) > .o_group {
+  flex: 1 !important;
+}

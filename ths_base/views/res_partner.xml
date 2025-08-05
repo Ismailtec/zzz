@@ -7,6 +7,10 @@
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
+                <xpath expr="//form" position="attributes"><attribute name="class">ths_full_screen</attribute></xpath>
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_credit_payments" type="object" string="Credit Balance" icon="fa-credit-card" invisible="available_credit_count == 0"/>
+                </xpath>
                 <field name="company_type" position="replace"/>
 
                 <!-- Remove the original group structure -->
@@ -84,6 +88,7 @@
                             <field name="lang" invisible="not is_company and active_lang_count &lt;= 1"/>
                             <field name="email" widget="email" context="{'gravatar_image': True}" required="user_ids"/>
                             <field name="website" string="Website" widget="url" placeholder="e.g. https://www.odoo.com" invisible="not is_company"/>
+                            <field name="available_credit" widget="monetary" decoration-success="available_credit > 0"/>
                             <field name="category_id" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" invisible="1"/>
                         </group>
                     </group>
@@ -126,6 +131,7 @@
                 <xpath expr="//field[@name='complete_name']" position="after">
                     <field name="partner_type_id" optional="show"/>
                     <field name="ths_gov_id" optional="hide"/>
+                    <field name="available_credit" widget="monetary" column_invisible="not available_credit"/>
                 </xpath>
                 <field name="user_id" position="attributes">
                     <attribute name="optional">Hide</attribute>
@@ -154,8 +160,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//filter[@name='inactive']" position="after">
                     <separator/>
-                    <filter string="Partner Type" name="filter_partner_type" domain="[]"
-                            context="{'group_by': 'partner_type_id'}"/>
+                    <filter string="Partner Type" name="filter_partner_type" domain="[]" context="{'group_by': 'partner_type_id'}"/>
                 </xpath>
                 <xpath expr="//field[@name='user_id']" position="after">
                     <field name="partner_type_id"/>

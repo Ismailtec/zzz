@@ -31,6 +31,43 @@ class ResPartner(models.Model):
 	ths_nationality = fields.Many2one('res.country', 'Nationality', copy=False, store=True)
 	ths_dob = fields.Date(string='Date of Birth')
 	ths_age = fields.Char(string='Age', compute='_compute_ths_age', store=False)
+	available_credit = fields.Monetary(string='Available Credit', compute='_compute_available_credit', currency_field='currency_id')
+	available_credit_count = fields.Integer(string='Credit Payments Count', compute='_compute_available_credit')
+	payment_ids = fields.One2many('account.payment', 'partner_id', string='Payments')
+
+	@api.depends('payment_ids.amount_remaining', 'payment_ids.state')
+	def _compute_available_credit(self):
+		for partner in self:
+			credit_payments = self.env['account.payment'].search([
+				('partner_id', '=', partner.id),
+				('amount_remaining', '>', 0),
+				('state', '=', 'paid'),
+				('payment_type', '=', 'inbound'),
+			])
+
+			partner.available_credit = sum(credit_payments.mapped('amount_remaining'))
+			partner.available_credit_count = len(credit_payments)
+
+
+	def get_credit_balance(self):
+		"""Get customer's available credit from payments with remaining amounts"""
+		self.ensure_one()
+
+		# Sum all payments with remaining amounts for this partner
+		credit_payments = self.env['account.payment'].search([
+			('partner_id', '=', self.id),
+			('amount_remaining', '>', 0),
+			('state', '=', 'paid'),
+			('payment_type', '=', 'inbound'),
+		])
+
+		total_credit = sum(credit_payments.mapped('amount_remaining'))
+
+		return {
+			'available_credit': total_credit,  # This should be positive
+			'credit_payments_count': len(credit_payments),
+			'credit_payments': credit_payments.ids
+		}
 
 	# --- Onchange Methods ---
 	@api.onchange('name')
@@ -217,3 +254,19 @@ class ResPartner(models.Model):
 			access_rights_uid=name_get_uid,
 			order=order
 		)
+
+	def action_view_credit_payments(self):
+		"""View all payments with remaining credit"""
+		self.ensure_one()
+
+		credit_payment_ids = self.env['account.payment'].search(
+			[('partner_id', '=', self.id), ('amount_remaining', '>', 0), ('state', '=', 'paid'), ('payment_type', '=', 'inbound')]).ids
+
+		return {
+			'type': 'ir.actions.act_window',
+			'name': f'Credit Payments - {self.name}',
+			'res_model': 'account.payment',
+			'view_mode': 'list,form',
+			'domain': [('id', 'in', credit_payment_ids)],
+			'context': {'create': False},
+		}

@@ -514,9 +514,9 @@ class CalendarEvent(models.Model):
 	patient_ids = fields.Many2many('res.partner', 'calendar_event_patient_rel', 'event_id', 'patient_id', string='Pets', index=True, tracking=True, store=True, readonly=False,
 								   domain="[('is_pet', '=', True), ('pet_owner_id', '=?', pet_owner_id)]", help="Pets receiving veterinary care")
 	# patient_ids_domain = fields.Char(compute='_compute_patient_domain',store=False)
-	practitioner_id = fields.Many2one('appointment.resource', string='Service Provider', domain="[('resource_category', '=', 'practitioner')]", store=True, readonly=False,
+	practitioner_id = fields.Many2one('appointment.resource', string='Practitioner', domain="practitioner_id_domain", store=True, readonly=False,
 									  tracking=True, help="Primary service provider for this appointment.")
-	room_id = fields.Many2one('appointment.resource', string='Room', domain="[('resource_category', '=', 'location')]", store=True, readonly=False, tracking=True, copy=False,
+	room_id = fields.Many2one('appointment.resource', string='Room', domain="room_id_domain", store=True, readonly=False, tracking=True, copy=False,
 							  help="Treatment room for this appointment.")
 	practitioner_id_domain = fields.Char(compute='_compute_ar_domains')
 	room_id_domain = fields.Char(compute='_compute_ar_domains')

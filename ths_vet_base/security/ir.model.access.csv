@@ -98,6 +98,3 @@ access_vet_operational_dashboard_manager,vet.operational.dashboard.manager,model
 access_vet_operational_dashboard_user,vet.operational.dashboard.user,model_vet_operational_dashboard,ths_vet_base.group_vet_user,1,1,1,0
 access_vet_dashboard_actions_manager,vet.dashboard.actions.manager,model_vet_dashboard_actions,ths_vet_base.group_vet_manager,1,1,1,1
 access_vet_dashboard_actions_user,vet.dashboard.actions.user,model_vet_dashboard_actions,ths_vet_base.group_vet_user,1,0,0,0
-
-access_vet_line_payment_track_manager,vet.line.payment.track.manager,model_vet_line_payment_track,ths_vet_base.group_vet_manager,1,1,1,1
-access_vet_line_payment_track_user,vet.line.payment.track.user,model_vet_line_payment_track,ths_vet_base.group_vet_user,1,1,1,0

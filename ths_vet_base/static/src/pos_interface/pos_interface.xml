@@ -13,100 +13,97 @@
         <div t-else="" class="vet-pos-interface">
             <!-- Compact Header -->
             <div class="pos-header-compact">
-                <div class="encounter-section-compact">
+                <div class="encounter-section-expanded">
                     <h5 class="encounter-title-compact">
-                        <i class="fa fa-file-text-o"/>
-                        <span t-esc="state.encounter.name || 'New Encounter'"/>
-                    </h5>
+                        <div class="title-left-expanded">
+                            <i class="fa fa-file-text-o"/>
+                            <span t-esc="state.encounter.name || 'New Encounter'"/>
 
-                    <div class="encounter-grid-compact">
-                        <div class="field-compact">
-                            <label>Customer:</label>
-                            <span t-esc="state.encounter.partner_id ? state.encounter.partner_id[1] : 'No Customer'"/>
-                        </div>
+                            <!-- Expanded inline fields -->
+                            <div class="inline-fields-expanded">
+                                <span class="inline-field-expanded customer-field">
+                                    <strong>Customer:</strong>
+                                    <span t-esc="state.encounter.partner_id ? state.encounter.partner_id[1] : 'No Customer'"/>
+                                </span>
 
-                        <div class="field-compact">
-                            <label>Practitioner:</label>
-                            <select class="select-compact">
-                                <option value="">Select</option>
-                                <option t-foreach="state.availablePractitioners" t-as="prac" t-key="prac.id"
-                                        t-att-value="prac.id"
-                                        t-att-selected="state.encounter.practitioner_id ? state.encounter.practitioner_id[0] === prac.id : false"
-                                        t-esc="prac.name"/>
-                            </select>
-                        </div>
+                                <span class="inline-field-expanded practitioner-field">
+                                    <strong>Practitioner:</strong>
+                                    <select class="select-expanded" t-on-change="(ev) => this.updateHeaderPractitioner(ev)">
+                                        <option value="">Select Practitioner</option>
+                                        <option t-foreach="state.availablePractitioners" t-as="prac" t-key="prac.id"
+                                                t-att-value="prac.id"
+                                                t-att-selected="state.encounter.practitioner_id ? state.encounter.practitioner_id[0] === prac.id : false"
+                                                t-esc="prac.name"/>
+                                    </select>
+                                </span>
 
-                        <div class="field-compact">
-                            <label>Room:</label>
-                            <select class="select-compact">
-                                <option value="">Select</option>
-                                <option t-foreach="state.availableRooms" t-as="room" t-key="room.id"
-                                        t-att-value="room.id"
-                                        t-att-selected="state.encounter.room_id ? state.encounter.room_id[0] === room.id : false"
-                                        t-esc="room.name"/>
-                            </select>
-                        </div>
+                                <span class="inline-field-expanded room-field">
+                                    <strong>Room:</strong>
+                                    <select class="select-expanded" t-on-change="(ev) => this.updateHeaderRoom(ev)">
+                                        <option value="">Select Room</option>
+                                        <option t-foreach="this.getFilteredRoomsForHeader()" t-as="room" t-key="room.id"
+                                                t-att-value="room.id"
+                                                t-att-selected="state.encounter.room_id ? state.encounter.room_id[0] === room.id : false"
+                                                t-esc="room.name"/>
+                                    </select>
+                                </span>
 
-                        <div class="field-compact">
-                            <label>Patients:</label>
-                            <div class="patient-tags-compact">
-                                <span t-foreach="state.availablePatients" t-as="patient" t-key="patient.id"
-                                      class="patient-tag-compact"
-                                      t-att-class="state.encounter.patient_ids &amp;&amp; state.encounter.patient_ids.map(p => p[0]).includes(patient.id) ? 'selected' : ''"
-                                      t-on-click="() => this.togglePatientSelection(patient.id)"
-                                      t-esc="patient.name"/>
+                                <span class="inline-field-expanded patients-field">
+                                    <strong>Patients:</strong>
+                                    <div class="patient-tags-expanded">
+                                        <span t-foreach="state.availablePatients" t-as="patient" t-key="patient.id"
+                                              class="patient-tag-expanded"
+                                              t-att-class="this.isPatientSelectedInHeader(patient.id) ? 'selected' : ''"
+                                              t-on-click="() => this.togglePatientSelection(patient.id)"
+                                              t-esc="patient.name"/>
+                                    </div>
+                                </span>
+
+                                <!-- Search bar in header -->
+                                <span class="inline-field-expanded search-field">
+                                    <div class="search-section-header">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">
+                                                <i class="fa fa-search"/>
+                                            </span>
+                                            <input type="text"
+                                                   class="form-control"
+                                                   placeholder="Search products..."
+                                                   t-att-value="state.searchProductWord"
+                                                   t-on-input="onSearchInputChange"
+                                                   t-on-keydown="(ev) => ev.key === 'Enter' &amp;&amp; this.onSearchProducts(state.searchProductWord)"/>
+                                            <button class="btn btn-outline-secondary"
+                                                    t-on-click="clearSearch"
+                                                    t-if="state.searchProductWord">
+                                                <i class="fa fa-times"/>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </span>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="categories-section-compact">
-                    <!-- Search Bar -->
-                    <div class="search-section me-3" style="min-width: 250px;">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">
-                                <i class="fa fa-search"/>
-                            </span>
-                            <input type="text"
-                                   class="form-control"
-                                   placeholder="Search products..."
-                                   t-att-value="state.searchProductWord"
-                                   t-on-input="onSearchInputChange"
-                                   t-on-keydown="(ev) => ev.key === 'Enter' &amp;&amp; this.onSearchProducts(state.searchProductWord)"/>
-                            <button class="btn btn-outline-secondary"
-                                    t-on-click="clearSearch"
-                                    t-if="state.searchProductWord">
-                                <i class="fa fa-times"/>
+                        <!-- Buttons on far right -->
+                        <div class="title-buttons-right">
+                            <button class="btn btn-light btn-scan"
+                                    t-if="isBarcodeScannerSupported()"
+                                    t-on-click="onClickScan">
+                                <i class="fa fa-barcode"/>
+                                <span class="ms-1">Scan</span>
                             </button>
+                            <button class="btn btn-primary btn-sm" t-on-click="saveChanges"><i class="fa fa-save"/> Save</button>
+                            <button class="btn btn-secondary btn-sm" t-on-click="closeInterface"><i class="fa fa-times"/> Close</button>
                         </div>
+                    </h5>
+                </div>
+            </div>
 
-                        <!-- Search Results Dropdown -->
-                        <div class="search-results position-absolute bg-white border rounded shadow-sm"
-                             style="z-index: 1000; width: 100%; max-height: 200px; overflow-y: auto;"
-                             t-if="state.searchResults.length > 0">
-                            <div t-foreach="state.searchResults" t-as="product" t-key="product.id"
-                                 class="search-result-item p-2 border-bottom cursor-pointer"
-                                 t-on-click="() => this.addToCart(product)"
-                                 style="cursor: pointer;">
-                                <div class="d-flex justify-content-between">
-                                    <span t-esc="product.name"/>
-                                    <span class="text-success" t-esc="this.formatCurrency(product.lst_price)"/>
-                                </div>
-                                <small class="text-muted" t-if="product.default_code" t-esc="product.default_code"/>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Barcode Scanner Button -->
-                    <button class="btn btn-light btn-sm me-2"
-                            t-if="isBarcodeScannerSupported()"
-                            t-on-click="onClickScan">
-                        <i class="fa fa-barcode fa-lg"/>
-                        <span class="ms-1">Scan</span>
-                    </button>
-
-                    <!-- Categories -->
-                    <div class="categories-wrap-compact">
+            <!-- Main Content -->
+            <div class="pos-content">
+                <!-- Products with categories inside-->
+                <div class="pos-products-perfect">
+                    <!-- Categories horizontal bar -->
+                    <div class="categories-horizontal">
                         <div t-foreach="Object.keys(state.productsByCategory)" t-as="category" t-key="category"
                              class="category-tab-compact"
                              t-att-class="state.selectedCategory === category ? 'active' : ''"
@@ -114,29 +111,27 @@
                             <span t-esc="category"/> (<span t-esc="state.productsByCategory[category].length"/>)
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Main Content -->
-            <div class="pos-content">
-                <!-- Products -->
-                <div class="pos-products-perfect">
-                    <div t-if="state.filteredProducts.length === 0" class="products-empty-perfect">
-                        <i class="fa fa-cube fa-3x mb-3"/>
-                        <h5>No products in this category</h5>
-                    </div>
-
-                    <div t-foreach="state.filteredProducts" t-as="product" t-key="product.id"
-                         class="product-card-perfect"
-                         t-on-click="() => this.addToCart(product)"
-                         t-att-title="product.name">
-                        <div class="product-image-perfect">
-                            <img t-if="product.image_128" t-attf-src="data:image/png;base64,{{product.image_128}}" t-att-alt="product.name"/>
-                            <i t-else="" class="fa fa-cube"/>
+                    <!-- Products grid -->
+                    <div class="products-grid-fixed">
+                        <div t-if="state.filteredProducts.length === 0" class="products-empty-perfect">
+                            <i class="fa fa-cube fa-3x mb-3"/>
+                            <h5 t-if="state.searchProductWord">No products found for "<span t-esc="state.searchProductWord"/>"</h5>
+                            <h5 t-else="">No products in this category</h5>
                         </div>
-                        <div class="product-info-perfect">
-                            <div class="product-name-perfect" t-esc="product.name"/>
-                            <div class="product-price-perfect" t-esc="this.formatCurrency(product.lst_price)"/>
+
+                        <div t-foreach="state.filteredProducts" t-as="product" t-key="product.id"
+                             class="product-card-perfect"
+                             t-on-click="() => this.addToCart(product)"
+                             t-att-title="product.name">
+                            <div class="product-image-perfect">
+                                <img t-if="product.image_128" t-attf-src="data:image/png;base64,{{product.image_128}}" t-att-alt="product.name"/>
+                                <i t-else="" class="fa fa-cube"/>
+                            </div>
+                            <div class="product-info-perfect">
+                                <div class="product-name-perfect" t-esc="product.name"/>
+                                <div class="product-price-perfect" t-esc="this.formatCurrency(product.lst_price)"/>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -154,13 +149,20 @@
                         </div>
 
                         <!-- Compact Cart Items -->
-                        <div t-foreach="state.cartItems" t-as="item" t-key="item.id" class="cart-item-compact">
+                        <div t-foreach="state.cartItems" t-as="item" t-key="item.id" class="cart-item-compact" t-att-data-item-id="item.id">
                             <!-- Item Header -->
                             <div class="item-header-compact">
-                                <strong t-esc="item.name"/>
-                                <button class="btn-remove-compact" t-on-click="() => this.removeFromCart(item.id)">
-                                    <i class="fa fa-times"/>
-                                </button>
+                                <div class="item-header-left">
+                                    <strong t-esc="item.name"/>
+                                </div>
+                                <div class="item-header-right">
+                                    <button class="btn-move-compact" t-on-click="() => this.moveCartItemUp(item.id)" title="Move Up"><i class="fa fa-chevron-up"/>
+                                    </button>
+                                    <button class="btn-move-compact" t-on-click="() => this.moveCartItemDown(item.id)" title="Move Down"><i class="fa fa-chevron-down"/>
+                                    </button>
+                                    <button class="btn-remove-compact" t-on-click="() => this.removeFromCart(item.id)"><i class="fa fa-times"/>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Controls -->
@@ -201,28 +203,13 @@
 
                             <!-- Compact Line Details -->
                             <div class="line-details-compact">
-                                <div class="detail-row-compact patients-row">
-                                    <label>Patients:</label>
-                                    <div class="patient-tags-line-compact">
-                                        <span t-foreach="state.availablePatients" t-as="patient" t-key="patient.id"
-                                              class="patient-tag-line-compact"
-                                              t-att-class="item.patient_ids.includes(patient.id) ? 'selected' : ''"
-                                              t-on-click="() => this.toggleLinePatient(item.id, patient.id)"
-                                              t-esc="patient.name"/>
-                                    </div>
-                                    <button class="clear-btn-compact" t-on-click="() => this.clearLinePatients(item.id)">
-                                        <i class="fa fa-times"/>
-                                    </button>
-                                </div>
-
                                 <div class="detail-row-compact dual-row">
                                     <div class="detail-half">
                                         <label>Practitioner:</label>
-                                        <select class="select-line-compact" t-att-value="item.practitioner_id || ''"
-                                                t-on-change="(ev) => this.updateLinePractitioner(item.id, parseInt(ev.target.value) || null)">
+                                        <select class="select-line-compact" t-att-value="item.practitioner_id || ''" t-on-change="(ev) => this.updateLinePractitioner(ev, item.id)">
                                             <option value="">None</option>
                                             <option t-foreach="state.availablePractitioners" t-as="practitioner" t-key="practitioner.id"
-                                                    t-att-value="practitioner.id" t-esc="practitioner.name"/>
+                                                    t-att-value="practitioner.id" t-att-selected="item.practitioner_id === practitioner.id" t-esc="practitioner.name"/>
                                         </select>
                                         <button class="clear-btn-compact" t-on-click="() => this.clearLinePractitioner(item.id)">
                                             <i class="fa fa-times"/>
@@ -231,16 +218,28 @@
 
                                     <div class="detail-half">
                                         <label>Room:</label>
-                                        <select class="select-line-compact" t-att-value="item.room_id || ''"
-                                                t-on-change="(ev) => this.updateLineRoom(item.id, parseInt(ev.target.value) || null)">
+                                        <select class="select-line-compact" t-att-value="item.room_id || ''" t-on-change="(ev) => this.updateLineRoom(ev, item.id)">
                                             <option value="">None</option>
-                                            <option t-foreach="this.getAvailableRoomsForPractitioner(item.practitioner_id)" t-as="room" t-key="room.id"
-                                                    t-att-value="room.id" t-esc="room.name"/>
+                                            <option t-foreach="this.getFilteredRoomsForLine(item.practitioner_id)" t-as="room" t-key="room.id" t-att-value="room.id"
+                                                    t-att-selected="item.room_id === room.id" t-esc="room.name"/>
                                         </select>
                                         <button class="clear-btn-compact" t-on-click="() => this.clearLineRoom(item.id)">
                                             <i class="fa fa-times"/>
                                         </button>
                                     </div>
+                                </div>
+                                <div class="detail-row-compact patients-row">
+                                    <label>Patients:</label>
+                                    <div class="patient-tags-line-compact">
+                                        <span t-foreach="state.availablePatients" t-as="patient" t-key="patient.id"
+                                              class="patient-tag-line-compact"
+                                              t-att-class="this.isPatientSelectedInLine(item, patient.id) ? 'selected' : ''"
+                                              t-on-click="() => this.toggleLinePatient(item.id, patient.id)"
+                                              t-esc="patient.name"/>
+                                    </div>
+                                    <button class="clear-btn-compact" t-on-click="() => this.clearLinePatients(item.id)">
+                                        <i class="fa fa-times"/>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -249,6 +248,7 @@
                     <!-- Compact Footer -->
                     <div class="cart-footer-compact">
                         <!-- Side by Side Global Discount & Totals -->
+                        <!-- Update footer layout -->
                         <div class="footer-top-row">
                             <div class="global-discount-left">
                                 <label>Global Discount:</label>
@@ -263,17 +263,42 @@
                                 </div>
                             </div>
 
+                            <!-- Payment Amount in the middle -->
+                            <div class="payment-amount-middle">
+                                <label>Payment Amt:</label>
+                                <input type="number"
+                                       class="form-control form-control-sm payment-amt-input"
+                                       t-att-value="state.paymentAmount || state.cartTotal"
+                                       t-att-max="state.cartTotal"
+                                       t-on-input="(ev) => this.updatePaymentAmount(ev.target.value)"
+                                       step="0.250"/>
+                            </div>
+
                             <div class="totals-right">
-                                <div class="total-line-compact">
-                                    <span>Subtotal:</span>
-                                    <span t-esc="this.formatCurrency(state.cartItems.reduce((t, i) => t + this.getLineTotal(i), 0))"/>
+                                <div t-if="getTotalDiscountAmount() > 0" class="total-line-compact discount-line">
+                                    <span>Total Discount:</span>
+                                    <span t-esc="this.formatCurrency(this.getTotalDiscountAmount(), true)"/>
                                 </div>
-                                <div t-if="state.globalDiscount > 0" class="total-line-compact discount-line">
-                                    <span>Global Discount:</span>
-                                    <span t-esc="'-' + this.formatCurrency(this.getGlobalDiscountAmount())"/>
+                                <div t-if="state.paymentDistribution.credit > 0" class="total-line-compact balance-line">
+                                        <span>Balance Used:</span>
+                                    <span t-esc="'-' + this.formatCurrency(state.paymentDistribution.credit)"/>
                                 </div>
+                                <div t-if="state.paymentDistribution.remaining > 0" class="total-line-compact remaining-line">
+                                    <span>Amount to Pay:</span>
+                                    <span t-esc="this.formatCurrency(state.paymentDistribution.remaining)"/>
+                                </div>
+                                <!--                                <div class="total-line-compact final-total">-->
+                                <!--                                    <strong>Total: <span t-esc="this.formatCurrency(state.cartTotal)" class="text-right"/></strong>-->
+                                <!--                                </div>-->
                                 <div class="total-line-compact final-total">
-                                    <strong>Total: <span t-esc="this.formatCurrency(state.cartTotal)"/></strong>
+                                    <strong>
+                                        Total:
+                                        <span t-if="state.paymentDistribution.credit > 0 &amp;&amp; state.paymentDistribution.remaining === 0">
+                                            <!-- When fully covered by balance -->
+                                            <span class="text-success">Covered by Balance</span>
+                                        </span>
+                                        <span t-else="" t-esc="this.formatCurrency(state.cartTotal)"/>
+                                    </strong>
                                 </div>
                             </div>
                         </div>
@@ -281,26 +306,34 @@
                         <!-- Compact Payment Methods -->
                         <div class="payment-methods-compact">
                             <div t-foreach="state.paymentMethods" t-as="method" t-key="method.id"
-                                 class="payment-method-compact" t-att-class="state.selectedPaymentMethod?.id === method.id ? 'selected' : ''"
-                                 t-on-click="() => this.selectPaymentMethod(method)">
-                                <i t-att-class="method.type === 'cash' ? 'fa fa-money' : 'fa fa-credit-card'"/>
-                                <span t-esc="method.name"/>
+                                 class="payment-method-compact"
+                                 t-att-class="this.isPaymentMethodSelected(method) ? 'selected' : ''"
+                                 t-on-click="() => this.togglePaymentMethod(method)">
+                                <div class="payment-icon-amount">
+                                    <i t-if="method.type === 'cash'" class="fa fa-money"/>
+                                    <i t-elif="method.type === 'bank'" class="fa fa-credit-card"/>
+                                    <i t-elif="method.is_credit" class="fa fa-credit-card-alt"/>
+                                    <i t-else="" class="fa fa-credit-card"/>
+                                    <span t-if="method.is_credit" class="credit-amount-inline" t-esc="this.formatCurrency(state.customerCredit)"/>
+                                </div>
+                                <span t-if="method.is_credit">Balance</span>
+                                <span t-else="" t-esc="method.name"/>
                             </div>
                         </div>
 
                         <!-- Compact Pay Button -->
                         <button class="pay-button-compact"
-                                t-att-disabled="state.cartItems.length === 0 || !state.selectedPaymentMethod || state.isProcessingPayment || state.paymentCompleted"
+                                t-att-disabled="state.cartItems.length === 0 || (state.selectedPaymentMethods.length === 0 &amp;&amp; state.paymentDistribution.remaining > 0) || state.isProcessingPayment || state.paymentCompleted"
                                 t-on-click="processPayment">
                                 <i t-att-class="state.isProcessingPayment ? 'fa fa-spinner fa-spin' : 'fa fa-credit-card'"/>
                             <span t-if="state.isProcessingPayment">Processing...</span>
                             <span t-elif="state.paymentCompleted">Payment Complete</span>
-                            <span t-else="">Pay <span t-esc="this.formatCurrency(state.cartTotal)"/></span>
+                            <span t-elif="state.paymentDistribution.remaining === 0">Pay with Balance Only</span>
+                            <span t-else="">Pay <span t-esc="this.formatCurrency(state.paymentDistribution.remaining)"/></span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
-
     </t>
 </templates>

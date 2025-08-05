@@ -76,8 +76,7 @@ class VetMedicalHistorySummary(models.Model):
                     enc_stats.last_visit_date,
                     enc_stats.first_visit_date,
                     COALESCE(fin_stats.total_spent, 0) AS total_spent,
-                    COALESCE(fin_stats.pending_amount, 0) AS pending_amount,
-
+                    
                     -- Service Statistics
                     COALESCE(vacc_stats.vaccination_count, 0) AS vaccination_count,
                     COALESCE(vacc_stats.expired_count, 0) AS expired_vaccinations,
@@ -152,8 +151,7 @@ class VetMedicalHistorySummary(models.Model):
                 LEFT JOIN (
                     SELECT 
                         rel.patient_id AS pet_id,
-                        SUM(l.sub_total / GREATEST((SELECT COUNT(*) FROM vet_encounter_mixin_patient_rel rel2 WHERE rel2.encounter_id = l.id), 1)) AS total_spent,
-                        SUM(l.remaining_amount / GREATEST((SELECT COUNT(*) FROM vet_encounter_mixin_patient_rel rel2 WHERE rel2.encounter_id = l.id), 1)) AS pending_amount
+                        SUM(l.sub_total / GREATEST((SELECT COUNT(*) FROM vet_encounter_mixin_patient_rel rel2 WHERE rel2.encounter_id = l.id), 1)) AS total_spent
                     FROM vet_encounter_line l
                     JOIN vet_encounter_mixin_patient_rel rel ON rel.encounter_id = l.id
                     JOIN vet_encounter_header e ON e.id = l.encounter_id
@@ -234,8 +232,7 @@ class VetMedicalHistorySummary(models.Model):
                    COUNT(CASE WHEN last_visit_date > (CURRENT_DATE - INTERVAL '30 days') THEN 1 END) as active_pets,
                    COUNT(CASE WHEN overdue_vaccination = true THEN 1 END)                            as overdue_vaccinations,
                    COUNT(CASE WHEN high_value_client = true THEN 1 END)                              as high_value_clients,
-                   AVG(total_spent)                                                                  as avg_spent_per_pet,
-                   SUM(pending_amount)                                                               as total_pending
+                   AVG(total_spent)                                                                  as avg_spent_per_pet
             FROM vet_medical_history_summary
         """)
 

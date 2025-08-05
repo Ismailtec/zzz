@@ -236,6 +236,7 @@
                     <field name="lang" invisible="not is_company and active_lang_count &lt;= 1"/>
                     <field name="email" widget="email" context="{'gravatar_image': True}" required="user_ids"/>
                     <field name="website" string="Website" widget="url" placeholder="e.g. https://www.odoo.com" invisible="not is_company"/>
+                    <field name="available_credit" widget="monetary" decoration-success="available_credit > 0"/>
                     <field name="category_id" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" invisible="1"/>
                 </group>
             </group>

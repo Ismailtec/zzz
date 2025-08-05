@@ -3,6 +3,7 @@
 import {Component} from "@odoo/owl";
 import {Dialog} from "@web/core/dialog/dialog";
 import {useService} from "@web/core/utils/hooks";
+import {patch} from "@web/core/utils/patch";
 import {_t} from "@web/core/l10n/translation";
 
 export class CompletionDialog extends Component {

@@ -313,7 +313,8 @@
             </xpath>
 
             <xpath expr="//field[@name='appointment_type_id']" position="attributes">
-                <attribute name="invisible"></attribute>
+                <attribute name="required">1</attribute>
+                <attribute name="invisible">0</attribute>
             </xpath>
 
 
@@ -444,8 +445,6 @@
         <field name="inherit_id" ref="appointment.calendar_event_view_gantt_booking_resource"/>
         <field name="arch" type="xml">
             <xpath expr="//gantt" position="inside">
-                <field name="practitioner_id"/>
-                <field name="room_id"/>
                 <field name="pet_owner_id"/>
                 <field name="patient_ids"/>
                 <field name="practitioner_id"/>
@@ -505,14 +504,18 @@
                        domain="[('is_pet_owner', '=', True)]" help="Pet owner responsible for billing"/>
                 <field name="patient_ids" string="Pets" widget="many2many_tags" options="{'no_create': True, 'no_quick_create': True}" placeholder="Select pets..."
                        domain="[('is_pet', '=', True), ('pet_owner_id', '=?', pet_owner_id)]" help="Pets receiving care"/>
-                <field name="is_emergency" widget="boolean_toggle"/>
+                <field name="practitioner_id"/>
+                <field name="room_id"/>
                 <xpath expr="//field[@name='resource_ids']" position="move"/>
                 <xpath expr="//field[@name='partner_ids']" position="move"/>
             </xpath>
 
+            <field name="partner_ids" position="attributes"><attribute name="invisible">1</attribute></field>
+
             <!-- Reorganize fields for better UX -->
             <xpath expr="//field[@name='resource_ids']" position="attributes">
                 <attribute name="string">Practitioner/Room</attribute>
+                <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//label[@for='duration']" position="before">
                 <xpath expr="//label[@for='start']" position="move"/>
@@ -523,6 +526,7 @@
             </xpath>
             <xpath expr="//field[@name='appointment_type_id']" position="attributes">
                 <attribute name="invisible">0</attribute>
+                <attribute name="required">1</attribute>
             </xpath>
             <xpath expr="//field[@name='name']" position="attributes">
                 <attribute name="readonly">1</attribute>
@@ -538,8 +542,7 @@
 
             <xpath expr="//div[.//field[@name='duration']]" position="after">
                 <field name="reason_for_visit" widget="many2many_tags"/>
-                <field name="practitioner_id"/>
-                <field name="room_id"/>
+                <field name="is_emergency" widget="boolean_toggle"/>
             </xpath>
         </field>
     </record>

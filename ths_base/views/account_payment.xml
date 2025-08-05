@@ -25,9 +25,8 @@
         <field name="model">account.payment</field>
         <field name="inherit_id" ref="account.view_account_payment_tree"/>
         <field name="arch" type="xml">
-            <!-- Add amount_remaining after amount column -->
-            <xpath expr="//field[@name='amount_signed']" position="after">
-                <field name="amount_remaining" string="Amount Left" decoration-danger="amount_remaining &gt; 0" decoration-success="amount_remaining == 0"/>
+            <xpath expr="//field[@name='amount_company_currency_signed']" position="after">
+                <field name="amount_remaining" string="Unused Amount" sum="Total Unused" decoration-danger="amount_remaining &gt; 0" decoration-success="amount_remaining == 0"/>
             </xpath>
         </field>
     </record>

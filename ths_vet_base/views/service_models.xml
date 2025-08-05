@@ -366,9 +366,6 @@
                                 <field name="notes"/>
                             </group>
                         </page>
-                        <page string="Billing" name="billing" groups="account.group_account_manager,ths_vet_base.group_vet_user,ths_vet_base.group_vet_manager">
-                            <field name="encounter_line_ids" can_create="1" can_write="1" context="{'default_partner_id': partner_id, 'default_encounter_id': encounter_id}"/>
-                        </page>
                     </notebook>
                 </sheet>
                 <chatter/>
