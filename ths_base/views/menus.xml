@@ -1,19 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <menuitem
-                id="menu_ths_services_root"
-                name="Services"
-                sequence="40"
-                web_icon="ths_base,static/description/icon_services.png"
-                groups="ths_base.group_ths_manage_services"/>
+        <menuitem id="menu_ths_services_root" name="Services" sequence="40" web_icon="ths_base,static/description/icon_services.png" groups="ths_base.group_ths_manage_services"/>
 
-        <menuitem
-                id="menu_ths_action_product_template_service"
-                name="Services"
-                parent="menu_ths_services_root"
-                action="action_product_template_service"
-                sequence="10"
-                groups="ths_base.group_ths_manage_services"/>
+        <menuitem id="menu_ths_action_product_template_service" name="Services" parent="menu_ths_services_root" action="action_product_template_service" sequence="10"
+                  groups="ths_base.group_ths_manage_services"/>
     </data>
 </odoo>

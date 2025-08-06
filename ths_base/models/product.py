@@ -10,19 +10,12 @@ _logger = logging.getLogger(__name__)
 class ProductProduct(models.Model):
 	_inherit = 'product.product'
 
-	ths_last_standard_price = fields.Float(
-		string="Last Cost Price",
-		digits='Product Price',
-		help="Snapshot of standard_price just before the last landed cost application or any other change",
-	)
+	ths_last_standard_price = fields.Float(string="Last Cost Price", digits='Product Price',
+										   help="Snapshot of standard_price just before the last landed cost application or any other change")
 
 	# Override the method responsible for selecting the bestseller
 	def _select_seller(self, partner_id=False, quantity=0.0, date=None, uom_id=False, params=None):
-		"""
-		Selects the best seller for a given product and quantity.
-		OVERRIDE: Prioritizes a vendor marked with 'Manual Priority' and sequence=0/1,
-		otherwise selects the valid seller with the lowest price.
-		"""
+		""" Selects the best seller for a given product and quantity. OVERRIDE: Prioritizes a vendor marked with 'Manual Priority' and sequence=0/1, otherwise selects the valid seller with the lowest price. """
 		self.ensure_one()
 		if date is None:
 			date = fields.Date.context_today(self)
@@ -97,33 +90,14 @@ class ProductBrand(models.Model):
 
 	name = fields.Char(string='Brand Name', required=True, index=True)
 	logo = fields.Image(string='Logo')
-# Add any other fields like description, website, etc.
 
 
 class ProductTemplate(models.Model):
 	_inherit = 'product.template'
 
-	product_brand = fields.Many2one(
-		'product.brand',
-		string="Product Brand",
-		index=True,
-		tracking=True,
-		ondelete='set null',
-		help="Product Brand, Used for filtering and reports.xml purposes ONLY",
-	)
-	# --- Computed Domain Field for Category ---
-	# This field holds the domain string used to filter categories based on product type
-	ths_category_domain = fields.Char(
-		string='Category Domain',
-		compute='_compute_category_domain',
-		help="Technical field for computing the domain of Product Category based on Product Type."
-	)
-	ths_hide_taxes = fields.Boolean(
-		compute='_compute_ths_hide_taxes',
-		readonly=False,
-		string="Hide Taxes",
-		help="Technical field to read the global config setting."
-	)
+	product_brand = fields.Many2one('product.brand', string="Product Brand", index=True, tracking=True, ondelete='set null', help="Used for filtering and reports ONLY")
+	ths_category_domain = fields.Char(string='Category Domain', compute='_compute_category_domain', help="Computing the domain of Product Category based on Product Type.")
+	ths_hide_taxes = fields.Boolean(compute='_compute_ths_hide_taxes', readonly=False, string="Hide Taxes", help="Technical field to read the global config setting.")
 
 	@api.depends_context('company')
 	def _compute_ths_hide_taxes(self):
@@ -187,7 +161,5 @@ class ProductSupplierinfo(models.Model):
 	# Records will be sorted by price ascending, then by sequence, then by ID
 	_order = 'price asc, sequence asc, id asc'
 
-	ths_manual_priority_vendor = fields.Boolean(
-		string="Priority",
-		help="If checked, this vendor will be selected for replenishment IF their sequence is set to the lowest value (e.g., 0 or 1), overriding the automatic lowest price selection."
-	)
+	ths_manual_priority_vendor = fields.Boolean(string="Priority",
+												help="If checked, this vendor will be selected for replenishment IF their sequence is set to the lowest value (e.g., 0 or 1), overriding the automatic lowest price selection.")

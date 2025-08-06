@@ -141,10 +141,10 @@
 
         <record id="action_overdue_vaccinations" model="ir.actions.act_window">
             <field name="name">Overdue Vaccinations</field>
-            <field name="res_model">res.partner</field>
+            <field name="res_model">vet.vaccination</field>
             <field name="view_mode">list,form</field>
-            <field name="domain">[('is_pet', '=', True), ('next_vaccination_due', '&lt;', context_today()), ('next_vaccination_due', '!=', False)]</field>
-            <field name="context">{'search_default_filter_vaccines_overdue': 1}</field>
+            <field name="domain">[('is_expired', '=', True)]</field>
+            <field name="context">{'search_default_filter_expired': 1}</field>
         </record>
 
 

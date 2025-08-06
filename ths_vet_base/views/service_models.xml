@@ -581,8 +581,6 @@
                             <field name="partner_id" options="{'no_create': True, 'no_quick_create': True}"/>
                             <field name="patient_ids" widget="many2many_tags" options="{'no_create': True, 'no_quick_create': True}"
                                    context="{'show_valid_park_members_only': True, 'default_is_pet': True}"/>
-
-                            <!--                            <field name="has_valid_membership" invisible="1"/>-->
                             <label for="checkin_time"/>
                             <div>
                                 <field name="checkin_time" class="oe_inline"/>
@@ -697,67 +695,83 @@
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">ths_vet_base.report_park_usage_template</field>
         <field name="report_file">ths_vet_base.report_park_usage_template</field>
+        <field name="print_report_name">'Park Usage Report'</field>
+        <field name="binding_type">report</field>
     </record>
 
     <template id="report_park_usage_template">
         <t t-call="web.external_layout">
             <t t-set="date_from" t-value="data and data.get('date_from') or ''"/>
             <t t-set="date_to" t-value="data and data.get('date_to') or ''"/>
-            <main> <!-- Add main tag to wrap content for proper PDF rendering and avoid xpath error -->
+            <main>
                 <div class="page">
-                    <!-- Report header with dates from passed data -->
-                    <h2>Park Usage Report:
-                        <span t-esc="date_from"/>
-                        to
-                        <span t-esc="date_to"/>
-                    </h2>
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Check-in Ref</th>
-                                <th>Pet Owner</th>
-                                <th>Pets</th>
-                                <th>Check-in Time</th>
-                                <th>Check-out Time</th>
-                                <th>Duration (Hours)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-foreach="docs" t-as="checkin">
+                    <!-- Enhanced report header with full from/to dates -->
+                    <h2>Park Usage Report from <span t-esc="date_from"/> to <span t-esc="date_to"/></h2>
+                    <t t-if="docs"> <!-- Handle empty docs to avoid MissingError when no checkins -->
+                        <table class="table table-sm">
+                            <thead>
                                 <tr>
-                                    <td>
-                                        <span t-field="checkin.name"/>
-                                    </td>
-                                    <td>
-                                        <span t-field="checkin.partner_id.name"/>
-                                    </td>
-                                    <td>
-                                        <span t-esc="', '.join(checkin.patient_ids.mapped('name'))"/>
-                                    </td>
-                                    <td>
-                                        <span t-field="checkin.checkin_time"/>
-                                    </td>
-                                    <td>
-                                        <span t-field="checkin.checkout_time"/>
-                                    </td>
-                                    <td>
-                                        <span t-field="checkin.duration_hours"/>
-                                    </td>
+                                    <th>Check-in Ref</th>
+                                    <th>Pet Owner</th>
+                                    <th>Pets</th>
+                                    <th>Check-in Time</th>
+                                    <th>Check-out Time</th>
+                                    <th>Duration</th>
                                 </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="docs" t-as="checkin">
+                                    <tr>
+                                        <td>
+                                            <span t-field="checkin.name"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="checkin.partner_id.name"/>
+                                        </td>
+                                        <td>
+                                            <span t-esc="', '.join(checkin.patient_ids.mapped('name'))"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="checkin.checkin_time"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="checkin.checkout_time"/>
+                                        </td>
+                                        <td>
+                                            <!-- Use duration_hours field for calculation; format as HH:MM with rounded minutes and rollover handling -->
+                                            <t t-set="hours" t-value="int(checkin.duration_hours)"/>
+                                            <t t-set="minutes" t-value="int(round((checkin.duration_hours - hours) * 60, 0))"/>
+                                            <t t-if="minutes >= 60">
+                                                <t t-set="hours" t-value="hours + 1"/>
+                                                <t t-set="minutes" t-value="minutes - 60"/>
+                                            </t>
+                                            <span t-esc="'{:02d}:{:02d}'.format(hours, minutes)"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <p>Total Visits:
+                            <span t-esc="len(docs)"/>
+                        </p>
+                        <p>Total Duration:
+                            <t t-set="total_duration" t-value="0.0"/>
+                            <t t-foreach="docs" t-as="checkin">
+                                <t t-set="total_duration" t-value="total_duration + checkin.duration_hours"/>
                             </t>
-                        </tbody>
-                    </table>
-                    <p>Total Visits:
-                        <span t-esc="len(docs)"/>
-                    </p>
-                    <p>Total Duration:
-                        <t t-set="total_duration" t-value="0.0"/>
-                        <t t-foreach="docs" t-as="checkin">
-                            <t t-set="total_duration" t-value="total_duration + checkin.duration_hours"/>
-                        </t>
-                        <span t-esc="total_duration"/>
-                        hours
-                    </p>
+                            <!-- Format total duration as HH:MM with rounded minutes and rollover handling -->
+                            <t t-set="total_hours" t-value="int(total_duration)"/>
+                            <t t-set="total_minutes" t-value="int(round((total_duration - total_hours) * 60, 0))"/>
+                            <t t-if="total_minutes >= 60">
+                                <t t-set="total_hours" t-value="total_hours + 1"/>
+                                <t t-set="total_minutes" t-value="total_minutes - 60"/>
+                            </t>
+                            <span t-esc="'{:02d}:{:02d}'.format(total_hours, total_minutes)"/>
+                        </p>
+                    </t>
+                    <t t-else="">
+                        <p>No visits found for the selected period.</p>
+                    </t>
                 </div>
             </main>
         </t>
@@ -899,6 +913,14 @@
         <field name="model">vet.vaccination</field>
         <field name="arch" type="xml">
             <form string="Vaccination Record">
+                <div class="alert alert-danger" role="alert" invisible="not is_expired">
+                    <strong>This vaccination has expired!</strong> Please schedule a renewal appointment.
+                </div>
+                <div class="alert alert-warning" role="alert"
+                     invisible="is_expired or days_until_expiry &gt; 30 or days_until_expiry &lt; 0">
+                    <strong>This vaccination expires in <field name="days_until_expiry" readonly="1"/>
+                        days!</strong>
+                </div>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_schedule_reminder" type="object" class="oe_stat_button" icon="fa-bell"
@@ -930,7 +952,8 @@
                         <group>
                             <field name="partner_id"/>
                             <field name="pet_owner_id" invisible="1"/>
-                            <field name="patient_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="patient_ids" widget="many2many_tags" options="{'no_create': True}"
+                                   domain="[('is_pet', '=', True), ('pet_owner_id', '=?', partner_id)]"/>
                             <field name="date"/>
                             <field name="expiry_date"/>
                         </group>
@@ -944,15 +967,8 @@
                     <group string="Status" invisible="not expiry_date">
                         <field name="is_expired" invisible="1"/>
                         <field name="days_until_expiry" invisible="is_expired"/>
-                        <div class="alert alert-danger" role="alert" invisible="not is_expired">
-                            <strong>This vaccination has expired!</strong> Please schedule a renewal appointment.
-                        </div>
-                        <div class="alert alert-warning" role="alert"
-                             invisible="is_expired or days_until_expiry &gt; 30 or days_until_expiry &lt; 0">
-                            <strong>This vaccination expires in <field name="days_until_expiry" readonly="1"/>
-                                days!</strong>
-                        </div>
                     </group>
+
                     <group string="Notes">
                         <field name="notes" nolabel="1" placeholder="Additional notes..."/>
                     </group>

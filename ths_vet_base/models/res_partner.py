@@ -137,8 +137,10 @@ class ResPartner(models.Model):
 	dietary_restrictions = fields.Text(string='Dietary Restrictions', help="Special dietary needs or restrictions")
 
 	# --- MEMBERSHIP & SERVICES ---
+	document_ids = fields.One2many('documents.document', 'res_id', domain=[('res_model', '=', 'res.partner')], string='Documents', help="All documents for this partner")
 	pet_membership_ids = fields.One2many('vet.pet.membership', 'patient_ids', string='Pet Memberships', help="Membership for Park.")
 	pet_membership_count = fields.Integer(compute='_compute_pet_membership_count', string="# Memberships")
+	vaccination_ids = fields.One2many('vet.vaccination', 'patient_ids', string='Vaccinations', help="All vaccinations for this pet")
 
 	# --- DISPLAY & UI ENHANCEMENTS ---
 	pet_badge_data = fields.Json(string="Pet Badge Data", compute="_compute_pet_badge_data", store=True)
@@ -313,16 +315,13 @@ class ResPartner(models.Model):
 			else:
 				rec.encounter_count = 0
 
-	@api.depends('is_pet', 'is_pet_owner')
+	@api.depends('is_pet', 'is_pet_owner', 'vaccination_ids')
 	def _compute_vaccination_count(self):
 		"""Count vaccinations for pets and pet owners"""
 		for partner in self:
 			if partner.is_pet:
-				partner.vaccination_count = self.env['vet.vaccination'].search_count([
-					('patient_ids', 'in', partner.id)
-				])
+				partner.vaccination_count = len(partner.vaccination_ids)
 			elif partner.is_pet_owner:
-				# Count all vaccinations where this person is the pet owner
 				partner.vaccination_count = self.env['vet.vaccination'].search_count([
 					('partner_id', '=', partner.id)
 				])
@@ -363,25 +362,18 @@ class ResPartner(models.Model):
 			else:
 				partner.park_count = 0
 
-	@api.depends('is_pet', 'is_pet_owner')
+	@api.depends('is_pet', 'is_pet_owner', 'document_ids', 'pet_ids.document_ids')
 	def _compute_documents_count(self):
 		"""Count documents/photos for pets and pet owners"""
 		for partner in self:
 			if partner.is_pet:
-				domain = [('partner_id', '=', partner.id)]
-				partner.documents_count = self.env['documents.document'].search_count(domain)
+				# Count only documents for this specific pet
+				partner.documents_count = len(partner.document_ids)
 			elif partner.is_pet_owner:
 				# Count pet owner's personal docs + all their pets' docs
-				pet_ids = self.env['res.partner'].search([
-					('pet_owner_id', '=', partner.id),
-					('is_pet', '=', True)
-				]).ids
-				domain = [
-					'|',
-					('res_model', '=', 'res.partner'), ('res_id', '=', partner.id),
-					('res_model', '=', 'res.partner'), ('res_id', 'in', pet_ids)
-				]
-				partner.documents_count = self.env['documents.document'].search_count(domain)
+				owner_docs = len(partner.document_ids)
+				pets_docs = sum(len(pet.document_ids) for pet in partner.pet_ids)
+				partner.documents_count = owner_docs + pets_docs
 			else:
 				partner.documents_count = 0
 
@@ -399,7 +391,7 @@ class ResPartner(models.Model):
 			else:
 				rec.pet_badge_data = {}
 
-	@api.depends('is_pet', 'appointment_count', 'vaccination_count', 'last_visit_date')
+	@api.depends('is_pet', 'vaccination_ids.expiry_date', 'vaccination_ids.is_expired')
 	def _compute_medical_summary(self):
 		"""Compute medical summary fields"""
 		for partner in self:
@@ -408,21 +400,17 @@ class ResPartner(models.Model):
 				partner.next_vaccination_due = False
 				continue
 
-			# Get last appointment
-			last_appointment = self.env['calendar.event'].search([
-				('patient_ids', 'in', partner.id),
-				('appointment_status', 'in', ['completed', 'paid'])
-			], order='start desc', limit=1)
+			# Use search instead of relationship for encounters
+			last_encounter = self.env['vet.encounter.header'].search([
+				('patient_ids', 'in', partner.id)
+			], order='encounter_date desc', limit=1)
+			partner.last_visit_date = last_encounter.encounter_date if last_encounter else False
 
-			partner.last_visit_date = last_appointment.start.date() if last_appointment else False
-
-			# Get next vaccination due
-			next_vaccination = self.env['vet.vaccination'].search([
-				('patient_ids', 'in', partner.id),
-				('expiry_date', '>', fields.Date.today())
-			], order='expiry_date asc', limit=1)
-
-			partner.next_vaccination_due = next_vaccination.expiry_date if next_vaccination else False
+			# Keep vaccination relationship since it works
+			next_vaccination = partner.vaccination_ids.filtered(
+				lambda v: v.expiry_date
+			).sorted('expiry_date')
+			partner.next_vaccination_due = next_vaccination[0].expiry_date if next_vaccination else False
 
 	@api.depends('is_pet', 'last_visit_date', 'vaccination_count', 'medical_alerts', 'dietary_restrictions', 'ths_microchip', 'ths_insurance_number')
 	def _compute_full_medical_summary(self):
@@ -560,6 +548,19 @@ class ResPartner(models.Model):
 		"""Clear species breed ids on changing species"""
 		self.breed_id = False
 
+	@api.model
+	def default_get(self, fields_list):
+		"""Set default values"""
+		res = super().default_get(fields_list)
+
+		# Set Kuwait as default country
+		if 'country_id' in fields_list and not res.get('country_id'):
+			kuwait = self.env.ref('base.kw', raise_if_not_found=False)
+			if kuwait:
+				res['country_id'] = kuwait.id
+
+		return res
+
 	# --- OVERRIDE CREATE/WRITE FOR BUSINESS LOGIC ---
 	@api.model_create_multi
 	def create(self, vals_list):
@@ -651,7 +652,7 @@ class ResPartner(models.Model):
 			'type': 'ir.actions.act_window',
 			'res_model': 'res.partner',
 			'view_mode': 'kanban,list,form',
-			'domain': [('pet_owner_id', '=', self.id)],
+			'domain': [('pet_owner_id', '=?', self.id)],
 			'context': {
 				'default_pet_owner_id': self.id,
 				'default_partner_type_id': pet_type.id,
@@ -763,7 +764,7 @@ class ResPartner(models.Model):
 				'default_pet_owner_id': self.pet_owner_id.id if self.pet_owner_id else False,
 			}
 		elif self.is_pet_owner:
-			domain = [('pet_owner_id', '=', self.id)]
+			domain = [('pet_owner_id', '=?', self.id)]
 			name = _('Appointments for %s') % self.name
 			context = {
 				'default_pet_owner_id': self.id,
@@ -1065,7 +1066,7 @@ class ResPartner(models.Model):
 		if self.is_pet:
 			domain = [('patient_ids', 'in', [self.id])]
 		elif self.is_pet_owner:
-			domain = [('pet_owner_id', '=', self.id)]
+			domain = [('pet_owner_id', '=?', self.id)]
 		else:
 			return False
 

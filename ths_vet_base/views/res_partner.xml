@@ -287,8 +287,8 @@
                         </div>
                     </div>
 
-                    <field name="pet_ids" context="{'default_pet_owner_id': id,'default_partner_type_id': %(ths_vet_base.partner_type_pet)d, 'default_is_pet': True, 'default_is_pet_owner': False,
-                                                    'default_parent_id': id, 'show_pet_owner': True}">
+                    <field name="pet_ids" context="{'default_pet_owner_id': id if id else False,'default_partner_type_id': %(ths_vet_base.partner_type_pet)d, 'default_is_pet': True, 'default_is_pet_owner': False,
+                                                    'default_parent_id': id if id else False, 'show_pet_owner': True}">
                         <list editable="bottom" create="true" delete="true">
                             <field name="name" string="Pet Name" required="1"/>
                             <field name="species_id" required="1" options="{'no_create': True, 'no_quick_create': True}"/>
@@ -344,7 +344,7 @@
 
                 <!-- Park Membership Tab for Pets -->
                 <page string="Park Membership" name="pet_membership" invisible="not is_pet">
-                    <field name="pet_membership_ids" context="{'default_partner_id': pet_owner_id, 'default_patient_ids': [id] if id else []}">
+                    <field name="pet_membership_ids" context="{'default_partner_id': pet_owner_id or False, 'default_patient_ids': [id] if id else []}">
                         <list string="Pet Memberships" decoration-success="state == 'active'" decoration-warning="state == 'draft'" decoration-danger="state == 'expired'">
                             <field name="name" width="100px;"/>
                             <field name="partner_id" string="Pet Owner"/>

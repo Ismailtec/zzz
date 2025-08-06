@@ -153,6 +153,10 @@ class ProductTemplate(models.Model):
 	ths_membership_duration = fields.Integer(string='Membership Duration (Months)', help="Duration in months for membership services")
 	ths_membership_duration_visible = fields.Boolean(compute='_compute_membership_duration_visible')
 	ths_membership_duration_required = fields.Boolean(compute='_compute_membership_duration_visible')
+	ths_exclude_from_auto_code = fields.Boolean(string='Exclude from Auto Code', default=False, help="Check this to prevent automatic internal reference generation")
+	ths_auto_code_generated = fields.Boolean(string='Auto Code Generated', default=False, copy=False, help="Technical field to track if code was auto-generated")
+	ths_code_generation_trigger = fields.Datetime(string='Code Generation Trigger', default=fields.Datetime.now)
+	ths_computed_default_code = fields.Char(string='Computed Default Code', compute='_compute_default_code_with_trigger', store=True)
 
 	# --- Depends on 'type' field now ---
 	@api.depends('type')
@@ -220,6 +224,271 @@ class ProductTemplate(models.Model):
 					product.product_sub_type_id == member_subtype and
 					not product.ths_membership_duration):
 				raise ValidationError(_('Membership Duration is required for membership services.'))
+
+	@api.onchange('product_sub_type_id')
+	def _onchange_product_sub_type_id(self):
+		"""Auto-generate code when sub-type changes (live)"""
+		if self.product_sub_type_id and self.product_sub_type_id.is_for_internal_reference:
+			# Only auto-generate if no existing code and not excluded
+			if not self.default_code and not self.ths_exclude_from_auto_code:
+				new_code = self._generate_internal_reference()
+				if new_code:
+					self.default_code = new_code
+					self.ths_auto_code_generated = True
+
+	@api.depends('ths_code_generation_trigger', 'product_sub_type_id', 'ths_auto_code_generated')
+	def _compute_default_code_with_trigger(self):
+		"""Compute default code - this will trigger UI refresh when ths_code_generation_trigger changes"""
+		for product in self:
+			product.ths_computed_default_code = str(product.ths_code_generation_trigger) if product.ths_code_generation_trigger else ''
+
+	@api.onchange('default_code')
+	def _onchange_default_code(self):
+		"""Validate manually entered code against sequence format"""
+		if (self.default_code and
+				self.product_sub_type_id and
+				self.product_sub_type_id.is_for_internal_reference and
+				self.product_sub_type_id.sequence_id and
+				not self.ths_exclude_from_auto_code):
+
+			if not self._validate_code_format(self.default_code):
+				self.ths_auto_code_generated = False
+			else:
+				self.ths_auto_code_generated = True
+
+	@api.onchange('ths_exclude_from_auto_code')
+	def _onchange_exclude_from_auto_code(self):
+		"""Handle exclusion toggle"""
+		if self.ths_exclude_from_auto_code:
+			if self.default_code:
+				self.ths_auto_code_generated = False
+		else:
+			if (self.product_sub_type_id and
+					self.product_sub_type_id.is_for_internal_reference and
+					not self.default_code):
+				new_code = self._generate_internal_reference()
+				if new_code:
+					self.default_code = new_code
+					self.ths_auto_code_generated = True
+
+	def _get_expected_code_format(self):
+		"""Get the expected code format for the current sub-type"""
+		self.ensure_one()
+		if (self.product_sub_type_id and
+				self.product_sub_type_id.sequence_id):
+			sequence = self.product_sub_type_id.sequence_id
+			prefix = sequence.prefix or ''
+			padding = '0' * (sequence.padding or 5)
+			suffix = sequence.suffix or ''
+			return f"{prefix}{padding}{suffix}"
+		return "No format defined"
+
+	def _validate_code_format(self, code):
+		"""Validate if the code matches the expected sequence format"""
+		self.ensure_one()
+		if not code or not self.product_sub_type_id or not self.product_sub_type_id.sequence_id:
+			return True  # No validation if no sequence
+
+		sequence = self.product_sub_type_id.sequence_id
+		prefix = sequence.prefix or ''
+		suffix = sequence.suffix or ''
+
+		# Check if code starts with prefix and ends with suffix
+		if prefix and not code.startswith(prefix):
+			return False
+		if suffix and not code.endswith(suffix):
+			return False
+
+		# Extract the number part
+		start_pos = len(prefix)
+		end_pos = len(code) - len(suffix) if suffix else len(code)
+		number_part = code[start_pos:end_pos]
+
+		# Check if the middle part is numeric and matches padding
+		if not number_part.isdigit():
+			return False
+
+		# Check padding (optional - you might want to be flexible here)
+		expected_padding = sequence.padding or 5
+		if len(number_part) != expected_padding:
+			return False
+
+		return True
+
+	def _suggest_next_code_in_sequence(self):
+		"""Suggest what the next code should be based on existing codes"""
+		self.ensure_one()
+		if not self.product_sub_type_id or not self.product_sub_type_id.sequence_id:
+			return False
+
+		sequence = self.product_sub_type_id.sequence_id
+		prefix = sequence.prefix or ''
+
+		# Find existing products with same prefix
+		existing_codes = self.search([
+			('default_code', 'like', f'{prefix}%'),
+			('product_sub_type_id', '=', self.product_sub_type_id.id),
+			('id', '!=', self.id)
+		]).mapped('default_code')
+
+		# Extract numbers and find the highest
+		max_number = 0
+		for code in existing_codes:
+			if code and code.startswith(prefix):
+				number_part = code[len(prefix):].split('-')[0] if '-' in code else code[len(prefix):]
+				try:
+					number = int(number_part)
+					max_number = max(max_number, number)
+				except ValueError:
+					continue
+
+		# Generate next number
+		next_number = max_number + 1
+		padding = sequence.padding or 5
+		suffix = sequence.suffix or ''
+
+		return f"{prefix}{str(next_number).zfill(padding)}{suffix}"
+
+	def _should_auto_generate_code(self):
+		"""Check if product should get auto-generated code"""
+		self.ensure_one()
+		return (
+				self.product_sub_type_id and
+				self.product_sub_type_id.is_for_internal_reference and
+				self.product_sub_type_id.sequence_id and
+				not self.ths_exclude_from_auto_code
+		)
+
+	def _generate_internal_reference(self):
+		"""Generate new internal reference using sub-type sequence (reuse gaps)"""
+		self.ensure_one()
+
+		if not self.product_sub_type_id or not self.product_sub_type_id.sequence_id:
+			return False
+
+		try:
+			sequence = self.product_sub_type_id.sequence_id
+			prefix = sequence.prefix or ''
+			suffix = sequence.suffix or ''
+			padding = sequence.padding or 5
+
+			# Find existing codes with this prefix
+			existing_products = self.search([
+				('default_code', 'like', f'{prefix}%'),
+				('product_sub_type_id', '=', self.product_sub_type_id.id),
+				('id', '!=', self.id),
+				('active', '=', True)
+			])
+
+			used_numbers = set()
+			for product in existing_products:
+				if product.default_code and product.default_code.startswith(prefix):
+					# Extract number from code
+					number_part = product.default_code[len(prefix):]
+					if suffix:
+						number_part = number_part[:-len(suffix)]
+					try:
+						used_numbers.add(int(number_part))
+					except ValueError:
+						continue
+
+			# Find the first unused number starting from 1
+			next_number = 1
+			while next_number in used_numbers:
+				next_number += 1
+
+			# Generate the code
+			new_code = f"{prefix}{str(next_number).zfill(padding)}{suffix}"
+			return new_code
+
+		except Exception as e:
+			_logger.error(f"Error generating sequence code: {e}")
+			return False
+
+	def action_generate_internal_reference(self):
+		"""Manual action to generate/regenerate internal reference"""
+		for product in self:
+			if not product.product_sub_type_id:
+				raise ValidationError(_("Please select a Product Sub Type first."))
+
+			if not product.product_sub_type_id.is_for_internal_reference:
+				raise ValidationError(_("Selected Product Sub Type is not configured for internal reference generation."))
+
+			if not product.product_sub_type_id.sequence_id:
+				raise ValidationError(_("No sequence configured for this Product Sub Type."))
+
+			new_code = product._generate_internal_reference()
+			if new_code:
+				# Update both the actual field AND the trigger
+				product.write({
+					'default_code': new_code,
+					'ths_auto_code_generated': True,
+					'ths_code_generation_trigger': fields.Datetime.now()
+				})
+
+	def action_clear_auto_generated_flag(self):
+		"""Clear the auto-generated flag (for manual codes)"""
+		self.write({
+			'ths_auto_code_generated': False,
+			'ths_code_generation_trigger': fields.Datetime.now()  # Trigger UI refresh
+		})
+
+	@api.constrains('default_code')
+	def _check_unique_default_code(self):
+		"""Ensure internal reference is unique"""
+		for product in self:
+			if product.default_code:
+				duplicate = self.search([
+					('default_code', '=', product.default_code),
+					('id', '!=', product.id),
+					('active', '=', True)
+				], limit=1)
+				if duplicate:
+					raise ValidationError(_("Internal Reference '%s' already exists for product '%s'") %
+										  (product.default_code, duplicate.name))
+
+	@api.model_create_multi
+	def create(self, vals_list):
+		"""Override create to auto-generate internal reference codes"""
+		products = super().create(vals_list)
+
+		for product in products:
+			# Auto-generate code if conditions are met
+			if product._should_auto_generate_code():
+				try:
+					new_code = product._generate_internal_reference()
+					if new_code:
+						product.write({
+							'default_code': new_code,
+							'ths_auto_code_generated': True
+						})
+						_logger.info(f"Auto-generated code '{new_code}' for product {product.name}")
+				except Exception as e:
+					_logger.error(f"Failed to auto-generate code for product {product.name}: {e}")
+
+		return products
+
+	def write(self, vals):
+		"""Override write to handle sub-type changes"""
+		result = super().write(vals)
+
+		# If sub-type changed, check if we need to auto-generate new code
+		if 'product_sub_type_id' in vals:
+			for product in self:
+				if (product._should_auto_generate_code() and
+						not product.default_code and
+						not product.ths_exclude_from_auto_code):
+					try:
+						new_code = product._generate_internal_reference()
+						if new_code:
+							product.write({
+								'default_code': new_code,
+								'ths_auto_code_generated': True
+							})
+					except Exception as e:
+						_logger.error(f"Failed to auto-generate code for product {product.name}: {e}")
+
+		return result
 
 
 # TODO: Add membership pricing tiers based on duration

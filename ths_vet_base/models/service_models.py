@@ -1200,7 +1200,9 @@ class VetParkReportWizard(models.TransientModel):
 			domain.append(('partner_id', '=', self.pet_owner_id.id))
 		checkins = self.env['vet.park.checkin'].search(domain)
 		data = {'date_from': self.date_from, 'date_to': self.date_to}
-		return self.env.ref('ths_vet_base.action_report_park_usage').report_action(checkins, data=data)
+		report_action = self.env.ref('ths_vet_base.action_report_park_usage').report_action(checkins.ids, data=data, config=False)
+		report_action.update({'close_on_report_download': True})
+		return report_action
 
 
 class VetVaccination(models.Model):
@@ -1224,7 +1226,7 @@ class VetVaccination(models.Model):
 
 	# Status tracking
 	is_expired = fields.Boolean(string='Expired', compute='_compute_is_expired', store=True)
-	days_until_expiry = fields.Integer(string='Days Until Expiry', store=True, compute='_compute_days_until_expiry')
+	days_until_expiry = fields.Integer(string='Days Until Expiry', compute='_compute_days_until_expiry', store=True)
 
 	@api.depends('date', 'vaccine_type_id.validity_months')
 	def _compute_expiry_date(self):
@@ -1346,9 +1348,6 @@ class VetVaccination(models.Model):
 			'ths_vet_base.documents_tag_vaccines'
 		)
 
-
-
-
 	def action_schedule_reminder(self):
 		"""Schedule activity reminder for vaccination renewal"""
 		self.ensure_one()
@@ -1364,6 +1363,20 @@ class VetVaccination(models.Model):
 						self.vaccine_type_id.name, self.patient_ids.name, self.expiry_date),
 					user_id=self.env.user.id,
 				)
+
+	@api.model
+	def _cron_update_vaccination_status(self):
+		"""Cron job to update vaccination expiry status daily"""
+		today = fields.Date.context_today(self)
+		vaccinations_to_update = self.search([
+			('expiry_date', '<', today),
+			('is_expired', '=', False)
+		])
+
+		vaccinations_to_update._compute_is_expired()
+		vaccinations_to_update._compute_days_until_expiry()
+
+		return True
 
 
 class VetVaccineType(models.Model):

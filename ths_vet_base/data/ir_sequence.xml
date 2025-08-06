@@ -47,98 +47,98 @@
     <record id="seq_product_sub_type_retp" model="ir.sequence">
         <field name="name">Product Sub Type - Retail Products (RETP)</field>
         <field name="code">product.sub.type.seq.RETP</field>
-        <field name="prefix">RETP-</field>
+        <field name="prefix">RETP</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_cons" model="ir.sequence">
         <field name="name">Product Sub Type - Consultation (CONS)</field>
         <field name="code">product.sub.type.seq.CONS</field>
-        <field name="prefix">CONS-</field>
+        <field name="prefix">CONS</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_med" model="ir.sequence">
         <field name="name">Product Sub Type - Medicine (MED)</field>
         <field name="code">product.sub.type.seq.MED</field>
-        <field name="prefix">MED-</field>
+        <field name="prefix">MED</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_serv" model="ir.sequence">
         <field name="name">Product Sub Type - Services (SERV)</field>
         <field name="code">product.sub.type.seq.SERV</field>
-        <field name="prefix">SERV-</field>
+        <field name="prefix">SERV</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_ipd" model="ir.sequence">
         <field name="name">Product Sub Type - Hospitalization (IPD)</field>
         <field name="code">product.sub.type.seq.IPD</field>
-        <field name="prefix">IPD-</field>
+        <field name="prefix">IPD</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_rad" model="ir.sequence">
         <field name="name">Product Sub Type - Radiology (RAD)</field>
         <field name="code">product.sub.type.seq.RAD</field>
-        <field name="prefix">RAD-</field>
+        <field name="prefix">RAD</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_lab" model="ir.sequence">
         <field name="name">Product Sub Type - Laboratory (LAB)</field>
         <field name="code">product.sub.type.seq.LAB</field>
-        <field name="prefix">LAB-</field>
+        <field name="prefix">LAB</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_vcn" model="ir.sequence">
         <field name="name">Product Sub Type - Vaccination (VCN)</field>
         <field name="code">product.sub.type.seq.VCN</field>
-        <field name="prefix">VCN-</field>
+        <field name="prefix">VCN</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_opr" model="ir.sequence">
         <field name="name">Product Sub Type - Operation (OPR)</field>
         <field name="code">product.sub.type.seq.OPR</field>
-        <field name="prefix">OPR-</field>
+        <field name="prefix">OPR</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_den" model="ir.sequence">
         <field name="name">Product Sub Type - Dental (DEN)</field>
         <field name="code">product.sub.type.seq.DEN</field>
-        <field name="prefix">DEN-</field>
+        <field name="prefix">DEN</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_consu" model="ir.sequence">
         <field name="name">Product Sub Type - Consumables (CONSU)</field>
         <field name="code">product.sub.type.seq.consu</field>
-        <field name="prefix">CONSU-</field>
+        <field name="prefix">CONSU</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_eqp" model="ir.sequence">
         <field name="name">Product Sub Type - Equipment (EQUIP)</field>
         <field name="code">product.sub.type.seq.eqp</field>
-        <field name="prefix">EQUIP-</field>
+        <field name="prefix">EQUIP</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_product_sub_type_exps" model="ir.sequence">
         <field name="name">Product Sub Type - Expense Service (EXPS)</field>
         <field name="code">product.sub.type.seq.exps</field>
-        <field name="prefix">EXPS-</field>
+        <field name="prefix">EXPS</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
     <record id="seq_partner_ref_pet_owner" model="ir.sequence">
         <field name="name">Pet Owner</field>
         <field name="code">res.partner.ref.pet.owner</field>
-        <field name="prefix">OWN-</field>
+        <field name="prefix">OWN</field>
         <field name="padding">6</field>
         <field name="company_id" eval="False"/>
     </record>
@@ -146,7 +146,7 @@
     <record id="seq_partner_ref_pet" model="ir.sequence">
         <field name="name">Pet File</field>
         <field name="code">res.partner.ref.pet</field>
-        <field name="prefix">PET-</field>
+        <field name="prefix">PET</field>
         <field name="padding">6</field>
         <field name="company_id" eval="False"/>
     </record>
@@ -154,7 +154,7 @@
     <record id="seq_vet_boarding_stay" model="ir.sequence">
         <field name="name">Boarding Stay</field>
         <field name="code">vet.boarding.stay</field>
-        <field name="prefix">BRD-</field>
+        <field name="prefix">BRD</field>
         <field name="padding">7</field>
         <field name="company_id" eval="False"/>
     </record>
@@ -162,7 +162,7 @@
     <record id="seq_product_sub_type_grm" model="ir.sequence">
         <field name="name">Product Sub Type - Grooming (GRM)</field>
         <field name="code">product.sub.type.seq.GRM</field>
-        <field name="prefix">GRM-</field>
+        <field name="prefix">GRM</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
@@ -170,7 +170,7 @@
     <record id="seq_product_sub_type_brd" model="ir.sequence">
         <field name="name">Product Sub Type - Boarding (BRD)</field>
         <field name="code">product.sub.type.seq.BRD</field>
-        <field name="prefix">BRD-</field>
+        <field name="prefix">BRD</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
@@ -178,7 +178,7 @@
     <record id="seq_product_sub_type_member" model="ir.sequence">
         <field name="name">Product Sub Type - Membership (MEM)</field>
         <field name="code">product.sub.type.seq.MEM</field>
-        <field name="prefix">MEM-</field>
+        <field name="prefix">MEM</field>
         <field name="padding">5</field>
         <field name="company_id" eval="False"/>
     </record>
@@ -186,7 +186,7 @@
     <record id="seq_park_checkin" model="ir.sequence">
         <field name="name">Park Check-in</field>
         <field name="code">park.checkin</field>
-        <field name="prefix">PARK-</field>
+        <field name="prefix">PARK</field>
         <field name="padding">6</field>
         <field name="company_id" eval="False"/>
     </record>
@@ -194,7 +194,7 @@
     <record id="seq_vet_pet_membership" model="ir.sequence">
         <field name="name">Pet Membership</field>
         <field name="code">vet.pet.membership</field>
-        <field name="prefix">MEM-</field>
+        <field name="prefix">MEM</field>
         <field name="padding">6</field>
         <field name="company_id" eval="False"/>
     </record>
@@ -202,7 +202,7 @@
     <record id="seq_vet_treatment_plan" model="ir.sequence">
         <field name="name">Treatment Plan</field>
         <field name="code">vet.treatment.plan</field>
-        <field name="prefix">TRP-</field>
+        <field name="prefix">TRP</field>
         <field name="padding">7</field>
         <field name="company_id" eval="False"/>
     </record>

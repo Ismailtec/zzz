@@ -7,27 +7,13 @@ class ResPartner(models.Model):
 	_inherit = 'res.partner'
 
 	# Re-purpose the standard 'city' field to be a Many2one to res.country.area
-	city = fields.Many2one(
-		'res.country.area',
-		string='Area/District',
-		ondelete='restrict',
-	)
-
-	state_id = fields.Many2one(
-		"res.country.state", string='State',
-		ondelete='restrict',
-		domain="[('country_id', '=?', country_id)]",
-		tracking=True,
-	)
+	city = fields.Many2one('res.country.area', string='Area/District', ondelete='restrict')
+	state_id = fields.Many2one("res.country.state", string='State', ondelete='restrict', domain="[('country_id', '=?', country_id)]", tracking=True)
+	country_id = fields.Many2one('res.country', string='Country', ondelete='restrict', tracking=True, default=lambda self: self.env.ref('base.kw', raise_if_not_found=False))
 
 	@api.model
 	def _default_country_id(self):
 		return self.env['res.country'].search([('code', '=', 'KW')], limit=1).id
-
-	country_id = fields.Many2one(
-		'res.country', string='Country', ondelete='restrict', tracking=True,
-		default=_default_country_id  # Set Kuwait as default
-	)
 
 	# Computed domain for the 'city' field
 	@api.depends('state_id', 'country_id')
@@ -38,7 +24,7 @@ class ResPartner(models.Model):
 				domain.append(('country_id', '=', partner.country_id.id))
 			if partner.state_id:
 				domain.append(('state_id', '=', partner.state_id.id))
-			partner.city_domain = str(domain)  # Must be a string representation of the domain
+			partner.city_domain = str(domain)
 
 	city_domain = fields.Char(compute='_compute_city_domain', store=False)
 
@@ -71,9 +57,7 @@ class ResPartner(models.Model):
 
 	@api.model
 	def _prepare_display_address(self, without_company=False):
-		"""Override the base address preparation method to inject the name
-        of the Many2one 'city' field (res.country.area) into the arguments
-        for the address format."""
+		""" Override the base address preparation method to inject the name of the Many2one 'city' field (res.country.area) into the arguments for the address format."""
 		address_format, args = super()._prepare_display_address(without_company=without_company)
 		address_format = self._get_address_format()
 		if self.city:

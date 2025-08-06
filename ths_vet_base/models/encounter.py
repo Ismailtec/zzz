@@ -372,6 +372,8 @@ class VetEncounterHeader(models.Model):
 	practitioner_revenue = fields.Monetary(string='Practitioner Revenue', currency_field='company_currency', compute='_compute_practitioner_metrics')
 	practitioner_patients = fields.Integer(string='Patients Handled', compute='_compute_practitioner_metrics')
 
+	_sql_constraints = [('unique_partner_date', 'unique(partner_id, encounter_date)', 'Only one encounter per partner per date is allowed!'), ]
+
 	# -------- Computes & Depends Methods --------
 	@api.depends('patient_ids', 'patient_ids.name', 'patient_ids.species_id', 'patient_ids.species_id.name')
 	def _compute_pets_summary(self):
@@ -579,20 +581,39 @@ class VetEncounterHeader(models.Model):
 			result.append((encounter.id, display_name))
 		return result
 
+	@api.onchange('partner_id', 'encounter_date')
+	def _onchange_check_duplicate_encounter(self):
+		"""Warn about duplicate encounters"""
+		if (self.partner_id and self.encounter_date and
+				(not self.id or isinstance(self.id, models.NewId))):
+
+			existing_encounter = self.search([
+				('partner_id', '=', self.partner_id.id),
+				('encounter_date', '=', self.encounter_date)
+			], limit=1)
+
+			if existing_encounter:
+				return {
+					'warning': {
+						'title': _('Encounter Already Exists'),
+						'message': _('An encounter for %s on %s already exists (ID: %s)') %
+								   (self.partner_id.name, self.encounter_date, existing_encounter.id)
+					}
+				}
+		return None
+
 	@api.model_create_multi
 	def create(self, vals_list):
 		""" Assign sequence on creation. """
 		for vals in vals_list:
 			if vals.get('name', _('New')) == _('New'):
-				vals['name'] = self.env['ir.sequence'].sudo().next_by_code('medical.encounter') or _('New')  # Updated sequence code to match model
+				vals['name'] = self.env['ir.sequence'].sudo().next_by_code('medical.encounter') or _('New')
 
 			# Ensure encounter_date is set
 			if not vals.get('encounter_date'):
 				vals['encounter_date'] = fields.Date.context_today(self)
 
 		return super(VetEncounterHeader, self).create(vals_list)
-
-	_sql_constraints = [('unique_partner_date', 'unique(partner_id, encounter_date)', 'Only one encounter per partner per date is allowed!'), ]
 
 	def write(self, vals):
 		"""Allow manual state changes but sync with payment status"""
@@ -3001,6 +3022,7 @@ class VetEncounterLine(models.Model):
 			'domain': [('patient_ids', 'in', [self.patient_ids.id])],
 			'context': {'search_default_groupby_date': 1, 'create': False},
 		}
+
 
 # ---------------- Encounter Analytics Report ----------------
 class EncounterAnalyticsWizard(models.TransientModel):

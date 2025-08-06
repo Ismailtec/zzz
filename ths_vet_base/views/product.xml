@@ -65,6 +65,17 @@
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_form_view"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <div invisible="not product_sub_type_id or not product_sub_type_id.is_for_internal_reference">
+                    <button name="action_generate_internal_reference" type="object" string="Generate Code" class="btn btn-secondary me-1"/>
+                    <button name="action_clear_auto_generated_flag" type="object" string="Manual Code" class="btn btn-secondary" invisible="not ths_auto_code_generated"/>
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='product_tooltip']" position="after">
+                <div class="alert alert-info" role="alert" invisible="not ths_auto_code_generated">
+                    <i class="fa fa-bolt"/> This code was auto-generated. Click "Mark as Manual" if you want to edit it manually.
+                </div>
+            </xpath>
             <xpath expr="//field[@name='type']" position="after">
                 <field name="ths_sub_type_domain" invisible="1"/>
                 <field name="product_sub_type_id" options="{'no_create': True, 'no_quick_create': True}" domain="ths_sub_type_domain"/>
@@ -72,6 +83,18 @@
                 <field name="ths_membership_duration_visible" invisible="1"/>
                 <field name="ths_membership_duration_required" invisible="1"/>
             </xpath>
+            <xpath expr="//field[@name='product_brand']" position="after">
+                <field name="ths_exclude_from_auto_code" invisible="not product_sub_type_id or not product_sub_type_id.is_for_internal_reference"/>
+                <field name="ths_auto_code_generated" invisible="1"/>
+                <field name="ths_code_generation_trigger" invisible="1"/>
+                <field name="ths_computed_default_code" invisible="1"/>
+            </xpath>
+
+            <!-- Add warning for auto-generated codes -->
+            <xpath expr="//field[@name='product_brand']" position="attributes">
+                <attribute name="help">Internal Reference (SKU). Auto-generated codes are marked with ⚡</attribute>
+            </xpath>
+
         </field>
     </record>
 
@@ -83,6 +106,8 @@
             <xpath expr="//field[@name='type']" position="after">
                 <field name="product_sub_type_id" optional="show"/>
                 <field name="ths_membership_duration" column_invisible="not ths_membership_duration_visible" optional="hide"/>
+                <field name="ths_exclude_from_auto_code" optional="hide" widget="boolean_toggle"/>
+                <field name="ths_auto_code_generated" optional="hide" widget="boolean_toggle"/>
                 <field name="ths_sub_type_domain" column_invisible="1"/>
                 <field name="ths_membership_duration_visible" column_invisible="1"/>
                 <field name="ths_membership_duration_required" column_invisible="1"/>

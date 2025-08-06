@@ -131,7 +131,7 @@
                 <xpath expr="//field[@name='complete_name']" position="after">
                     <field name="partner_type_id" optional="show"/>
                     <field name="ths_gov_id" optional="hide"/>
-                    <field name="available_credit" widget="monetary" column_invisible="not available_credit"/>
+                    <field name="available_credit" widget="monetary"/>
                 </xpath>
                 <field name="user_id" position="attributes">
                     <attribute name="optional">Hide</attribute>
