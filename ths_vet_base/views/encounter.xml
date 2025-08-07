@@ -89,7 +89,9 @@
                         <button name="action_view_credit_notes" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="credit_note_count == 0">
                             <field name="credit_note_count" widget="statinfo" string="Refunds"/>
                         </button>
-                        <button name="action_view_partner_credit_payments" type="object" string="Partner Credit" class="btn-link" invisible="partner_credit_count == 0"/>
+                        <button name="action_view_partner_credit_payments" type="object" class="oe_stat_button" icon="fa-credit-card" invisible="partner_credit_count == 0">
+                            <field name="partner_credit_count" widget="statinfo" string="Credit Balance"/>
+                        </button>
                     </div>
 
                     <div class="oe_title">

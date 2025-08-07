@@ -264,7 +264,7 @@
         </record>
 
         <!-- Main Veterinary Menu Structure -->
-        <menuitem id="menu_ths_vet_root" name="Veterinary" sequence="50" web_icon="ths_vet_base,static/src/img/vet_menu.png"/>
+        <menuitem id="menu_ths_vet_root" name="Veterinary" sequence="1" web_icon="ths_vet_base,static/src/img/vet_menu.png"/>
 
         <!-- Encounters Submenu -->
         <menuitem id="menu_ths_vet_encounters" name="Encounters" parent="menu_ths_vet_root" sequence="20"/>
@@ -328,6 +328,12 @@
         <menuitem id="menu_new_appointment" name="Create Appointment" parent="menu_vet_quick_actions" action="action_new_appointment" sequence="40"
                   groups="ths_vet_base.group_vet_user"/>
         <menuitem id="menu_new_boarding_stay" name="Create Boarding Stay" parent="menu_vet_quick_actions" action="action_new_vet_boarding_stay" sequence="50"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_new_park_checkin" name="Create Park Check-in" parent="menu_vet_quick_actions" action="action_new_vet_boarding_stay" sequence="60"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_new_vaccine" name="Create Vaccination" parent="menu_vet_quick_actions" action="action_new_vet_boarding_stay" sequence="70"
+                  groups="ths_vet_base.group_vet_user"/>
+        <menuitem id="menu_new_membership" name="Create Membership" parent="menu_vet_quick_actions" action="action_new_vet_boarding_stay" sequence="80"
                   groups="ths_vet_base.group_vet_user"/>
 
         <!-- Today's Activities -->
