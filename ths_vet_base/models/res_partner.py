@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
-
 from dateutil.relativedelta import relativedelta
 
 from odoo import models, fields, api, _
@@ -113,10 +111,7 @@ class ResPartner(models.Model):
 	send_whatsapp_reminder = fields.Boolean(string='Send WhatsApp Reminders', default=True)
 	preferred_communication = fields.Selection([('email', 'Email'), ('phone', 'Phone'), ('whatsapp', 'WhatsApp'), ('sms', 'SMS')], string='Preferred Communication',
 											   default='whatsapp', help="Preferred method for appointment reminders and notifications")
-	phone_normalized = fields.Char(string="Normalized Phone", compute='_compute_number_normalized', store=True, index=True,
-								   help="Only digits of the phone number for search purposes.")
-	mobile_normalized = fields.Char(string="Normalized Mobile", compute='_compute_number_normalized', store=True, index=True,
-									help="Only digits of the mobile number for search purposes.")
+
 
 	# --- PET-SPECIFIC MEDICAL FIELDS ---
 	species_id = fields.Many2one('vet.species', string='Species', tracking=True, help="Species of the pet (Dog, Cat, etc.)")
@@ -140,7 +135,6 @@ class ResPartner(models.Model):
 	document_ids = fields.One2many('documents.document', 'res_id', domain=[('res_model', '=', 'res.partner')], string='Documents', help="All documents for this partner")
 	pet_membership_ids = fields.One2many('vet.pet.membership', 'patient_ids', string='Pet Memberships', help="Membership for Park.")
 	pet_membership_count = fields.Integer(compute='_compute_pet_membership_count', string="# Memberships")
-	vaccination_ids = fields.One2many('vet.vaccination', 'patient_ids', string='Vaccinations', help="All vaccinations for this pet")
 
 	# --- DISPLAY & UI ENHANCEMENTS ---
 	pet_badge_data = fields.Json(string="Pet Badge Data", compute="_compute_pet_badge_data", store=True)
@@ -156,28 +150,6 @@ class ResPartner(models.Model):
 		for rec in self:
 			rec.is_pet = rec.partner_type_id == pet_type if pet_type else False
 			rec.is_pet_owner = rec.partner_type_id == owner_type if owner_type else False
-
-	@api.depends('payment_ids.amount_remaining', 'payment_ids.state')
-	def _compute_available_credit(self):
-		super()._compute_available_credit()
-		for partner in self:
-			if partner.is_pet_owner:
-				credit_payments = self.env['account.payment'].search([
-					('partner_id', '=', partner.id),
-					('amount_remaining', '>', 0),
-					('state', '=', 'paid'),
-					('payment_type', '=', 'inbound'),
-				])
-
-				partner.available_credit = sum(credit_payments.mapped('amount_remaining'))
-				partner.available_credit_count = len(credit_payments)
-
-	@api.depends('phone', 'mobile')
-	def _compute_number_normalized(self):
-		"""Compute the normalized version of the phone/mobile number (digits only)."""
-		for partner in self:
-			partner.phone_normalized = re.sub(r'\D', '', partner.phone) if partner.phone else False
-			partner.mobile_normalized = re.sub(r'\D', '', partner.mobile) if partner.mobile else False
 
 	@api.depends('pet_owner_id.street', 'pet_owner_id.street2', 'pet_owner_id.city', 'pet_owner_id.state_id', 'pet_owner_id.zip', 'pet_owner_id.country_id')
 	def _compute_owner_address_info(self):
@@ -257,6 +229,7 @@ class ResPartner(models.Model):
 				[('mobile_normalized', operator, name)],
 				[('phone_normalized', operator, name)],
 				[('ths_gov_id', operator, name)],
+				[('pet_ids.name', operator, name)],
 			])
 
 		if args and search_domain:
@@ -305,26 +278,20 @@ class ResPartner(models.Model):
 		"""Count encounters for pets and pet owners"""
 		for rec in self:
 			if rec.is_pet:
-				rec.encounter_count = self.env['vet.encounter.header'].search_count([
-					('patient_ids', 'in', rec.id)
-				])
+				rec.encounter_count = self.env['vet.encounter.header'].search_count([('patient_ids', 'in', rec.id)])
 			elif rec.is_pet_owner:
-				rec.encounter_count = self.env['vet.encounter.header'].search_count([
-					('partner_id', '=', rec.id)
-				])
+				rec.encounter_count = self.env['vet.encounter.header'].search_count([('partner_id', '=', rec.id)])
 			else:
 				rec.encounter_count = 0
 
-	@api.depends('is_pet', 'is_pet_owner', 'vaccination_ids')
+	@api.depends('is_pet', 'is_pet_owner')
 	def _compute_vaccination_count(self):
 		"""Count vaccinations for pets and pet owners"""
 		for partner in self:
 			if partner.is_pet:
-				partner.vaccination_count = len(partner.vaccination_ids)
+				partner.vaccination_count = self.env['vet.vaccination'].search_count([('patient_ids', 'in', partner.id)])
 			elif partner.is_pet_owner:
-				partner.vaccination_count = self.env['vet.vaccination'].search_count([
-					('partner_id', '=', partner.id)
-				])
+				partner.vaccination_count = self.env['vet.vaccination'].search_count([('partner_id', '=', partner.id)])
 			else:
 				partner.vaccination_count = 0
 
@@ -372,8 +339,8 @@ class ResPartner(models.Model):
 			elif partner.is_pet_owner:
 				# Count pet owner's personal docs + all their pets' docs
 				owner_docs = len(partner.document_ids)
-				pets_docs = sum(len(pet.document_ids) for pet in partner.pet_ids)
-				partner.documents_count = owner_docs + pets_docs
+				# pets_docs = sum(len(pet.document_ids) for pet in partner.pet_ids)
+				partner.documents_count = owner_docs
 			else:
 				partner.documents_count = 0
 
@@ -391,7 +358,7 @@ class ResPartner(models.Model):
 			else:
 				rec.pet_badge_data = {}
 
-	@api.depends('is_pet', 'vaccination_ids.expiry_date', 'vaccination_ids.is_expired')
+	@api.depends('is_pet')
 	def _compute_medical_summary(self):
 		"""Compute medical summary fields"""
 		for partner in self:
@@ -400,16 +367,11 @@ class ResPartner(models.Model):
 				partner.next_vaccination_due = False
 				continue
 
-			# Use search instead of relationship for encounters
-			last_encounter = self.env['vet.encounter.header'].search([
-				('patient_ids', 'in', partner.id)
-			], order='encounter_date desc', limit=1)
+			last_encounter = self.env['vet.encounter.header'].search([('patient_ids', 'in', partner.id)], order='encounter_date desc', limit=1)
 			partner.last_visit_date = last_encounter.encounter_date if last_encounter else False
 
-			# Keep vaccination relationship since it works
-			next_vaccination = partner.vaccination_ids.filtered(
-				lambda v: v.expiry_date
-			).sorted('expiry_date')
+			vaccinations = self.env['vet.vaccination'].search([('patient_ids', 'in', partner.id)])
+			next_vaccination = vaccinations.filtered(lambda v: v.expiry_date).sorted('expiry_date')
 			partner.next_vaccination_due = next_vaccination[0].expiry_date if next_vaccination else False
 
 	@api.depends('is_pet', 'last_visit_date', 'vaccination_count', 'medical_alerts', 'dietary_restrictions', 'ths_microchip', 'ths_insurance_number')
@@ -558,6 +520,14 @@ class ResPartner(models.Model):
 			kuwait = self.env.ref('base.kw', raise_if_not_found=False)
 			if kuwait:
 				res['country_id'] = kuwait.id
+
+		if 'is_pet_owner' in fields_list and 'is_pet_owner' == True:
+			pet_owner_type = self.env.ref('ths_vet_base.partner_type_pet_owner', raise_if_not_found=False)
+			res['partner_type_id'] = pet_owner_type.id
+
+		if 'is_pet' in fields_list:
+			pet_type = self.env.ref('ths_vet_base.partner_type_pet', raise_if_not_found=False)
+			res['partner_type_id'] = pet_type.id
 
 		return res
 
@@ -936,7 +906,6 @@ class ResPartner(models.Model):
 		tag_pet_owner = self.env.ref('ths_vet_base.documents_tag_pet_owner', raise_if_not_found=False)
 
 		if self.is_pet:
-			default_folder = folder_main.id if folder_main else False
 			default_tag = tag_pets.id if tag_pets else False
 			domain = [
 				'|',
@@ -950,7 +919,6 @@ class ResPartner(models.Model):
 			default_folder = folder_main.id if folder_main else False
 
 		else:
-			default_folder = folder_owner.id if folder_owner else False
 			default_tag = tag_pet_owner.id if tag_pet_owner else False
 			pet_ids = self.env['res.partner'].search([
 				('pet_owner_id', '=', self.id),

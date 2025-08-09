@@ -18,8 +18,8 @@ class EncounterMixin(models.AbstractModel):
 	_inherit = ['mail.thread', 'mail.activity.mixin']
 
 	# --------- Core fields for encounters and related models ---------
-	partner_id = fields.Many2one('res.partner', string='Pet Owner (Billing)', context={'default_is_pet': False, 'default_is_pet_owner': True}, required=True, index=True,
-								 tracking=True, domain="[('is_pet_owner', '=', True)]", help="Pet owner responsible for billing this encounter or service.")
+	partner_id = fields.Many2one('res.partner', string='Pet Owner (Billing)', tracking=True, domain="[('is_pet_owner', '=', True)]", required=True, index=True,
+								 context={'default_is_pet': False, 'default_is_pet_owner': True}, help="Pet owner responsible for billing.")
 	pet_owner_id = fields.Many2one('res.partner', string='Pet Owner', compute='_compute_pet_owner_id', store=True, readonly=True, index=True,
 								   context={'default_is_pet': False, 'default_is_pet_owner': True}, help="Computed pet owner, synchronized with partner_id.")
 	patient_ids = fields.Many2many('res.partner', 'vet_encounter_mixin_patient_rel', 'encounter_id', 'patient_id', string='Pets',
@@ -29,7 +29,7 @@ class EncounterMixin(models.AbstractModel):
 									  help="Veterinarian responsible for this encounter or service.")
 	room_id = fields.Many2one('appointment.resource', string='Room', index=True, tracking=True, domain="[('resource_category', '=', 'location')]",
 							  help="Room where the encounter or service takes place.")
-	partner_mobile = fields.Char(string="Partner Mobile", related='partner_id.mobile', store=False, readonly=True)
+	partner_mobile = fields.Char(string="Partner Mobile", related='partner_id.mobile', store=False, readonly=False, inverse='_inverse_partner_mobile')
 	is_pet = fields.Boolean(string='Is Pet', compute='_compute_partner_flags', store=False, help="Computed field for view compatibility - indicates if partner is a pet")
 	is_pet_owner = fields.Boolean(string='Is Pet Owner', compute='_compute_partner_flags', store=False, help="Computed field - indicates if partner is a pet owner")
 	documents_count_model = fields.Integer(string="Documents count", compute='_compute_documents_count_model')
@@ -38,6 +38,7 @@ class EncounterMixin(models.AbstractModel):
 									  help="Available Balance for this partner")
 	partner_balance_converted = fields.Monetary(string='Pet Owner Balance', compute='_compute_partner_balance', currency_field='company_currency', readonly=True, store=False,
 												help="Available Balance for this partner")
+	company_id = fields.Many2one('res.company', string='Branch', required=True, domain=lambda self: [('id', 'in', self.env.companies.ids)], default=lambda self: self.env.company, index=True)
 	# --------- Domains ---------
 	patient_ids_domain = fields.Char(compute='_compute_patient_ids_domain', store=False, help="Dynamic domain for pets based on pet owner.")
 	room_id_domain = fields.Char(compute='_compute_room_id_domain', store=False, help="Domain for selecting the room based on the practitioner.")
@@ -168,6 +169,11 @@ class EncounterMixin(models.AbstractModel):
 		if self.patient_ids and not self.partner_id:
 			# Set owner from first pet
 			self.partner_id = self.patient_ids[0].pet_owner_id
+
+	def _inverse_partner_mobile(self):
+		for record in self:
+			if record.partner_id:
+				record.partner_id.mobile = record.partner_mobile
 
 	# --------- Constrains ---------
 	@api.constrains('partner_id', 'patient_ids')
@@ -342,7 +348,8 @@ class VetEncounterHeader(models.Model):
 											   help="Payment method for POS UI processing")
 	partner_available_credit = fields.Monetary(string='Partner Available Credit', related='partner_id.available_credit', currency_field='company_currency')
 	partner_credit_count = fields.Integer(string='Partner Credit Payments', related='partner_id.available_credit_count')
-	payment_ids = fields.One2many('account.payment', 'partner_id', related='partner_id.payment_ids', string='Partner Payments')
+	partner_payment_ids = fields.One2many('account.payment', 'partner_id', related='partner_id.payment_ids', string='Partner Payments')
+	partner_payment_count = fields.Integer(string='Partner Payment Count', related='partner_id.payment_count', readonly=True)
 
 	# -------- EMR Fields (Base Text Fields) --------
 	chief_complaint = fields.Text(string="Chief Complaint")
@@ -720,6 +727,7 @@ class VetEncounterHeader(models.Model):
 						'patient_ids': self.patient_ids.ids if self.patient_ids else False,
 						'practitioner_id': self.practitioner_id.id if self.practitioner_id else False,
 						'room_id': self.room_id.id if self.room_id else False,
+						'company_id': self.env.company.id if self.env.company.id else self.company_id.id,
 					}
 
 					if has_recurring_products:
@@ -761,6 +769,7 @@ class VetEncounterHeader(models.Model):
 								'patient_ids': encounter_line.patient_ids.ids if encounter_line.patient_ids else False,
 								'practitioner_id': encounter_line.practitioner_id.id if encounter_line.practitioner_id else False,
 								'room_id': encounter_line.room_id.id if encounter_line.room_id else False,
+								'warehouse_id': self.env['stock.warehouse'].search([('company_id', '=', self.env.company.id)], limit=1).id,
 							}
 							self.env['sale.order.line'].create(sol_vals)
 			except Exception as e:
@@ -811,6 +820,7 @@ class VetEncounterHeader(models.Model):
 					'encounter_id': self.id,
 					'partner_type_id': self.partner_id.partner_type_id.id,
 					'partner_id': self.partner_id.id,
+					'company_id': self.env.company.id if self.env.company.id else self.company_id.id,
 				}
 				if self.patient_ids:
 					invoice_vals['patient_ids'] = self.patient_ids.ids
@@ -1016,6 +1026,9 @@ class VetEncounterHeader(models.Model):
 				raise UserError(f"Failed to reconcile payment: {str(e)}")
 
 			# STEP 8: Handle Deliveries (only for non-subscription products)
+			if sale_order.has_missing_deliveries:
+				sale_order.action_create_missing_deliveries()
+
 			try:
 				for picking in sale_order.picking_ids.filtered(lambda p: p.state not in ['done', 'cancel']):
 					# Confirm the picking
@@ -1666,6 +1679,16 @@ class VetEncounterHeader(models.Model):
 			return {'warning': {'title': _('Warning'), 'message': _('No invoices were created.')}}
 
 	# ------- ACTIONS -------
+	def action_view_payments(self):
+		return {
+			'name': _('Payments'),
+			'view_mode': 'list,kanban,form',
+			'res_model': 'account.payment',
+			'type': 'ir.actions.act_window',
+			'domain': [('partner_id', '=', self.partner_id.id), ('state', 'in', ('paid', 'in_process'))],
+			'context': {'default_partner_id': self.partner_id.id},
+		}
+
 	def action_view_partner_credit_payments(self):
 		"""View partner's credit payments"""
 		return self.partner_id.action_view_credit_payments()
@@ -3109,6 +3132,7 @@ class AccountMove(models.Model):
 	reversed_entry_id = fields.Many2one('account.move', string='Reversal of', help="Original invoice this credit note reverses")
 	reversal_entry_ids = fields.One2many('account.move', 'reversed_entry_id', string='Credit Notes')
 
+
 	@api.depends('encounter_line_ids')
 	def _compute_encounter_counts(self):
 		for move in self:
@@ -3384,6 +3408,14 @@ class AccountPartialReconcile(models.Model):
 		return result
 
 
+class AccountPayment(models.Model):
+	_inherit = 'account.payment'
+
+	partner_type_id = fields.Many2one('ths.partner.type', string='Partner Type', readonly=False, copy=True, index=True, ondelete='cascade',
+									  default=lambda self: self.env.ref('ths_vet_base.partner_type_pet_owner', raise_if_not_found=False),
+									  help="Choose proper Partner Type to show related Partners")
+
+
 class SaleOrder(models.Model):
 	_inherit = 'sale.order'
 
@@ -3406,7 +3438,7 @@ class SaleOrder(models.Model):
 			'name': _('Related Encounter Lines'),
 			'res_model': 'vet.encounter.line',
 			'view_mode': 'list,form',
-			'domain': [('sale_order_ids', 'in', [self.id])],
+			'domain': [('sale_order_id', 'in', [self.id])],
 			'context': {'create': False}
 		}
 

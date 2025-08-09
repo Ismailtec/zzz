@@ -916,23 +916,18 @@
                 <div class="alert alert-danger" role="alert" invisible="not is_expired">
                     <strong>This vaccination has expired!</strong> Please schedule a renewal appointment.
                 </div>
-                <div class="alert alert-warning" role="alert"
-                     invisible="is_expired or days_until_expiry &gt; 30 or days_until_expiry &lt; 0">
-                    <strong>This vaccination expires in <field name="days_until_expiry" readonly="1"/>
-                        days!</strong>
+                <div class="alert alert-warning" role="alert" invisible="is_expired or days_until_expiry &gt; 30 or days_until_expiry &lt; 0">
+                    <strong>This vaccination expires in <field name="days_until_expiry" readonly="1"/>days!</strong>
                 </div>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_schedule_reminder" type="object" class="oe_stat_button" icon="fa-bell"
-                                invisible="is_expired or days_until_expiry &lt;= 30">
+                        <button name="action_schedule_reminder" type="object" class="oe_stat_button" icon="fa-bell" invisible="is_expired or days_until_expiry &lt;= 30">
                             <div class="o_stat_info">
                                 <span class="o_stat_text">Schedule<br/>Reminder</span>
                             </div>
                         </button>
-                        <button name="action_view_encounter" type="object" icon="fa-stethoscope" class="oe_stat_button"
-                                invisible="not encounter_id">
+                        <button name="action_view_encounter" type="object" icon="fa-stethoscope" class="oe_stat_button" invisible="not encounter_id">
                             <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_text">Daily</span>
                                 <span class="o_stat_text">Encounter</span>
                             </div>
                         </button>

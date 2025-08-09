@@ -6,17 +6,37 @@
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
-                <field name="partner_id" position="after"><field name="ths_hide_taxes" invisible="1"/></field>
+                <xpath expr="//sheet//div[@name='button_box']" position="before">
+                    <widget name="web_ribbon" title="Completed" bg_color="bg-success" class="o_ribbon_right" invisible="not ribbon_title"/>
+                    <field name="ribbon_title" invisible="1"/>
+                </xpath>
+                <xpath expr="//header" position="after">
+                    <div class="alert alert-info d-flex align-items-center justify-content-center" style="margin-bottom: 10px; padding: 6px 12px; min-height: auto;"
+                         invisible="not show_status_bar" role="status">
+                        <strong style="margin-right: 8px;">Order Status:</strong><span><field name="status_message" widget="html" nolabel="1"/></span>
+                    </div>
+                    <field name="status_message" invisible="1"/>
+                    <field name="show_status_bar" invisible="1"/>
+                </xpath>
+                <button name="action_cancel" position="after">
+                    <button name="action_create_missing_deliveries" string="Create Delivery" type="object" class="btn-primary" invisible="not has_missing_deliveries"/>
+                </button>
+                <field name="partner_id" position="after">
+                    <field name="ths_hide_taxes" invisible="1"/>
+                    <field name="has_missing_deliveries" invisible="1"/>
+                </field>
                 <field name="partner_id" position="attributes">
                     <attribute name="domain">[('partner_type_id', '=?', partner_type_id)]</attribute>
                     <attribute name="context">{'show_address': False, 'show_email': False}</attribute>
                     <attribute name="readonly">state == 'sale'</attribute>
                     <attribute name="options">{'no_open': True, 'no_create': True}</attribute>
+                    <attribute name="widget">many2one</attribute>
                 </field>
                 <xpath expr="//field[@name='partner_id']" position="before">
                     <field name="partner_type_id" options="{'no_open': True, 'no_create': True}" readonly="state == 'sale'"
                            placeholder="Select Partner Type first to see partners..."/>
                 </xpath>
+
                 <xpath expr="//page[@name='order_lines']//field[@name='order_line']//list//field[@name='product_template_id']" position="attributes">
                     <attribute name="options">{'no_quick_create': True, 'no_create_edit': True}</attribute>
                 </xpath>
@@ -50,6 +70,9 @@
                 <xpath expr="//page[@name='order_lines']//field[@name='order_line']//form//field[@name='product_packaging_qty']" position="attributes">
                     <attribute name="optional">hide</attribute>
                 </xpath>
+                <xpath expr="//page[@name='order_lines']//field[@name='order_line']//list//field[@name='qty_invoiced']" position="after">
+                    <field name="qty_returned" readonly="1" decoration-danger="qty_returned > 0" optional="show"/>
+                </xpath>
                 <xpath expr="//field[@name='tax_totals']" position="before">
                     <!-- Wrapper to control vertical spacing between custom discount fields independently, using smaller gap for closeness -->
                     <div class="d-flex flex-column gap-1" invisible="total_discount_amount == 0">
@@ -71,11 +94,46 @@
                         </div>
                     </div>
                 </xpath>
-<!--                <field name="tax_totals" position="before">-->
-<!--                    <field name="total_before_discount" string="Total W/o Disc." widget="monetary" readonly="1" invisible="total_discount_amount == 0"/>-->
-<!--                    <field name="total_discount_amount" widget="monetary" string="Total Disc." readonly="1" class="text-danger" invisible="total_discount_amount == 0"/>-->
-<!--                </field>-->
+                <xpath expr="//field[@name='tax_totals']" position="after">
+                    <div class="d-flex flex-column gap-1">
+                        <div class="row mb-0">
+                            <div class="col-6 text-end fw-bold">
+                                <label for="paid_amount" string="Paid Amount" class="fw-bold"/>
+                            </div>
+                            <div class="col-6 fw-bold">
+                                <field name="paid_amount" nolabel="1" widget="monetary" readonly="1" class="text-nowrap fw-bolder" decoration-success="paid_amount > 0"/>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
             </field>
         </record>
+
+        <record id="view_order_tree_inherit_payment_status" model="ir.ui.view">
+            <field name="name">sale.order.tree.inherit.payment.status</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_tree"/>
+            <field name="arch" type="xml">
+                <field name="invoice_status" position="after">
+                    <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-warning="payment_status == 'partial'"
+                           decoration-muted="payment_status == 'nothing'" optional="show"/>
+                </field>
+                <field name="invoice_status" position="attributes">
+                    <attribute name="optional">show</attribute>
+                </field>
+            </field>
+        </record>
+
+        <record id="view_order_line_list_inherit_ths_base" model="ir.ui.view">
+            <field name="name">sale.order.line.list.inherit.ths.base</field>
+            <field name="model">sale.order.line</field>
+            <field name="inherit_id" ref="sale.view_order_line_tree"/>
+            <field name="arch" type="xml">
+                <field name="qty_invoiced" position="after">
+                    <field name="qty_returned" readonly="1" decoration-danger="qty_returned > 0"/>
+                </field>
+            </field>
+        </record>
+
     </data>
 </odoo>

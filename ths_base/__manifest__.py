@@ -43,7 +43,7 @@ Detailed Feature List (User-Friendly)
         Adds the "Effective Date" field to relevant forms.
         Relocates the "Valuation Adjustments" section on the Landed Cost form for better flow.
         Adds the "Description" column to the Inventory Valuation report view.
-        
+
     Reporting:
         Includes code intended to modify standard PDF reports (Sales Order, Purchase Order, Invoice) based on the "Hide Taxes" setting (marked as needing potential fixes).
     """,

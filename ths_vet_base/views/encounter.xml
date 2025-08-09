@@ -89,6 +89,9 @@
                         <button name="action_view_credit_notes" type="object" class="oe_stat_button" icon="fa-file-text-o" invisible="credit_note_count == 0">
                             <field name="credit_note_count" widget="statinfo" string="Refunds"/>
                         </button>
+                        <button class="oe_stat_button" type="object" name="action_view_payments" icon="fa-credit-card">
+                            <field name="partner_payment_count" widget="statinfo" string="Payments"/>
+                        </button>
                         <button name="action_view_partner_credit_payments" type="object" class="oe_stat_button" icon="fa-credit-card" invisible="partner_credit_count == 0">
                             <field name="partner_credit_count" widget="statinfo" string="Credit Balance"/>
                         </button>
@@ -106,15 +109,19 @@
                             <field name="patient_ids" string="Pets" options="{'open_create': True}" widget="many2many_tags" help="Pets receiving veterinary care"/>
                             <field name="practitioner_id" string="Practitioner" options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"/>
                             <field name="room_id" options="{'no_create': True, 'no_quick_create': True, 'no_open': True}" string="Treatment Room" domain="room_id_domain"/>
-                            <field name="partner_mobile" readonly="1" string="Mobile" help="Mobile number of the partner"/>
+                            <field name="partner_mobile" string="Mobile" help="Mobile number of the partner"/>
+                            <field name="company_id" options="{'no_create': True, 'no_quick_create': True, 'no_open': True}"/>
                         </group>
                         <group string="Payment Information" name="col_2">
-                            <field name="pending_amount" readonly="1" widget="monetary" string="Pending Amount" options="{'currency_field': 'company_currency'}"/>
-                            <field name="paid_amount" readonly="1" widget="monetary" options="{'currency_field': 'company_currency'}"/>
-                            <field name="total_amount" widget="monetary" options="{'currency_field': 'company_currency'}"/>
+                            <field name="pending_amount" readonly="1" widget="monetary" string="Pending Amount" options="{'currency_field': 'company_currency'}"
+                                   decoration-danger="pending_amount != 0" decoration-success="pending_amount == 0"/>
+                            <field name="paid_amount" readonly="1" widget="monetary" options="{'currency_field': 'company_currency'}"
+                                   decoration-success="paid_amount == total_amount"/>
+                            <field name="total_amount" widget="monetary" options="{'currency_field': 'company_currency'}" decoration-danger="total_amount != paid_amount"
+                                   decoration-success="paid_amount == total_amount"/>
                             <field name="returned_amount" widget="monetary" invisible="not returned_amount" options="{'currency_field': 'company_currency'}"/>
-                            <field name="pending_payments" readonly="1" widget="boolean_toggle" string="Has Pending Payments"/>
-                            <field name="partner_available_credit" widget="monetary" decoration-success="partner_available_credit > 0"/>
+                            <span>Pending Payments: </span><field name="pending_payments" readonly="1" nolabel="1" widget="boolean_toggle" string="Has Pending Payments"/>
+                            <field name="partner_available_credit" string="Available Credit" widget="monetary" decoration-success="partner_available_credit > 0"/>
                             <field name="invoice_count" invisible="1"/>
                             <field name="sale_order_count" invisible="1"/>
                             <field name="company_currency" invisible="1"/>
@@ -222,6 +229,8 @@
                                     <field name="expiry_date" widget="date"/>
                                     <field name="practitioner_id"/>
                                     <field name="is_expired" widget="boolean_toggle"/>
+<!--                                    <field name="photo" widget="binary"/>-->
+                                    <button name="action_view_documents" string="Photos" type="object" icon="fa-camera" class="oe_stat_button"/>
                                 </list>
                             </field>
                         </page>
@@ -280,12 +289,14 @@
         <field name="arch" type="xml">
             <search string="Search Encounters">
                 <group expand="0" string="Search">
-                    <field name="name" string="Encounter ID"/>
+                    <field name="name" string="Encounter ID" filter_domain="['|', '|', '|', '|', '|', ('partner_id', 'ilike', self), ('patient_ids', 'ilike', self), ('name',
+                        'ilike', self), ('partner_id.mobile_normalized', 'ilike', self), ('partner_id.ths_gov_id', 'ilike', self), ('partner_id.phone_normalized', 'ilike', self)]"/>
                     <field name="encounter_date"/>
                     <field name="appointment_ids"/>
                     <field name="partner_id" filter_domain="['|', ('partner_id', 'ilike', self), ('patient_ids', 'ilike', self)]" string="Pet Owner"/>
                     <field name="patient_ids" string="Pets"/>
                     <field name="practitioner_id"/>
+                    <field name="partner_mobile" string="Owner Mobile"/>
                     <field name="all_pets_species" string="All Species"/>
                     <field name="pets_summary" string="Pet Summary"/>
                     <!-- Status Filters -->
@@ -404,8 +415,6 @@
             <graph string="Encounter Analytics" type="bar" stacked="True">
                 <field name="encounter_date" type="row" interval="day"/>
                 <field name="state" type="col"/>
-                <field name="total_amount" type="measure"/>
-                <field name="total_pets_count" type="measure"/>
             </graph>
         </field>
     </record>
@@ -418,10 +427,10 @@
             <pivot string="Encounter Analysis">
                 <field name="encounter_date" type="row" interval="month"/>
                 <field name="practitioner_id" type="col"/>
-                <field name="total_amount" type="measure"/>
-                <field name="pending_amount" type="measure"/>
-                <field name="paid_amount" type="measure"/>
-                <field name="total_pets_count" type="measure"/>
+                <field name="room_id" type="col"/>
+                <field name="pending_amount" type="measure" sum="Total Pending"/>
+                <field name="paid_amount" type="measure" sum="Total Paid"/>
+                <field name="total_amount" type="measure" sum="Total Amount"/>
             </pivot>
         </field>
     </record>
@@ -471,6 +480,7 @@
                 <field name="room_id" optional="show"/>
                 <field name="paid_amount" string="Paid" sum="Paid" widget="monetary" options="{'currency_field': 'company_currency'}" width="80px"/>
                 <field name="source_model" widget="selection" optional="hide" width="80px"/>
+                <field name="sale_order_id" optional="hide"/>
                 <field name="multiple_payment_sources" optional="hide" width="80px"/>
                 <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-info="payment_status in ('pending', 'posted')"
                        decoration-warning="payment_status in ('partial', 'cancelled', 'refunded')" width="80px"/>

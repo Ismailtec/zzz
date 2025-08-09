@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from dateutil.relativedelta import relativedelta
 
 from odoo import models, fields, api, _
@@ -34,6 +36,9 @@ class ResPartner(models.Model):
 	available_credit = fields.Monetary(string='Available Credit', compute='_compute_available_credit', currency_field='currency_id')
 	available_credit_count = fields.Integer(string='Credit Payments Count', compute='_compute_available_credit')
 	payment_ids = fields.One2many('account.payment', 'partner_id', string='Payments')
+	payment_count = fields.Integer(string='Payment Count', compute='_compute_payment_count')
+	phone_normalized = fields.Char(string="Normalized Phone", compute='_compute_number_normalized', store=True, index=True, help="Only digits of the phone number for search.")
+	mobile_normalized = fields.Char(string="Normalized Mobile", compute='_compute_number_normalized', store=True, index=True, help="Only digits of the mobile number for search.")
 
 	@api.depends('payment_ids.amount_remaining', 'payment_ids.state')
 	def _compute_available_credit(self):
@@ -47,7 +52,6 @@ class ResPartner(models.Model):
 
 			partner.available_credit = sum(credit_payments.mapped('amount_remaining'))
 			partner.available_credit_count = len(credit_payments)
-
 
 	def get_credit_balance(self):
 		"""Get customer's available credit from payments with remaining amounts"""
@@ -68,6 +72,18 @@ class ResPartner(models.Model):
 			'credit_payments_count': len(credit_payments),
 			'credit_payments': credit_payments.ids
 		}
+
+	@api.depends('payment_ids', 'payment_ids.state')
+	def _compute_payment_count(self):
+		for partner in self:
+			partner.payment_count = len(partner.payment_ids.filtered(lambda p: p.state in ('paid', 'in_process')))
+
+	@api.depends('phone', 'mobile')
+	def _compute_number_normalized(self):
+		"""Compute the normalized version of the phone/mobile number (digits only)."""
+		for partner in self:
+			partner.phone_normalized = re.sub(r'\D', '', partner.phone) if partner.phone else False
+			partner.mobile_normalized = re.sub(r'\D', '', partner.mobile) if partner.mobile else False
 
 	# --- Onchange Methods ---
 	@api.onchange('name')
@@ -125,7 +141,6 @@ class ResPartner(models.Model):
 			today = fields.Date.context_today(partner)
 			delta = relativedelta(today, partner.ths_dob)
 
-			# Simple format
 			parts = []
 			if delta.years: parts.append(f"{delta.years}y")
 			if delta.months: parts.append(f"{delta.months}m")
@@ -209,7 +224,7 @@ class ResPartner(models.Model):
 
 	# --- Name Search Override ---
 	@api.model
-	def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None, order=None):
+	def _name_search(self, name, args=None, operator='ilike', limit=100):
 		""" Override name_search to include additional searchable fields.
 			Searches across: name, ref, mobile, phone, email, name_ar, ths_gov_id  """
 		args = args or []
@@ -248,12 +263,17 @@ class ResPartner(models.Model):
 			])
 
 		# Execute search with combined domain
-		return self._search(
-			expression.AND([domain, args]),
-			limit=limit,
-			access_rights_uid=name_get_uid,
-			order=order
-		)
+		return self._search(expression.AND([domain, args]), limit=limit)
+
+	def action_view_payments(self):
+		return {
+			'type': 'ir.actions.act_window',
+			'name': _('Payments'),
+			'res_model': 'account.payment',
+			'view_mode': 'list,kanban,form',
+			'domain': [('partner_id', '=', self.id), ('state', 'in', ('paid', 'in_process'))],
+			'context': {'default_partner_id': self.id},
+		}
 
 	def action_view_credit_payments(self):
 		"""View all payments with remaining credit"""

@@ -9,7 +9,15 @@
             <field name="arch" type="xml">
                 <xpath expr="//form" position="attributes"><attribute name="class">ths_full_screen</attribute></xpath>
                 <xpath expr="//div[@name='button_box']" position="inside">
-                    <button name="action_view_credit_payments" type="object" string="Credit Balance" icon="fa-credit-card" invisible="available_credit_count == 0"/>
+                    <button class="oe_stat_button" type="object" name="action_view_payments" icon="fa-credit-card">
+                        <field name="payment_count" widget="statinfo" string="Payments"/>
+                    </button>
+                    <button name="action_view_credit_payments" class="oe_stat_button" type="object" icon="fa-credit-card" invisible="available_credit_count == 0">
+                        <div class="o_field_widget o_stat_info">
+                            <span class="o_stat_text">Credit</span>
+                            <span class="o_stat_text">Balance</span>
+                        </div>
+                    </button>
                 </xpath>
                 <field name="company_type" position="replace"/>
 

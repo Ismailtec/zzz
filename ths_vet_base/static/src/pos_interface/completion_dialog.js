@@ -21,7 +21,7 @@ export class CompletionDialog extends Component {
                 // Print invoice report
                 await this.action.doAction({
                     type: 'ir.actions.report',
-                    report_name: 'account.report_invoice',
+                    report_name: 'account.report_invoice_with_payments',
                     report_type: 'qweb-pdf',
                     data: {
                         'report_type': 'pdf'

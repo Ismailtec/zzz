@@ -16,6 +16,8 @@
                 <field name="amount_used" invisible="state not in ('in_process', 'paid')" style="color: green; font-weight: bold;"/>
                 <field name="amount_remaining" invisible="state not in ('in_process', 'paid')" style="color: red; font-weight: bold;"/>
             </xpath>
+
+
         </field>
     </record>
 

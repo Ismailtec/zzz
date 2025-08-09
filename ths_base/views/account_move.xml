@@ -191,6 +191,7 @@
                 </xpath>
                 <xpath expr="//filter" position="after">
                     <searchpanel>
+                        <field name="company_id" select="multi" icon="fa-building"/>
                         <field name="state" select="multi" icon="fa-filter" enable_counters="1"/>
                         <field name="payment_journal_ids" string="Journals" icon="fa fa-credit-card" select="multi" enable_counters="1"/>
                         <field name="payment_state" select="multi" icon="fa-credit-card" enable_counters="1" string="Payment Status"/>

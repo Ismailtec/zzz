@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Techouse Multi Branches Management</title>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+        /* Techouse Theme Colors */
+        :root {
+            --techouse-primary: #FF8E46;
+            --techouse-secondary: #FFDCC6;
+            --techouse-text: #212529;
+            --techouse-link: #c64d00;
+            --techouse-link-darker: #a03d00;
+            --techouse-bg: #FFFBF6;
+            --techouse-dark-section-bg: #F8F9FA;
+            --techouse-border: #E9ECEF;
+            --techouse-secondary-darker: #ffd1b3;
+        }
+
+        /* Basic styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--techouse-text);
+            background-color: var(--techouse-bg);
+        }
+
+        .oe_container {
+            padding-right: 15px;
+            padding-left: 15px;
+            margin-right: auto;
+            margin-left: auto;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 1140px;
+        }
+
+        .oe_row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -15px;
+            margin-left: -15px;
+            box-sizing: border-box;
+        }
+
+        .oe_spaced {
+            padding-top: 32px;
+            padding-bottom: 32px;
+        }
+
+        .oe_slogan {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+            color: var(--techouse-text);
+            font-weight: 300;
+        }
+
+        h2.oe_slogan {
+            font-size: 36px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            color: var(--techouse-primary);
+        }
+
+        h3.oe_slogan {
+            font-size: 28px;
+            margin-bottom: 25px;
+            font-weight: 400;
+            color: var(--techouse-text);
+        }
+
+        .oe_span12, .oe_span6 {
+            position: relative;
+            min-height: 1px;
+            padding-right: 15px;
+            padding-left: 15px;
+            box-sizing: border-box;
+        }
+
+        .oe_span12 {
+            width: 100%;
+        }
+
+        .oe_span6 {
+            width: 50%;
+            float: left;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-justify {
+            text-align: justify;
+        }
+
+        .text-primary {
+            color: var(--techouse-primary) !important;
+        }
+
+        .oe_mt16 {
+            margin-top: 16px !important;
+        }
+
+        .oe_mt32 {
+            margin-top: 32px !important;
+        }
+
+        .mb32 {
+            margin-bottom: 32px !important;
+        }
+
+        .list-unstyled {
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .list-unstyled li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .list-unstyled li .fa {
+            margin-right: 10px;
+            margin-top: 4px;
+            color: var(--techouse-primary);
+        }
+
+        hr {
+            margin-top: 25px;
+            margin-bottom: 25px;
+            border: 0;
+            border-top: 1px solid var(--techouse-border);
+        }
+
+        .oe_row::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .oe_dark {
+            background-color: var(--techouse-dark-section-bg);
+            border-top: 1px solid var(--techouse-border);
+            border-bottom: 1px solid var(--techouse-border);
+        }
+
+        .fa {
+            margin-right: 8px;
+        }
+
+        a {
+            color: var(--techouse-link);
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: var(--techouse-link-darker);
+            text-decoration: underline;
+        }
+
+        h4 {
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            color: var(--techouse-text);
+        }
+
+        h4 .fa {
+            font-size: 20px;
+            margin-right: 10px;
+            color: var(--techouse-primary);
+        }
+
+        .alert {
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+
+        .alert-info {
+            background-color: var(--techouse-secondary);
+            border-color: var(--techouse-secondary-darker);
+            color: var(--techouse-text);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .oe_span6 {
+                width: 100%;
+                float: none;
+                margin-bottom: 20px;
+            }
+
+            h2.oe_slogan {
+                font-size: 30px;
+            }
+
+            h3.oe_slogan {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="oe_span12 text-center">
+            <h2 class="oe_slogan">Techouse Multi Branches Management</h2>
+            <h3 class="oe_slogan">Company to Branch Terminology Transformation</h3>
+            <p class="oe_mt32 text-justify">
+                This module transforms Odoo's standard "Company" terminology to "Branch" across all key accounting
+                models, views, and reports. Perfect for organizations that prefer branch-based thinking while
+                maintaining full compatibility with Odoo's native multi-company functionality. Covers invoices,
+                payments, reports, and all accounting workflows.
+            </p>
+            <div class="alert alert-info">
+                <strong>Fully Compatible</strong> with Odoo 18's native multi-company features and all
+                standard accounting workflows. Simply changes terminology while preserving all functionality.
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <h3 class="oe_slogan" style="color: var(--techouse-text);">Key Features</h3>
+        <div class="oe_span6 mt32 mb32">
+            <h4>
+                <i class="fa fa-file-text-o"></i>
+                Core Model Updates
+            </h4>
+            <ul class="list-unstyled">
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Customer Invoices (account.move) - "Company" → "Branch"
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Customer Payments (account.payment) - Field labels updated
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Journal Items (account.move.line) - Branch context
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Accounting Journals - Branch field configuration
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Chart of Accounts - "Branches" terminology
+                </li>
+            </ul>
+            <hr/>
+            <h4>
+                <i class="fa fa-search"></i>
+                Enhanced Views & Filters
+            </h4>
+            <ul class="list-unstyled">
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Form, tree, and search views updated
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Branch-based filtering and grouping
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Enhanced search capabilities
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Multi-branch selection in views
+                </li>
+            </ul>
+
+        </div>
+        <div class="oe_span6 mt32 mb32">
+            <h4>
+                <i class="fa fa-bar-chart"></i>
+                Comprehensive Reports
+            </h4>
+            <ul class="list-unstyled">
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Balance Sheet, P&L, Cash Flow Statement
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    General Ledger, Trial Balance, Tax Return
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Executive Summary, Journal Audit
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Invoice Analysis, Analytic Reports
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Aged Receivables/Payables, Partner Ledger
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Budget Reports, Depreciation Schedule
+                </li>
+            </ul>
+            <hr/>
+            <h4>
+                <i class="fa fa-cogs"></i>
+                Advanced Features
+            </h4>
+            <ul class="list-unstyled">
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    JavaScript filter integration for dynamic reports
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    QWeb template updates for consistency
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Report action and menu updates
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Full multi-company/branch compatibility
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <h3 class="oe_slogan" style="color: var(--techouse-text);">Installation & Usage</h3>
+        <div class="oe_span12">
+            <p class="oe_mt16">
+                <i class="fa fa-download" style="color: var(--techouse-primary);"></i>
+                <b>Installation:</b>
+                Simply install the module through Apps menu. No additional configuration required -
+                all changes are applied automatically.
+            </p>
+            <p class="oe_mt16">
+                <i class="fa fa-building" style="color: var(--techouse-primary);"></i>
+                <b>Branch Setup:</b>
+                Use the standard Companies menu to create and manage your branches. All existing
+                multi-company functionality works exactly the same.
+            </p>
+            <p class="oe_mt16">
+                <i class="fa fa-users" style="color: var(--techouse-primary);"></i>
+                <b>User Access:</b>
+                Assign users to branches using the standard company assignment. The branch switcher
+                works just like the company switcher.
+            </p>
+            <p class="oe_mt16">
+                <i class="fa fa-bar-chart" style="color: var(--techouse-primary);"></i>
+                <b>Reports:</b>
+                All accounting reports now show "Branch" filters instead of "Company".
+                Filter by single or multiple branches as needed.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced">
+        <h3 class="oe_slogan" style="color: var(--techouse-text);">Technical Specifications</h3>
+        <div class="oe_span6 mt32 mb32">
+            <h4>
+                <i class="fa fa-code"></i>
+                Compatibility
+            </h4>
+            <ul class="list-unstyled">
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Odoo 18.0 Community & Enterprise
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Python 3.8+ compatibility
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    PostgreSQL database support
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Multi-language ready
+                </li>
+            </ul>
+        </div>
+        <div class="oe_span6 mt32 mb32">
+            <h4>
+                <i class="fa fa-shield"></i>
+                Dependencies & Security
+            </h4>
+            <ul class="list-unstyled">
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Core modules: account, base
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Maintains all standard security rules
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    No data structure changes
+                </li>
+                <li>
+                    <i class="fa fa-check text-primary"></i>
+                    Safe to uninstall/reinstall
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row oe_spaced">
+        <div class="oe_span12 text-center">
+            <h3 class="oe_slogan">Developed by Techouse Solutions</h3>
+            <p>
+                <a href="https://www.techouse.ae" target="_blank">www.techouse.ae</a>
+                |
+                <a href="mailto:info@techouse.ae">info@techouse.ae</a>
+            </p>
+            <p class="oe_mt16">
+                <i class="fa fa-star text-primary"></i>
+                Professional Odoo development and customization services
+            </p>
+        </div>
+    </div>
+</section>
+</body>
+</html>

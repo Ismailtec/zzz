@@ -506,21 +506,21 @@ class VetBoardingStay(models.Model):
 			except Exception as e:
 				_logger.error("Failed to send reminder for stay %s: %s", stay.id, e)
 
-	# @api.model
-	# def _cron_schedule_reminders(self):
-	# 	"""Remind users about upcoming food/medication schedules"""
-	# 	upcoming = self.env['vet.boarding.schedule'].search([
-	# 		('scheduled_time', '<', fields.Datetime.now() + timedelta(hours=1)),
-	# 		('done', '=', False)
-	# 	])
-	# 	for schedule in upcoming:
-	# 		schedule.boarding_stay_id.activity_schedule(
-	# 			'mail.mail_activity_data_todo',
-	# 			date_deadline=schedule.scheduled_time,
-	# 			summary=_('%s Schedule Reminder') % schedule.schedule_type.capitalize(),
-	# 			note=schedule.notes,
-	# 			user_id=schedule.user_id.id
-	# 		)
+# @api.model
+# def _cron_schedule_reminders(self):
+# 	"""Remind users about upcoming food/medication schedules"""
+# 	upcoming = self.env['vet.boarding.schedule'].search([
+# 		('scheduled_time', '<', fields.Datetime.now() + timedelta(hours=1)),
+# 		('done', '=', False)
+# 	])
+# 	for schedule in upcoming:
+# 		schedule.boarding_stay_id.activity_schedule(
+# 			'mail.mail_activity_data_todo',
+# 			date_deadline=schedule.scheduled_time,
+# 			summary=_('%s Schedule Reminder') % schedule.schedule_type.capitalize(),
+# 			note=schedule.notes,
+# 			user_id=schedule.user_id.id
+# 		)
 
 
 # TODO: Implement boarding photo upload per encounter
@@ -1222,6 +1222,7 @@ class VetVaccination(models.Model):
 	expiry_date = fields.Date(string='Expiry Date', compute='_compute_expiry_date', store=True, readonly=False, tracking=True)
 	batch_number = fields.Char(string='Batch/Lot Number', tracking=True)
 	clinic_name = fields.Char(string='Clinic/Hospital Name', default=lambda self: self.env.company.name)
+	# photo = fields.Binary(string='Photo', attachment=True)
 	notes = fields.Text(string='Notes')
 
 	# Status tracking
@@ -1310,7 +1311,48 @@ class VetVaccination(models.Model):
 		for vaccination in vaccinations:
 			vaccination._schedule_vaccination_reminder()
 
+			# if vaccination.photo and vaccination.patient_ids:
+			# 	first_pet = vaccination.patient_ids[0]
+			# 	attach = self.env['ir.attachment'].search([('res_model', '=', self._name), ('res_field', '=', 'photo'), ('res_id', '=', vaccination.id)], limit=1)
+			# 	if attach:
+			# 		copy_attach = attach.copy()
+			# 		tag_vaccines = self.env.ref('ths_vet_base.documents_tag_vaccines', raise_if_not_found=False)
+			# 		tag_pets = self.env.ref('ths_vet_base.documents_tag_pets', raise_if_not_found=False)
+			# 		tag_ids = [tag.id for tag in (tag_vaccines, tag_pets) if tag]
+			# 		self.env['documents.document'].create({
+			# 			'name': attach.name or f'Vaccination Photo {vaccination.id}',
+			# 			'type': 'binary',
+			# 			'attachment_id': copy_attach.id,
+			# 			'folder_id': self.env.ref('ths_vet_base.documents_vaccine_folder').id,
+			# 			'tag_ids': [(6, 0, tag_ids)],
+			# 			'res_model': 'res.partner',
+			# 			'res_id': first_pet.id,
+			# 		})
+
 		return vaccinations
+
+	# def write(self, vals):
+	# 	res = super().write(vals)
+	# 	if 'photo' in vals:
+	# 		for vaccination in self:
+	# 			if vaccination.photo and vaccination.patient_ids:
+	# 				first_pet = vaccination.patient_ids[0]
+	# 				attach = self.env['ir.attachment'].search([('res_model', '=', self._name), ('res_field', '=', 'photo'), ('res_id', '=', vaccination.id)], limit=1)
+	# 				if attach:
+	# 					copy_attach = attach.copy()
+	# 					tag_vaccines = self.env.ref('ths_vet_base.documents_tag_vaccines', raise_if_not_found=False)
+	# 					tag_pets = self.env.ref('ths_vet_base.documents_tag_pets', raise_if_not_found=False)
+	# 					tag_ids = [tag.id for tag in (tag_vaccines, tag_pets) if tag]
+	# 					self.env['documents.document'].create({
+	# 						'name': attach.name or f'Vaccination Photo {vaccination.id}',
+	# 						'type': 'binary',
+	# 						'attachment_id': copy_attach.id,
+	# 						'folder_id': self.env.ref('ths_vet_base.documents_vaccine_folder').id,
+	# 						'tag_ids': [(6, 0, tag_ids)],
+	# 						'res_model': 'res.partner',
+	# 						'res_id': first_pet.id,
+	# 					})
+	# 	return res
 
 	def _schedule_vaccination_reminder(self):
 		"""Schedule reminder activity on pet owner for vaccination renewal"""

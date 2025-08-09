@@ -12,8 +12,8 @@
                     <field name="name"/>
                     <field name="code"/>
                     <field name="product_group" optional="show"/>
-                    <field name="is_for_service" optional="show"/>
-                    <field name="is_for_internal_reference" optional="show"/>
+                    <field name="is_for_service" optional="show" widget="boolean_toggle"/>
+                    <field name="is_for_internal_reference" optional="show" widget="boolean_toggle"/>
                     <field name="sequence_id" optional="show"/>
                     <field name="active" widget="boolean_toggle" optional="show"/>
                 </list>
@@ -33,8 +33,8 @@
                                 <field name="product_group"/>
                                 <field name="sequence"/></group>
                             <group>
-                                <field name="is_for_service"/>
-                                <field name="is_for_internal_reference"/>
+                                <field name="is_for_service" widget="boolean_toggle"/>
+                                <field name="is_for_internal_reference" widget="boolean_toggle"/>
                                 <field name="sequence_id" readonly="1"/> <field name="active"/>
                             </group>
                         </group>
@@ -84,7 +84,7 @@
                 <field name="ths_membership_duration_required" invisible="1"/>
             </xpath>
             <xpath expr="//field[@name='product_brand']" position="after">
-                <field name="ths_exclude_from_auto_code" invisible="not product_sub_type_id or not product_sub_type_id.is_for_internal_reference"/>
+                <field name="ths_exclude_from_auto_code" widget="boolean_toggle" invisible="not product_sub_type_id or not product_sub_type_id.is_for_internal_reference"/>
                 <field name="ths_auto_code_generated" invisible="1"/>
                 <field name="ths_code_generation_trigger" invisible="1"/>
                 <field name="ths_computed_default_code" invisible="1"/>
